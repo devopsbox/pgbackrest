@@ -1,6 +1,6 @@
 ####################################################################################################################################
 # BACKUP MODULE
-####################################################################################################################################
+#<<< ###############################################################################################################################
 package pgBackRest::Backup;
 
 use threads;
@@ -44,7 +44,7 @@ use constant OP_BACKUP_PROCESS                                      => OP_BACKUP
 use constant OP_BACKUP_PROCESS_MANIFEST                             => OP_BACKUP . '->processManifest';
 use constant OP_BACKUP_TMP_CLEAN                                    => OP_BACKUP . '->tmpClean';
 
-####################################################################################################################################
+#>>> ###############################################################################################################################
 # new
 ####################################################################################################################################
 sub new
@@ -114,7 +114,7 @@ sub fileNotInManifest
 {
     my $self = shift;
 
-    # Assign function parameters, defaults, and log debug info
+    #<<< Assign function parameters, defaults, and log debug info
     my
     (
         $strOperation,
@@ -128,7 +128,7 @@ sub fileNotInManifest
             {name => 'strPathType', trace => true},
             {name => 'oManifest', trace => true},
             {name => 'oAbortedManifest', trace => true}
-        );
+        ); #>>>
 
     # Build manifest for aborted temp path
     my %oFileHash;
