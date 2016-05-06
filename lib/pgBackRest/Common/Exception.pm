@@ -1,6 +1,6 @@
 ####################################################################################################################################
 # COMMON EXCEPTION MODULE
-####################################################################################################################################
+#<<< ###############################################################################################################################
 package pgBackRest::Common::Exception;
 
 use strict;
@@ -132,15 +132,15 @@ use constant ERROR_INVALID_VALUE                                    => ERROR_MAX
 use constant ERROR_UNKNOWN                                          => ERROR_MAXIMUM;
     push @EXPORT, qw(ERROR_UNKNOWN);
 
-####################################################################################################################################
+#>>> ###############################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
 sub new
 {
-    my $class = shift;       # Class name
-    my $iCode = shift;       # Error code
-    my $strMessage = shift;  # ErrorMessage
-    my $strTrace = shift;    # Stack trace
+    my $class      = shift;    # Class name
+    my $iCode      = shift;    # Error code
+    my $strMessage = shift;    # ErrorMessage
+    my $strTrace   = shift;    # Stack trace
 
     # if ($iCode < ERROR_MINIMUM || $iCode > ERROR_MAXIMUM)
     # {
@@ -152,9 +152,9 @@ sub new
     bless $self, $class;
 
     # Initialize exception
-    $self->{iCode} = $iCode;
+    $self->{iCode}      = $iCode;
     $self->{strMessage} = $strMessage;
-    $self->{strTrace} = $strTrace;
+    $self->{strTrace}   = $strTrace;
 
     return $self;
 }
