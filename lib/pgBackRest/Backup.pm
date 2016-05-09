@@ -49,7 +49,7 @@ use constant OP_BACKUP_TMP_CLEAN                                    => OP_BACKUP
 ####################################################################################################################################
 sub new
 {
-    my $class = shift;          # Class name
+    my $class = shift;                                              # Class name
 
     # Create the class hash
     my $self = {};
@@ -128,7 +128,8 @@ sub fileNotInManifest
             {name => 'strPathType', trace => true},
             {name => 'oManifest', trace => true},
             {name => 'oAbortedManifest', trace => true}
-        ); #>>>
+        );
+    #>>>
 
     # Build manifest for aborted temp path
     my %oFileHash;
@@ -240,8 +241,8 @@ sub tmpClean
         {
             logDebugMisc($strOperation, "remove path ${strDelete}");
 
-            rmdir($strDelete)
-                or confess &log(ERROR, "unable to delete path ${strDelete}, is it empty?", ERROR_PATH_REMOVE);
+            rmdir($strDelete) or
+                confess &log(ERROR, "unable to delete path ${strDelete}, is it empty?", ERROR_PATH_REMOVE);
         }
         # Else delete a file
         else
@@ -782,8 +783,8 @@ sub process
             &log(WARN, "aborted backup exists, but cannot be resumed (${strReason}) - will be dropped and recreated");
             &log(TEST, TEST_BACKUP_NORESUME);
 
-            remove_tree($self->{oFile}->pathGet(PATH_BACKUP_TMP))
-                or confess &log(ERROR, "unable to delete tmp path: ${strBackupTmpPath}");
+            remove_tree($self->{oFile}->pathGet(PATH_BACKUP_TMP)) or
+                confess &log(ERROR, "unable to delete tmp path: ${strBackupTmpPath}");
             $self->{oFile}->pathCreate(PATH_BACKUP_TMP, undef, undef, false, true);
         }
     }

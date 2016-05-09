@@ -108,6 +108,7 @@ my $strVm = 'all';
 my $bVmBuild = false;
 my $bVmForce = false;
 my $bNoLint = false;
+my $bTidy = false;
 
 my $strCommandLine = join(' ', @ARGV);
 
@@ -132,7 +133,8 @@ GetOptions ('q|quiet' => \$bQuiet,
             'infinite' => \$bInfinite,
             'db-version=s' => \$strDbVersion,
             'log-force' => \$bLogForce,
-            'no-lint' => \$bNoLint)
+            'no-lint' => \$bNoLint,
+            'tidy', => \$bTidy)
     or pod2usage(2);
 
 # Display version and exit if requested
@@ -188,6 +190,27 @@ if (defined($iModuleTestRun) && $strModuleTest eq 'all')
 if (defined($iThreadMax) && ($iThreadMax < 1 || $iThreadMax > 32))
 {
     confess 'thread-max must be between 1 and 32';
+}
+
+####################################################################################################################################
+# Tidy Perl Code
+####################################################################################################################################
+sub perlTidy
+{
+    my $strFile = shift;
+
+    my $strBasePath = dirname(dirname(abs_path($0)));
+
+    executeTest("perltidy -b -pro=${strBasePath}/test/lint/perltidy.conf ${strBasePath}/${strFile}");
+    executeTest("rm ${strBasePath}/${strFile}.bak");
+}
+
+if ($bTidy)
+{
+    perlTidy('bin/pgbackrest');
+    perlTidy('lib/pgBackRest/Backup.pm');
+
+    exit 0;
 }
 
 ####################################################################################################################################
