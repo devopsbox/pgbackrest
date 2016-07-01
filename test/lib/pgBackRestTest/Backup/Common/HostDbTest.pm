@@ -355,6 +355,13 @@ sub clusterCreate
     $self->clusterStart(
         {bHotStandby => $$hParam{bHotStandby}, bArchive => $$hParam{bArchive}, bArchiveAlways => $$hParam{bArchiveAlways},
          bArchiveInvalid => $$hParam{bArchiveInvalid}});
+
+    if (!$self->standby())
+    {
+        $self->sqlExecute("create user replicator password 'jw8s0F4' replication", {bCommit =>true});
+        $self->executeSimple(
+            "echo 'host replication replicator db-standby trust' >> " . $self->dbBasePath() . '/pg_hba.conf');
+    }
 }
 
 ####################################################################################################################################

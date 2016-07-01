@@ -65,11 +65,11 @@ sub backupTestSetup
     # Create the db-standby host
     my $oHostDbStandby = undef;
 
-    # if (defined($$oConfigParam{bStandby}) && $$oConfigParam{bStandby})
-    # {
-    #     $oHostDbStandby = new pgBackRestTest::Backup::Common::HostDbSyntheticTest(
-    #         {bStandby => true, oHostBackup => $oHostBackup, oLogTest => $oLogTest});
-    # }
+    if (defined($$oConfigParam{bStandby}) && $$oConfigParam{bStandby})
+    {
+        $oHostDbStandby = new pgBackRestTest::Backup::Common::HostDbSyntheticTest(
+            {bStandby => true, oHostBackup => $oHostBackup, oLogTest => $oLogTest});
+    }
 
     # If backup host is not defined set it to db-master
     $oHostBackup = defined($oHostBackup) ? $oHostBackup : $oHostDbMaster;
