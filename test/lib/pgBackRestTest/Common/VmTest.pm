@@ -209,6 +209,7 @@ my $oyVm =
         &VM_DB_DOC =>
         [
             PG_VERSION_94,
+            PG_VERSION_96,
         ],
     },
 
