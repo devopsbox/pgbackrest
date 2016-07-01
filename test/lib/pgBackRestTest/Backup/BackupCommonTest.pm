@@ -13,6 +13,7 @@ use Carp qw(confess);
 use Exporter qw(import);
     our @EXPORT = qw();
 
+use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 
 use pgBackRestTest::Backup::Common::HostBackupTest;
@@ -36,7 +37,7 @@ sub backupTestSetup
     # Get host group
     my $oHostGroup = hostGroupGet();
 
-    # Create the backup container
+    # Create the backup host
     my $oHostBackup = undef;
 
     if ($bRemote)
@@ -46,7 +47,7 @@ sub backupTestSetup
         $oHostGroup->hostAdd($oHostBackup);
     }
 
-    # Create the db-master container
+    # Create the db-master host
     my $oHostDbMaster = undef;
 
     if ($bSynthetic)
@@ -60,6 +61,17 @@ sub backupTestSetup
     }
 
     $oHostGroup->hostAdd($oHostDbMaster);
+
+    # Create the db-standby host
+    my $oHostDbStandby = undef;
+
+    # if (defined($$oConfigParam{bStandby}) && $$oConfigParam{bStandby})
+    # {
+    #     $oHostDbStandby = new pgBackRestTest::Backup::Common::HostDbSyntheticTest(
+    #         {bStandby => true, oHostBackup => $oHostBackup, oLogTest => $oLogTest});
+    # }
+
+    # If backup host is not defined set it to db-master
     $oHostBackup = defined($oHostBackup) ? $oHostBackup : $oHostDbMaster;
 
     # Create the local file object
@@ -97,7 +109,7 @@ sub backupTestSetup
             $$oConfigParam{iThreadMax});                            # thread-max
     }
 
-    return $oHostDbMaster, $oHostBackup, $oFile;
+    return $oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile;
 }
 
 push @EXPORT, qw(backupTestSetup);

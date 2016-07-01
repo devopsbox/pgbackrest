@@ -36,10 +36,8 @@ use pgBackRestTest::Common::HostGroupTest;
 ####################################################################################################################################
 # Host constants
 ####################################################################################################################################
-use constant HOST_DB_MASTER                                         => 'db-master';
-    push @EXPORT, qw(HOST_DB_MASTER);
-use constant HOST_DB_MASTER_USER                                    => 'db-master-user';
-    push @EXPORT, qw(HOST_DB_MASTER_USER);
+use constant HOST_DB_USER                                           => 'db-user';
+    push @EXPORT, qw(HOST_DB_USER);
 
 ####################################################################################################################################
 # Host parameters
@@ -82,12 +80,18 @@ sub new
             {name => 'oParam', required => false, trace => true},
         );
 
+    # Get host group
+    my $oHostGroup = hostGroupGet();
+
+    # Is standby?
+    my $bStandby = defined($$oParam{bStandby}) && $$oParam{bStandby} ? true : false;
+
     my $self = $class->SUPER::new(
         {
-            strName => $$oParam{strName},
+            strName => $bStandby ? HOST_DB_STANDBY : HOST_DB_MASTER,
             strImage => $$oParam{strImage},
-            strUser => $$oParam{strUser},
-            strVm => $$oParam{strVm},
+            strUser => $oHostGroup->paramGet(HOST_DB_USER),
+            strVm => $oHostGroup->paramGet(HOST_PARAM_VM),
             oLogTest => $$oParam{oLogTest},
             bSynthetic => $$oParam{bSynthetic},
             oHostBackup => $$oParam{oHostBackup},
@@ -95,6 +99,8 @@ sub new
     bless $self, $class;
 
     # Set parameters
+    $self->{bStandby} = $bStandby;
+
     $self->paramSet(HOST_PARAM_DB_PATH, $self->testPath() . '/' . HOST_PATH_DB);
     $self->paramSet(HOST_PARAM_DB_BASE_PATH, $self->dbPath() . '/' . HOST_PATH_DB_BASE);
     $self->paramSet(HOST_PARAM_TABLESPACE_PATH, $self->dbPath() . '/tablespace');
@@ -615,6 +621,7 @@ sub dbBasePath
 }
 
 sub spoolPath {return shift->paramGet(HOST_PARAM_SPOOL_PATH);}
+sub standby {return shift->{bStandby}}
 
 sub tablespacePath
 {

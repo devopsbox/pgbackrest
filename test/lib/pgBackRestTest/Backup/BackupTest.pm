@@ -173,7 +173,7 @@ sub backupTestRun
                                             \$oLogTest)) {next}
 
                 # Create hosts, file object, and config
-                my ($oHostDbMaster, $oHostBackup, $oFile) = backupTestSetup(
+                my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = backupTestSetup(
                     $bRemote, true, $oLogTest, {bCompress => $bCompress, bArchiveAsync => $bArchiveAsync});
 
                 # Create the xlog path
@@ -385,7 +385,7 @@ sub backupTestRun
                                             \$oLogTest)) {next}
 
                 # Create hosts, file object, and config
-                my ($oHostDbMaster, $oHostBackup, $oFile) = backupTestSetup(
+                my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = backupTestSetup(
                     $bRemote, true, $oLogTest, {bCompress => $bCompress, bArchiveAsync => true});
 
                 # Create the xlog path
@@ -468,7 +468,7 @@ sub backupTestRun
                                             \$oLogTest)) {next}
 
                 # Create hosts, file object, and config
-                my ($oHostDbMaster, $oHostBackup, $oFile) = backupTestSetup(
+                my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = backupTestSetup(
                     $bRemote, true, $oLogTest, {bCompress => $bCompress});
 
                 # Create the xlog path
@@ -593,7 +593,7 @@ sub backupTestRun
                                     \$oLogTest))
         {
             # Create hosts, file object, and config
-            my ($oHostDbMaster, $oHostBackup, $oFile) = backupTestSetup(false, true, $oLogTest);
+            my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = backupTestSetup(false, true, $oLogTest);
 
             # Create the test object
             my $oExpireTest = new pgBackRestTest::Backup::Common::ExpireCommonTest($oHostBackup, $oFile, $oLogTest);
@@ -677,7 +677,7 @@ sub backupTestRun
                                         \$oLogTest)) {next}
 
             # Create hosts, file object, and config
-            my ($oHostDbMaster, $oHostBackup, $oFile) = backupTestSetup(
+            my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = backupTestSetup(
                 $bRemote, true, $oLogTest, {bCompress => $bCompress, bHardLink => $bHardLink, iThreadMax => $iThreadMax});
 
             # Determine if this is a neutral test, i.e. we only want to do it once for local and once for remote.  Neutral means
@@ -1557,9 +1557,9 @@ sub backupTestRun
             if (!testRun(++$iRun, "rmt ${bRemote}, arc_async ${bArchiveAsync}, cmp ${bCompress}")) {next}
 
             # Create hosts, file object, and config
-            my ($oHostDbMaster, $oHostBackup, $oFile) = backupTestSetup(
+            my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = backupTestSetup(
                 $bRemote, false, undef,
-                {bCompress => $bCompress, iThreadMax => $iThreadMax, bArchiveAsync => $bArchiveAsync});
+                {bStandby => $bRemote, bCompress => $bCompress, iThreadMax => $iThreadMax, bArchiveAsync => $bArchiveAsync});
 
             # For the 'fail on missing archive.info file' test, the archive.info file must not be found so set archive invalid.
             $oHostDbMaster->clusterCreate({bArchiveInvalid => true});

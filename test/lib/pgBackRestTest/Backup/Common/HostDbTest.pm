@@ -80,11 +80,9 @@ sub new
 
     my $self = $class->SUPER::new(
         {
-            strName => HOST_DB_MASTER,
             strImage => 'backrest/' . $oHostGroup->paramGet(HOST_PARAM_VM) . "-db-${strDbVersion}-test-pre",
-            strUser => $oHostGroup->paramGet(HOST_DB_MASTER_USER),
-            strVm => $oHostGroup->paramGet(HOST_PARAM_VM),
             oHostBackup => $$oParam{oHostBackup},
+            bStandby => $$oParam{bStandby},
         });
     bless $self, $class;
 

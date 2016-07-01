@@ -30,8 +30,6 @@ use pgBackRestTest::Common::HostGroupTest;
 ####################################################################################################################################
 # Host constants
 ####################################################################################################################################
-use constant HOST_BACKUP                                            => 'backup';
-    push @EXPORT, qw(HOST_BACKUP);
 use constant HOST_BACKUP_USER                                       => 'backup-user';
     push @EXPORT, qw(HOST_BACKUP_USER);
 
