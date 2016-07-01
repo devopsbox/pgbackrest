@@ -301,6 +301,8 @@ use constant OPTION_BACKUP_ARCHIVE_COPY                             => 'archive-
     push @EXPORT, qw(OPTION_BACKUP_ARCHIVE_COPY);
 use constant OPTION_BACKUP_HOST                                     => 'backup-host';
     push @EXPORT, qw(OPTION_BACKUP_HOST);
+use constant OPTION_BACKUP_STANDBY                                  => 'backup-standby';
+    push @EXPORT, qw(OPTION_BACKUP_STANDBY);
 use constant OPTION_BACKUP_USER                                     => 'backup-user';
     push @EXPORT, qw(OPTION_BACKUP_USER);
 use constant OPTION_HARDLINK                                        => 'hardlink';
@@ -352,6 +354,17 @@ use constant OPTION_DB_SOCKET_PATH                                  => 'db-socke
     push @EXPORT, qw(OPTION_DB_SOCKET_PATH);
 use constant OPTION_DB_USER                                         => 'db-user';
     push @EXPORT, qw(OPTION_DB_USER);
+
+use constant OPTION_DB_STANDBY_HOST                                 => 'db-standby-host';
+    push @EXPORT, qw(OPTION_DB_STANDBY_HOST);
+use constant OPTION_DB_STANDBY_PATH                                 => 'db-standby-path';
+    push @EXPORT, qw(OPTION_DB_STANDBY_PATH);
+use constant OPTION_DB_STANDBY_PORT                                 => 'db-standby-port';
+    push @EXPORT, qw(OPTION_DB_STANDBY_PORT);
+use constant OPTION_DB_STANDBY_SOCKET_PATH                          => 'db-standby-socket-path';
+    push @EXPORT, qw(OPTION_DB_STANDBY_SOCKET_PATH);
+use constant OPTION_DB_STANDBY_USER                                 => 'db-standby-user';
+    push @EXPORT, qw(OPTION_DB_STANDBY_USER);
 
 ####################################################################################################################################
 # Option Defaults
@@ -485,6 +498,8 @@ use constant OPTION_DEFAULT_BACKUP_MANIFEST_SAVE_THRESHOLD          => 107374182
     push @EXPORT, qw(OPTION_DEFAULT_BACKUP_MANIFEST_SAVE_THRESHOLD);
 use constant OPTION_DEFAULT_BACKUP_RESUME                           => true;
     push @EXPORT, qw(OPTION_DEFAULT_BACKUP_RESUME);
+use constant OPTION_DEFAULT_BACKUP_STANDBY                          => false;
+    push @EXPORT, qw(OPTION_DEFAULT_BACKUP_STANDBY);
 use constant OPTION_DEFAULT_BACKUP_STOP_AUTO                        => false;
     push @EXPORT, qw(OPTION_DEFAULT_BACKUP_STOP_AUTO);
 use constant OPTION_DEFAULT_BACKUP_START_FAST                       => false;
@@ -1309,6 +1324,17 @@ my %oOptionRule =
         },
     },
 
+    &OPTION_BACKUP_STANDBY =>
+    {
+        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
+        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_STANDBY,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_BACKUP => true
+        },
+    },
+
     &OPTION_BACKUP_USER =>
     {
         &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
@@ -1611,7 +1637,112 @@ my %oOptionRule =
         {
             &OPTION_RULE_DEPEND_OPTION => OPTION_DB_HOST
         }
-    }
+    },
+
+    &OPTION_DB_STANDBY_HOST =>
+    {
+        &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
+        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
+        &OPTION_RULE_REQUIRED => false,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_BACKUP => true,
+            &CMD_CHECK => true,
+            &CMD_START => true,
+            &CMD_STOP => true,
+        },
+        &OPTION_RULE_DEPEND =>
+        {
+            &OPTION_RULE_DEPEND_OPTION  => OPTION_BACKUP_STANDBY,
+            &OPTION_RULE_DEPEND_VALUE   => true
+        },
+    },
+
+    &OPTION_DB_STANDBY_PATH =>
+    {
+        &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
+        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
+        &OPTION_RULE_REQUIRED => false,
+        &OPTION_RULE_HINT => "does this stanza exist?",
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_ARCHIVE_GET =>
+            {
+                &OPTION_RULE_REQUIRED => false,
+            },
+            &CMD_ARCHIVE_PUSH =>
+            {
+                &OPTION_RULE_REQUIRED => false,
+            },
+            &CMD_BACKUP => true,
+            &CMD_CHECK =>
+            {
+                &OPTION_RULE_REQUIRED => false,
+            },
+            &CMD_RESTORE => true,
+        },
+        &OPTION_RULE_DEPEND =>
+        {
+            &OPTION_RULE_DEPEND_OPTION  => OPTION_BACKUP_STANDBY,
+            &OPTION_RULE_DEPEND_VALUE   => true
+        },
+    },
+
+    &OPTION_DB_STANDBY_PORT =>
+    {
+        &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
+        &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_DB_PORT,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_BACKUP => true,
+            &CMD_CHECK => true,
+        },
+        &OPTION_RULE_DEPEND =>
+        {
+            &OPTION_RULE_DEPEND_OPTION  => OPTION_BACKUP_STANDBY,
+            &OPTION_RULE_DEPEND_VALUE   => true
+        },
+    },
+
+    &OPTION_DB_STANDBY_SOCKET_PATH =>
+    {
+        &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
+        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
+        &OPTION_RULE_REQUIRED => false,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_BACKUP => true,
+            &CMD_CHECK => true,
+        },
+        &OPTION_RULE_DEPEND =>
+        {
+            &OPTION_RULE_DEPEND_OPTION  => OPTION_BACKUP_STANDBY,
+            &OPTION_RULE_DEPEND_VALUE   => true
+        },
+    },
+
+    &OPTION_DB_STANDBY_USER =>
+    {
+        &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
+        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_DB_USER,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_BACKUP => true,
+            &CMD_CHECK => true,
+        },
+        &OPTION_RULE_REQUIRED => false,
+        &OPTION_RULE_DEPEND =>
+        {
+            &OPTION_RULE_DEPEND_OPTION => OPTION_DB_HOST,
+        },
+        &OPTION_RULE_DEPEND =>
+        {
+            &OPTION_RULE_DEPEND_OPTION  => OPTION_BACKUP_STANDBY,
+            &OPTION_RULE_DEPEND_VALUE   => true
+        },
+    },
 );
 
 ####################################################################################################################################
