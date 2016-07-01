@@ -777,13 +777,16 @@ sub configValidate
         confess &log(ERROR, "archive_mode=always not supported", ERROR_FEATURE_NOT_SUPPORTED);
     }
 
-    # # Check if archive_command is set
-    # my $strArchiveCommand = $self->executeSql('show archive_command');
-    #
-    # if (index($strArchiveCommand, BACKREST_EXE) == -1)
-    # {
-    #     confess &log(ERROR, 'archive_command must contain \'' . BACKREST_EXE . '\'', ERROR_ARCHIVE_COMMAND_INVALID);
-    # }
+    # Check if archive_command is set
+    if (!optionGet(OPTION_BACKUP_STANDBY))
+    {
+        my $strArchiveCommand = $self->executeSql('show archive_command');
+
+        if (index($strArchiveCommand, BACKREST_EXE) == -1)
+        {
+            confess &log(ERROR, 'archive_command must contain \'' . BACKREST_EXE . '\'', ERROR_ARCHIVE_COMMAND_INVALID);
+        }
+    }
 
     return logDebugReturn
     (

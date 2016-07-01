@@ -1331,7 +1331,8 @@ my %oOptionRule =
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_STANDBY,
         &OPTION_RULE_COMMAND =>
         {
-            &CMD_BACKUP => true
+            &CMD_BACKUP => true,
+            &CMD_CHECK => true,
         },
     },
 
