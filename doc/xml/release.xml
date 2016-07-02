@@ -94,7 +94,17 @@
     </contributor-list>
 
     <release-list>
-         <release date="XXXX-XX-XX" version="1.03dev" title="UNDER DEVELOPMENT">
+         <release date="XXX-XX-XX" version="1.04dev" title="UNDER DEVELOPMENT">
+             <release-doc-list>
+                 <release-feature-list>
+                    <release-item>
+                        <p>Added <file>release.pl</file> to make releases reproducible.  For now this only includes building and deploying documentation.</p>
+                    </release-item>
+                </release-feature-list>
+            </release-doc-list>
+         </release>
+
+         <release date="2016-07-02" version="1.03" title="Check Command and Bug Fixes">
              <release-core-list>
                 <release-bug-list>
                     <release-item>
@@ -103,7 +113,7 @@
                             <release-item-ideator id="barber.chris"/>
                         </release-item-contributor-list>
 
-                        <p>Fixed an issue where <id>keep-alives</id> could be starved out by lots of small files during multi-threaded operation and were completely absent during single/multi-threaded operation when resuming from a previous incomplete backup and checksumming during a delta restore.</p>
+                        <p>Fixed an issue where <id>keep-alives</id> could be starved out by lots of small files during multi-threaded <cmd>backup</cmd>.  They were also completely absent from single/multi-threaded <cmd>backup</cmd> resume and <cmd>restore</cmd> checksumming.</p>
                     </release-item>
 
                     <release-item>
@@ -111,7 +121,11 @@
                             <release-item-ideator id="barber.chris"/>
                         </release-item-contributor-list>
 
-                        <p>Fixed an issue where the <cmd>expire</cmd> command would refuse to run when explicitly called from the command line if the <br-option>db-host</br-option> option was set.  This was not an issue when <cmd>expire</cmd> was run after a <cmd>backup</cmd>, which is the usual case.</p>
+                        <p>Fixed an issue where the <cmd>expire</cmd> command would refuse to run when explicitly called from the command line if the <br-option>db-host</br-option> option was set.  This was not an issue when <cmd>expire</cmd> was run automatically after a <cmd>backup</cmd></p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Fixed an issue where validation was being running on <pg-setting>archive_command</pg-setting> even when the <br-option>archive-check</br-option> option was disabled.</p>
                     </release-item>
                 </release-bug-list>
 
@@ -132,6 +146,10 @@
 
                     <release-item>
                         <p>Failure to shutdown remotes at the end of the backup no longer throws an exception.  Instead a warning is generated that recommends a higher <br-option>protocol-timeout</br-option>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Experimental support for non-exclusive backups in <postgres/> 9.6 beta2.  Changes to the control/catalog/WAL versions in subsequent betas may break compatibility but <backrest/> will be updated with each release to keep pace.</p>
                     </release-item>
                 </release-feature-list>
 

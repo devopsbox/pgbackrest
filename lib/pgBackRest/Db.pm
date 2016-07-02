@@ -772,19 +772,20 @@ sub configValidate
     }
 
     # Error if archive_mode = always (support has not been added yet)
-    if ($self->executeSql('show archive_mode') eq 'always')
+    if (optionGet(OPTION_BACKUP_ARCHIVE_CHECK) && $self->executeSql('show archive_mode') eq 'always')
     {
         confess &log(ERROR, "archive_mode=always not supported", ERROR_FEATURE_NOT_SUPPORTED);
     }
 
     # Check if archive_command is set
-    if (!optionGet(OPTION_BACKUP_STANDBY))
+    if (!optionGet(OPTION_BACKUP_STANDBY) && optionGet(OPTION_BACKUP_ARCHIVE_CHECK))
     {
         my $strArchiveCommand = $self->executeSql('show archive_command');
 
         if (index($strArchiveCommand, BACKREST_EXE) == -1)
         {
-            confess &log(ERROR, 'archive_command must contain \'' . BACKREST_EXE . '\'', ERROR_ARCHIVE_COMMAND_INVALID);
+            confess &log(ERROR,
+                'archive_command \'${strArchiveCommand}\' must contain \'' . BACKREST_EXE . '\'', ERROR_ARCHIVE_COMMAND_INVALID);
         }
     }
 
