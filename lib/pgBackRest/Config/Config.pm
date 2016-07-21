@@ -1587,10 +1587,7 @@ my %oOptionRule =
                 &OPTION_RULE_REQUIRED => false
             },
             &CMD_BACKUP => true,
-            &CMD_CHECK =>
-            {
-                &OPTION_RULE_REQUIRED => false
-            },
+            &CMD_CHECK => true,
             &CMD_RESTORE => true,
         },
     },
