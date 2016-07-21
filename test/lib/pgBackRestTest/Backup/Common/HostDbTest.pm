@@ -93,7 +93,7 @@ sub new
     $self->paramSet(HOST_PARAM_DB_PORT, HOST_DB_PORT);
 
     $self->paramSet(HOST_PARAM_DB_LOG_PATH, $self->testPath());
-    $self->paramSet(HOST_PARAM_DB_LOG_FILE, $self->dbLogPath() . '/postgresql.log');
+    $self->paramSet(HOST_PARAM_DB_LOG_FILE, $self->dbLogPath() . '/postgresql-startup.log');
 
     # Get Db version
     if (defined($strDbVersion))
@@ -129,6 +129,9 @@ sub new
             confess &log(ERROR, "actual database version ${strDbVersionActual} does not match expected version ${strDbVersion}");
         }
     }
+
+    # Create pg_xlog directory
+    filePathCreate($self->dbPath() . '/pg_xlog');
 
     # Return from function and log return values if any
     return logDebugReturn

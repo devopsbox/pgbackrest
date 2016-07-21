@@ -458,8 +458,8 @@ sub restoreCompare
     }
 
     # Generate the actual manifest
-    my $strDbClusterPath =
-        ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_TARGET}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_PATH};
+    my $strDbClusterPath = $self->dbBasePath();
+        # ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_TARGET}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_PATH};
 
     if (defined($bTablespace) && !$bTablespace)
     {

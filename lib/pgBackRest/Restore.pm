@@ -433,6 +433,7 @@ sub manifestLoad
 
                 # Set the target path
                 $oManifest->set(MANIFEST_SECTION_BACKUP_TARGET, $strTarget, MANIFEST_SUBKEY_PATH, $strTargetPath);
+                $oManifest->set(MANIFEST_SECTION_TARGET_LINK, $strTarget, MANIFEST_SUBKEY_DESTINATION, $strTargetPath);
 
                 # Since this will be a link remove the associated path (??? perhaps this should be in build like it is for ts?)
                 $oManifest->remove(MANIFEST_SECTION_TARGET_PATH, $strTarget);

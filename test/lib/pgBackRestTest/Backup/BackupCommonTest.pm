@@ -67,8 +67,10 @@ sub backupTestSetup
 
     if (defined($$oConfigParam{bStandby}) && $$oConfigParam{bStandby})
     {
-        $oHostDbStandby = new pgBackRestTest::Backup::Common::HostDbSyntheticTest(
+        $oHostDbStandby = new pgBackRestTest::Backup::Common::HostDbTest(
             {bStandby => true, oHostBackup => $oHostBackup, oLogTest => $oLogTest});
+
+        $oHostGroup->hostAdd($oHostDbStandby);
     }
 
     # If backup host is not defined set it to db-master
@@ -107,6 +109,14 @@ sub backupTestSetup
             $$oConfigParam{bCompress},                              # compress
             $$oConfigParam{bHardLink},                              # hardlink
             $$oConfigParam{iThreadMax});                            # thread-max
+
+        $oHostDbStandby->configCreate(
+            $oHostBackup,
+            $$oConfigParam{bCompress},                              # compress
+            undef,                                                  # hardlink
+            undef,                                                  # thread-max
+            $$oConfigParam{bArchiveAsync},
+            undef);
     }
 
     return $oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile;

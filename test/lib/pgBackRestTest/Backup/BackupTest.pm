@@ -1685,6 +1685,30 @@ sub backupTestRun
 
             my $strFullBackup = $oHostBackup->backupEnd($strType, $oExecuteBackup);
 
+            # Setup replica
+            #-----------------------------------------------------------------------------------------------------------------------
+            $bDelta = false;
+            $bForce = false;
+            $strType = RECOVERY_TYPE_DEFAULT;
+            $strTarget = undef;
+            $bTargetExclusive = undef;
+            $strTargetAction = undef;
+            $strTargetTimeline = undef;
+            $oRecoveryHashRef = undef;
+            $strComment = undef;
+            $iExpectedExitStatus = undef;
+
+            # &log(INFO, "    recover replica");
+
+            $strComment = 'restore backup on replica';
+
+            $oHostDbStandby->restore(
+                OPTION_DEFAULT_RESTORE_SET, undef, undef, $bDelta, $bForce, $strType, $strTarget, $bTargetExclusive,
+                $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus,
+                '--link-map=pg_xlog=' . $oHostDbStandby->dbPath() . '/pg_xlog');
+
+            exit 0;
+
             # Execute stop and make sure the backup fails
             #-----------------------------------------------------------------------------------------------------------------------
             # Restart the cluster to check for any errors before continuing since the stop tests will definitely create errors and
@@ -1723,11 +1747,15 @@ sub backupTestRun
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = BACKUP_TYPE_INCR;
 
+            # Create a tablespace
             filePathCreate($oHostDbMaster->tablespacePath(1), undef, undef, true);
+            filePathCreate($oHostDbStandby->tablespacePath(1), undef, undef, true);
+
             $oHostDbMaster->sqlExecute(
                 "create tablespace ts1 location '" . $oHostDbMaster->tablespacePath(1) . "'", {bAutoCommit => true});
             $oHostDbMaster->sqlExecute("alter table test set tablespace ts1", {bCheckPoint => true});
 
+            # Create a table in the tablespace
             $oHostDbMaster->sqlExecute("create table test_remove (id int)");
             $oHostDbMaster->sqlXlogRotate();
             $oHostDbMaster->sqlExecute("update test set message = '$strDefaultMessage'");
