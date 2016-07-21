@@ -1687,6 +1687,8 @@ sub backupTestRun
 
             # Setup replica
             #-----------------------------------------------------------------------------------------------------------------------
+            if ($bRemote)
+            {
             $bDelta = false;
             $bForce = false;
             $strType = RECOVERY_TYPE_DEFAULT;
@@ -1698,16 +1700,23 @@ sub backupTestRun
             $strComment = undef;
             $iExpectedExitStatus = undef;
 
-            # &log(INFO, "    recover replica");
-
             $strComment = 'restore backup on replica';
 
             $oHostDbStandby->restore(
                 OPTION_DEFAULT_RESTORE_SET, undef, undef, $bDelta, $bForce, $strType, $strTarget, $bTargetExclusive,
                 $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus,
-                '--link-map=pg_xlog=' . $oHostDbStandby->dbPath() . '/pg_xlog');
+                    '--link-map=pg_xlog=' . $oHostDbStandby->dbPath() . '/pg_xlog' .
+                    ' --recovery-option=standby_mode=on' .
+                    ' --recovery-option="primary_conninfo=host=' . HOST_DB_MASTER . ' port=' . HOST_DB_PORT . ' user=replicator"');
+
+                $oHostDbStandby->clusterStart({bHotStandby => true});
+
+                $oHostDbStandby->sqlSelectOneTest('select message from test', $strFullMessage);
+                $oHostDbMaster->sqlSelectOneTest(
+                    "select client_addr || '-' || state from pg_stat_replication", $oHostDbStandby->ipGet() . '/32-streaming');
 
             exit 0;
+            }
 
             # Execute stop and make sure the backup fails
             #-----------------------------------------------------------------------------------------------------------------------

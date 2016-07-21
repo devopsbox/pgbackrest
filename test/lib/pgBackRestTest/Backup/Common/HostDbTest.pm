@@ -355,15 +355,19 @@ sub clusterCreate
         $self->dbBinPath() . '/initdb' . ($self->dbVersion() >= PG_VERSION_92 ? " --xlogdir=${strXlogPath}" : '') .
         ' --pgdata=' . $self->dbBasePath() . ' --auth=trust');
 
+    if (!$self->standby())
+    {
+        $self->executeSimple(
+            "echo 'host replication replicator db-standby trust' >> " . $self->dbBasePath() . '/pg_hba.conf');
+    }
+
     $self->clusterStart(
         {bHotStandby => $$hParam{bHotStandby}, bArchive => $$hParam{bArchive}, bArchiveAlways => $$hParam{bArchiveAlways},
          bArchiveInvalid => $$hParam{bArchiveInvalid}});
 
     if (!$self->standby())
     {
-        $self->sqlExecute("create user replicator password 'jw8s0F4' replication", {bCommit =>true});
-        $self->executeSimple(
-            "echo 'host replication replicator db-standby trust' >> " . $self->dbBasePath() . '/pg_hba.conf');
+        $self->sqlExecute("create user replicator replication", {bCommit =>true});
     }
 }
 
@@ -431,8 +435,10 @@ sub clusterStart
     }
 
     $strCommand .=
-        " -c log_error_verbosity=verbose" .
-        " -c unix_socket_director" . ($self->dbVersion() < PG_VERSION_93 ? 'y=\'' : 'ies=\'') . $self->dbPath() . '\'"' .
+        ' -c max_wal_senders=3' .
+        ' -c listen_addresses=\'*\'' .
+        ' -c log_error_verbosity=verbose' .
+        ' -c unix_socket_director' . ($self->dbVersion() < PG_VERSION_93 ? 'y=\'' : 'ies=\'') . $self->dbPath() . '\'"' .
         ' -D ' . $self->dbBasePath() . ' -l ' . $self->dbLogFile() . ' -s';
 
     $self->executeSimple($strCommand);
