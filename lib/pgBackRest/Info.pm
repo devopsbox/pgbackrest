@@ -122,7 +122,7 @@ sub process
         $strStanza,
         optionGet(OPTION_REPO_PATH),
         optionRemoteTypeTest(BACKUP) ? BACKUP : NONE,
-        protocolGet(!optionRemoteTypeTest(BACKUP))
+        protocolGet({bForceLocal => !optionRemoteTypeTest(BACKUP)})
     );
 
     # Get the stanza list with all info

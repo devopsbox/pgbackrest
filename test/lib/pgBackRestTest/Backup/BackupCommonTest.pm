@@ -110,13 +110,16 @@ sub backupTestSetup
             $$oConfigParam{bHardLink},                              # hardlink
             $$oConfigParam{iThreadMax});                            # thread-max
 
-        $oHostDbStandby->configCreate(
-            $oHostBackup,
-            $$oConfigParam{bCompress},                              # compress
-            undef,                                                  # hardlink
-            undef,                                                  # thread-max
-            $$oConfigParam{bArchiveAsync},
-            undef);
+        if (defined($oHostDbStandby))
+        {
+            $oHostDbStandby->configCreate(
+                $oHostBackup,
+                $$oConfigParam{bCompress},                              # compress
+                undef,                                                  # hardlink
+                undef,                                                  # thread-max
+                $$oConfigParam{bArchiveAsync},
+                undef);
+        }
     }
 
     return $oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile;

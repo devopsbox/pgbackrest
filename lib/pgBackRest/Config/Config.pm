@@ -1748,6 +1748,7 @@ my %oOption;                # Option hash
 my $strCommand;             # Command (backup, archive-get, ...)
 my $strRemoteType;          # Remote type (DB, BACKUP, NONE)
 my $oProtocol;              # Global remote object that is created on first request (NOT THREADSAFE!)
+my $oProtocolStandby;       # Global remote object used only for the standby database (NOT THREADSAFE!)
 
 ####################################################################################################################################
 # configLoad
@@ -2614,9 +2615,24 @@ push @EXPORT, qw(optionRemoteTest);
 ####################################################################################################################################
 sub protocolGet
 {
-    my $bForceLocal = shift;
-    my $bStore = shift;
-    my $iProcessIdx = shift;
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oParam,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::protocolGet', \@_,
+            {name => 'oParam', required => false, trace => true},
+        );
+
+    my $bForceLocal = defined($$oParam{bForceLocal}) ? $$oParam{bForceLocal} : false;
+    my $bStore = defined($$oParam{bStore}) ? $$oParam{bStore} : true;
+    my $bForceMaster = defined($$oParam{bForceMaster}) ? $$oParam{bForceMaster} : false;
+    my $bUseMaster =
+        optionRemoteTypeTest(BACKUP) || $bForceMaster || (optionTest(OPTION_BACKUP_STANDBY) && !optionGet(OPTION_BACKUP_STANDBY));
+    my $iProcessIdx = $$oParam{iProcessIdx};
 
     # If force local or remote = NONE then create a local remote and return it
     if ((defined($bForceLocal) && $bForceLocal) || optionRemoteTypeTest(NONE))
@@ -2631,18 +2647,28 @@ sub protocolGet
     }
 
     # Return the remote if is already defined
-    if (defined($oProtocol))
+    if (defined($oProtocol) && $bUseMaster)
     {
         return $oProtocol;
+    }
+    elsif (defined($oProtocolStandby))
+    {
+        return $oProtocolStandby;
     }
 
     # Return the remote when required
     my $oProtocolTemp = new pgBackRest::Protocol::RemoteMaster
     (
-        commandWrite(CMD_REMOTE, true, optionGet(OPTION_COMMAND_REMOTE), undef,
-                     {&OPTION_COMMAND => {value => commandGet()}, &OPTION_PROCESS => {value => $iProcessIdx}, &OPTION_CONFIG =>
-                     {value => optionSource(OPTION_CONFIG_REMOTE) eq SOURCE_DEFAULT ? undef : optionGet(OPTION_CONFIG_REMOTE)},
-                     &OPTION_LOG_PATH => {}, &OPTION_LOCK_PATH => {}}),
+        commandWrite(
+            CMD_REMOTE, true, optionGet(OPTION_COMMAND_REMOTE), undef,
+            {
+                &OPTION_COMMAND => {value => commandGet()},
+                &OPTION_PROCESS => {value => $iProcessIdx},
+                &OPTION_CONFIG =>
+                    {value => optionSource(OPTION_CONFIG_REMOTE) eq SOURCE_DEFAULT ? undef : optionGet(OPTION_CONFIG_REMOTE)},
+                &OPTION_LOG_PATH => {},
+                &OPTION_LOCK_PATH => {}
+            }),
         optionGet(OPTION_BUFFER_SIZE),
         commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL : optionGet(OPTION_COMPRESS_LEVEL),
         commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK : optionGet(OPTION_COMPRESS_LEVEL_NETWORK),
@@ -2651,9 +2677,16 @@ sub protocolGet
         optionGet(OPTION_PROTOCOL_TIMEOUT)
     );
 
-    if (!defined($bStore) || $bStore)
+    if ($bStore)
     {
-        $oProtocol = $oProtocolTemp;
+        if ($bUseMaster)
+        {
+            $oProtocol = $oProtocolTemp;
+        }
+        else
+        {
+            $oProtocolStandby = $oProtocolTemp;
+        }
     }
 
     return $oProtocolTemp;
@@ -2674,6 +2707,12 @@ sub protocolDestroy
     {
         $iExitStatus = $oProtocol->close();
         undef($oProtocol);
+    }
+
+    if (defined($oProtocolStandby))
+    {
+        $iExitStatus = $oProtocolStandby->close();
+        undef($oProtocolStandby);
     }
 
     return $iExitStatus;

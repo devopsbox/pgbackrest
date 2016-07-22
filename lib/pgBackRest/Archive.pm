@@ -619,7 +619,7 @@ sub push
         optionGet(OPTION_STANZA),
         $bAsync ? optionGet(OPTION_SPOOL_PATH) : optionGet(OPTION_REPO_PATH),
         $bAsync ? NONE : optionRemoteType(),
-        protocolGet($bAsync)
+        protocolGet({bForceLocal => $bAsync})
     );
 
     lockStopTest();
@@ -816,7 +816,7 @@ sub xfer
         optionGet(OPTION_STANZA),
         optionGet(OPTION_REPO_PATH),
         NONE,
-        protocolGet(true)
+        protocolGet({bForceLocal => true})
     );
 
     # Load the archive manifest - all the files that need to be pushed
