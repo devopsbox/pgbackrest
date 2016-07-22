@@ -1702,10 +1702,14 @@ sub backupTestRun
 
             $strComment = 'restore backup on replica';
 
+                my %oRemapHash;
+                $oRemapHash{&MANIFEST_TARGET_PGDATA} = $oHostDbStandby->dbBasePath();
+
+                $oHostDbStandby->linkRemap(DB_PATH_PGXLOG, $oHostDbStandby->dbPath() . '/' . DB_PATH_PGXLOG);
+
             $oHostDbStandby->restore(
-                OPTION_DEFAULT_RESTORE_SET, undef, undef, $bDelta, $bForce, $strType, $strTarget, $bTargetExclusive,
+                    OPTION_DEFAULT_RESTORE_SET, undef, \%oRemapHash, $bDelta, $bForce, $strType, $strTarget, $bTargetExclusive,
                 $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus,
-                    '--link-map=pg_xlog=' . $oHostDbStandby->dbPath() . '/pg_xlog' .
                     ' --recovery-option=standby_mode=on' .
                     ' --recovery-option="primary_conninfo=host=' . HOST_DB_MASTER . ' port=' . HOST_DB_PORT . ' user=replicator"');
 

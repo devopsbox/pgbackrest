@@ -164,10 +164,11 @@ use constant DB_PATH_GLOBAL                                         => 'global';
     push @EXPORT, qw(DB_PATH_GLOBAL);
 use constant DB_PATH_PGTBLSPC                                       => 'pg_tblspc';
     push @EXPORT, qw(DB_PATH_PGTBLSPC);
-####################################################################################################################################
+use constant DB_PATH_PGXLOG                                         => 'pg_xlog';
+    push @EXPORT, qw(DB_PATH_PGXLOG);
+
 use constant DB_FILE_POSTMASTERPID                                  => 'postmaster.pid';
     push @EXPORT, qw(DB_FILE_POSTMASTERPID);
-
 use constant DB_FILE_BACKUPLABEL                                    => 'backup_label';
     push @EXPORT, qw(DB_FILE_BACKUPLABEL);
 use constant DB_FILE_BACKUPLABELOLD                                 => DB_FILE_BACKUPLABEL . '.old';

@@ -121,6 +121,9 @@ sub new
         $self->paramSet(HOST_PARAM_SPOOL_PATH, $self->repoPath());
     }
 
+    # Initialize linkRemap Hashes
+    $self->{hLinkRemap} = {};
+
     # Return from function and log return values if any
     return logDebugReturn
     (
@@ -292,6 +295,33 @@ sub configRemap
 }
 
 ####################################################################################################################################
+# linkRemap
+####################################################################################################################################
+sub linkRemap
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strTarget,
+        $strDestination
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->linkRemap', \@_,
+            {name => 'strTarget'},
+            {name => 'strDestination'},
+        );
+
+    ${$self->{hLinkRemap}}{$strTarget} = $strDestination;
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
 # restore
 ####################################################################################################################################
 sub restore
@@ -318,6 +348,14 @@ sub restore
     $bDelta = defined($bDelta) ? $bDelta : false;
     $bForce = defined($bForce) ? $bForce : false;
 
+    # Build link map options
+    my $strLinkMap;
+
+    foreach my $strTarget (sort(keys(%{$self->{hLinkRemap}})))
+    {
+        $strLinkMap .= " --link-map=\"${strTarget}=${$self->{hLinkRemap}}{$strTarget}\"";
+    }
+
     $strComment = 'restore' .
                   ($bDelta ? ' delta' : '') .
                   ($bForce ? ', force' : '') .
@@ -338,6 +376,9 @@ sub restore
     my $oHostGroup = hostGroupGet();
     my $oHostBackup = defined($oHostGroup->hostGet(HOST_BACKUP, true)) ? $oHostGroup->hostGet(HOST_BACKUP) : $self;
 
+    # Load the expected manifest if it was not defined
+    my $oExpectedManifest = undef;
+
     if (!defined($oExpectedManifestRef))
     {
         # Change mode on the backup path so it can be read
@@ -348,6 +389,43 @@ sub restore
                 true);
 
         $oExpectedManifestRef = $oExpectedManifest->{oContent};
+
+        # Remap links in the expected manifest
+        foreach my $strTarget (sort(keys(%{$self->{hLinkRemap}})))
+        {
+            my $strDestination = ${$self->{hLinkRemap}}{$strTarget};
+            my $strTarget = 'pg_data/' . $strTarget;
+            my $strTargetPath = $strDestination;
+
+            # If this link is to a file then the specified path must be split into file and path parts
+            if ($oExpectedManifest->isTargetFile($strTarget))
+            {
+                $strTargetPath = dirname($strTargetPath);
+
+                # Error when the path is not deep enough to be valid
+                if (!defined($strTargetPath))
+                {
+                    confess &log(ERROR, "${strDestination} is not long enough to be target for ${strTarget}");
+                }
+
+                # Set the file part
+                $oExpectedManifest->set(
+                    MANIFEST_SECTION_BACKUP_TARGET, $strTarget, MANIFEST_SUBKEY_FILE,
+                    substr($strDestination, length($strTargetPath) + 1));
+
+                # Set the link target
+                $oExpectedManifest->set(
+                    MANIFEST_SECTION_TARGET_LINK, $strTarget, MANIFEST_SUBKEY_DESTINATION, $strDestination);
+            }
+            else
+            {
+                # Set the link target
+                $oExpectedManifest->set(MANIFEST_SECTION_TARGET_LINK, $strTarget, MANIFEST_SUBKEY_DESTINATION, $strTargetPath);
+            }
+
+            # Set the target path
+            $oExpectedManifest->set(MANIFEST_SECTION_BACKUP_TARGET, $strTarget, MANIFEST_SUBKEY_PATH, $strTargetPath);
+        }
     }
 
     # Get the backup host
@@ -373,6 +451,7 @@ sub restore
         (defined($strTarget) ? " --target=\"${strTarget}\"" : '') .
         (defined($strTargetTimeline) ? " --target-timeline=\"${strTargetTimeline}\"" : '') .
         (defined($bTargetExclusive) && $bTargetExclusive ? ' --target-exclusive' : '') .
+        (defined($strLinkMap) ? $strLinkMap : '') .
         ($self->synthetic() ? '' : ' --link-all') .
         (defined($strTargetAction) && $strTargetAction ne OPTION_DEFAULT_RESTORE_TARGET_ACTION
             ? ' --' . OPTION_TARGET_ACTION . "=${strTargetAction}" : '') .
