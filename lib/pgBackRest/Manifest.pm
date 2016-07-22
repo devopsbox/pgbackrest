@@ -608,9 +608,9 @@ sub build
         }
 
         # Skip certain files during backup
-        if ($strLevel eq MANIFEST_TARGET_PGDATA &&
-            (($strName =~ /^pg\_xlog\/.*/ && $bOnline) ||           # pg_xlog/ - this will be reconstructed
-             $strName eq DB_FILE_BACKUPLABELOLD ||                  # backup_label.old - old backup labels are not useful
+        if ($strFile =~ /^pg\_data\/pg\_xlog\/.*/ && $bOnline ||   # pg_xlog/ - this will be reconstructed
+            $strLevel eq MANIFEST_TARGET_PGDATA &&
+            ($strName eq DB_FILE_BACKUPLABELOLD ||                  # backup_label.old - old backup labels are not useful
              $strName eq DB_FILE_POSTMASTERPID ||                   # postmaster.pid - to avoid confusing postgres after restore
              $strName eq DB_FILE_RECOVERYCONF ||                    # recovery.conf - doesn't make sense to backup this file
              $strName eq DB_FILE_RECOVERYDONE))                     # recovery.done - doesn't make sense to backup this file
