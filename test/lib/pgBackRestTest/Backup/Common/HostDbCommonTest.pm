@@ -287,8 +287,8 @@ sub configRemap
     # Save db config file
     iniSave($self->backrestConfig(), \%oConfig, true);
 
-    # Save backup config file
-    if ($oHostBackup->nameTest(HOST_BACKUP))
+    # Save backup config file (but not is this is the standby which is not the source of backups)
+    if ($oHostBackup->nameTest(HOST_BACKUP) && !$self->standby())
     {
         iniSave($oHostBackup->backrestConfig(), \%oRemoteConfig, true);
     }
