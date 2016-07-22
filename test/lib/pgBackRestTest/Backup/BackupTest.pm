@@ -1561,8 +1561,11 @@ sub backupTestRun
                 $bRemote, false, undef,
                 {bStandby => $bRemote, bCompress => $bCompress, iThreadMax => $iThreadMax, bArchiveAsync => $bArchiveAsync});
 
+            # Determine if check tests are performed
+            my $bTestCheck = !$bRemote && !$bCompress || $bRemote && $bCompress;
+
             # For the 'fail on missing archive.info file' test, the archive.info file must not be found so set archive invalid.
-            $oHostDbMaster->clusterCreate({bArchiveInvalid => true});
+            $oHostDbMaster->clusterCreate({bArchiveInvalid => $bTestCheck});
 
             # Static backup parameters
             my $fTestDelay = 1;
@@ -1594,65 +1597,68 @@ sub backupTestRun
 
             # Test invalid archive command
             #-----------------------------------------------------------------------------------------------------------------------
-            $strType = BACKUP_TYPE_FULL;
-
-            # NOTE: This must run before the success test since that will create the archive.info file
-            $oHostDbMaster->check(
-                'fail on missing archive.info file',
-                {iTimeout => 0.1, iExpectedExitStatus => ERROR_FILE_MISSING});
-
-            # Stop the cluster ignoring any errors in the postgresql log
-            $oHostDbMaster->clusterStop({bIgnoreLogError => true});
-
-            # Check ERROR_ARCHIVE_COMMAND_INVALID error
-            $strComment = 'fail on invalid archive_command';
-            $oHostDbMaster->clusterStart({bArchive => false});
-
-            $oHostBackup->backup($strType, $strComment, {iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID});
-
-            $oHostDbMaster->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID});
-
-            # If running the remote tests then also need to run check locally
-            if ($bRemote)
+            if ($bTestCheck)
             {
-                $oHostBackup->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID});
+                $strType = BACKUP_TYPE_FULL;
+
+                # NOTE: This must run before the success test since that will create the archive.info file
+                $oHostDbMaster->check(
+                    'fail on missing archive.info file',
+                    {iTimeout => 0.1, iExpectedExitStatus => ERROR_FILE_MISSING});
+
+                # Stop the cluster ignoring any errors in the postgresql log
+                $oHostDbMaster->clusterStop({bIgnoreLogError => true});
+
+                # Check ERROR_ARCHIVE_COMMAND_INVALID error
+                $strComment = 'fail on invalid archive_command';
+                $oHostDbMaster->clusterStart({bArchive => false});
+
+                $oHostBackup->backup($strType, $strComment, {iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID});
+
+                $oHostDbMaster->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID});
+
+                # If running the remote tests then also need to run check locally
+                if ($bRemote)
+                {
+                    $oHostBackup->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID});
+                }
+
+                # When archive-check=n then ERROR_FILE_MISSING will be raised instead of ERROR_ARCHIVE_COMMAND_INVALID
+                $strComment = 'fail on file missing when archive-check=n';
+                $oHostDbMaster->check(
+                    $strComment,
+                    {iTimeout => 0.1, iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-archive-check'});
+
+                # Stop the cluster ignoring any errors in the postgresql log
+                $oHostDbMaster->clusterStop({bIgnoreLogError => true});
+
+                # Providing a sufficient archive-timeout, verify that the check command runs successfully.
+                $strComment = 'verify success';
+
+                $oHostDbMaster->clusterStart();
+                $oHostDbMaster->check($strComment, {iTimeout => 5});
+
+                # If running the remote tests then also need to run check locally
+                if ($bRemote)
+                {
+                    $oHostBackup->check($strComment, {iTimeout => 5});
+                }
+
+                # Check archive_timeout error
+                $strComment = 'fail on archive timeout';
+
+                $oHostDbMaster->clusterRestart({bArchiveInvalid => true});
+                $oHostDbMaster->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_TIMEOUT});
+
+                # If running the remote tests then also need to run check locally
+                if ($bRemote)
+                {
+                    $oHostBackup->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_TIMEOUT});
+                }
+
+                # Restart the cluster ignoring any errors in the postgresql log
+                $oHostDbMaster->clusterRestart({bIgnoreLogError => true});
             }
-
-            # When archive-check=n then ERROR_FILE_MISSING will be raised instead of ERROR_ARCHIVE_COMMAND_INVALID
-            $strComment = 'fail on file missing when archive-check=n';
-            $oHostDbMaster->check(
-                $strComment,
-                {iTimeout => 0.1, iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-archive-check'});
-
-            # Stop the cluster ignoring any errors in the postgresql log
-            $oHostDbMaster->clusterStop({bIgnoreLogError => true});
-
-            # Providing a sufficient archive-timeout, verify that the check command runs successfully.
-            $strComment = 'verify success';
-
-            $oHostDbMaster->clusterStart();
-            $oHostDbMaster->check($strComment, {iTimeout => 5});
-
-            # If running the remote tests then also need to run check locally
-            if ($bRemote)
-            {
-                $oHostBackup->check($strComment, {iTimeout => 5});
-            }
-
-            # Check archive_timeout error
-            $strComment = 'fail on archive timeout';
-
-            $oHostDbMaster->clusterRestart({bArchiveInvalid => true});
-            $oHostDbMaster->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_TIMEOUT});
-
-            # If running the remote tests then also need to run check locally
-            if ($bRemote)
-            {
-                $oHostBackup->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_TIMEOUT});
-            }
-
-            # Restart the cluster ignoring any errors in the postgresql log
-            $oHostDbMaster->clusterRestart({bIgnoreLogError => true});
 
             # Full backup
             #-----------------------------------------------------------------------------------------------------------------------
@@ -1663,18 +1669,21 @@ sub backupTestRun
             $oHostDbMaster->sqlXlogRotate();
             $oHostDbMaster->sqlExecute("insert into test values ('$strDefaultMessage')");
 
-            # Acquire the backup advisory lock so it looks like a backup is running
-            if (!$oHostDbMaster->sqlSelectOne('select pg_try_advisory_lock(' . DB_BACKUP_ADVISORY_LOCK . ')'))
+            if (!$bArchiveAsync && (!$bRemote && !$bCompress || $bRemote && $bCompress))
             {
-                confess 'unable to acquire advisory lock for testing';
-            }
+                # Acquire the backup advisory lock so it looks like a backup is running
+                if (!$oHostDbMaster->sqlSelectOne('select pg_try_advisory_lock(' . DB_BACKUP_ADVISORY_LOCK . ')'))
+                {
+                    confess 'unable to acquire advisory lock for testing';
+                }
 
-            $oHostBackup->backup($strType, 'fail on backup lock exists', {iExpectedExitStatus => ERROR_LOCK_ACQUIRE});
+                $oHostBackup->backup($strType, 'fail on backup lock exists', {iExpectedExitStatus => ERROR_LOCK_ACQUIRE});
 
-            # Release the backup advisory lock so the next backup will succeed
-            if (!$oHostDbMaster->sqlSelectOne('select pg_advisory_unlock(' . DB_BACKUP_ADVISORY_LOCK . ')'))
-            {
-                confess 'unable to acquire advisory lock for testing';
+                # Release the backup advisory lock so the next backup will succeed
+                if (!$oHostDbMaster->sqlSelectOne('select pg_advisory_unlock(' . DB_BACKUP_ADVISORY_LOCK . ')'))
+                {
+                    confess 'unable to acquire advisory lock for testing';
+                }
             }
 
             my $oExecuteBackup = $oHostBackup->backupBegin(
@@ -1689,27 +1698,27 @@ sub backupTestRun
             #-----------------------------------------------------------------------------------------------------------------------
             if ($bRemote)
             {
-            $bDelta = false;
-            $bForce = false;
-            $strType = RECOVERY_TYPE_DEFAULT;
-            $strTarget = undef;
-            $bTargetExclusive = undef;
-            $strTargetAction = undef;
-            $strTargetTimeline = undef;
-            $oRecoveryHashRef = undef;
-            $strComment = undef;
-            $iExpectedExitStatus = undef;
+                $bDelta = false;
+                $bForce = false;
+                $strType = RECOVERY_TYPE_DEFAULT;
+                $strTarget = undef;
+                $bTargetExclusive = undef;
+                $strTargetAction = undef;
+                $strTargetTimeline = undef;
+                $oRecoveryHashRef = undef;
+                $strComment = undef;
+                $iExpectedExitStatus = undef;
 
-            $strComment = 'restore backup on replica';
+                $strComment = 'restore backup on replica';
 
                 my %oRemapHash;
                 $oRemapHash{&MANIFEST_TARGET_PGDATA} = $oHostDbStandby->dbBasePath();
 
                 $oHostDbStandby->linkRemap(DB_PATH_PGXLOG, $oHostDbStandby->dbPath() . '/' . DB_PATH_PGXLOG);
 
-            $oHostDbStandby->restore(
+                $oHostDbStandby->restore(
                     OPTION_DEFAULT_RESTORE_SET, undef, \%oRemapHash, $bDelta, $bForce, $strType, $strTarget, $bTargetExclusive,
-                $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus,
+                    $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus,
                     ' --recovery-option=standby_mode=on' .
                     ' --recovery-option="primary_conninfo=host=' . HOST_DB_MASTER . ' port=' . HOST_DB_PORT . ' user=replicator"');
 
@@ -1719,7 +1728,10 @@ sub backupTestRun
                 $oHostDbMaster->sqlSelectOneTest(
                     "select client_addr || '-' || state from pg_stat_replication", $oHostDbStandby->ipGet() . '/32-streaming');
 
-            exit 0;
+                # docker exec -u backrest test-0-backup /backrest/bin/pgbackrest --config=/home/vagrant/test/test-0/backup/pgbackrest.conf --type=incr --stanza=db backup
+
+                # !!! REMOVE THIS
+                exit 0;
             }
 
             # Execute stop and make sure the backup fails
