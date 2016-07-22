@@ -62,7 +62,8 @@ eval
         logLevelSet(OFF, REMOTE);
 
         # Check that the remote repo path exists
-        if (optionRemoteTypeTest(DB) && !-e optionGet(OPTION_REPO_PATH))
+        if (optionRemoteTypeTest(DB) && !-e optionGet(OPTION_REPO_PATH) &&
+            !(optionTest(OPTION_BACKUP_STANDBY) && optionGet(OPTION_BACKUP_STANDBY)))
         {
             confess &log(ERROR, 'repo-path \'' . optionGet(OPTION_REPO_PATH) . '\' does not exist', ERROR_PATH_MISSING);
         }

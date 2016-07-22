@@ -1325,12 +1325,13 @@ my %oOptionRule =
     &OPTION_BACKUP_STANDBY =>
     {
         &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
+        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_STANDBY,
         &OPTION_RULE_COMMAND =>
         {
             &CMD_BACKUP => true,
             &CMD_CHECK => true,
+            &CMD_REMOTE => true,
         },
     },
 
@@ -2657,6 +2658,15 @@ sub protocolGet
     }
 
     # Return the remote when required
+    my $strDbHost = undef;
+    my $strDbUser = undef;
+
+    if (optionRemoteTypeTest(DB))
+    {
+        $strDbHost = $bUseMaster ? optionGet(OPTION_DB_HOST) : optionGet(OPTION_DB_STANDBY_HOST);
+        $strDbUser = $bUseMaster ? optionGet(OPTION_DB_USER) : optionGet(OPTION_DB_STANDBY_USER);
+    }
+
     my $oProtocolTemp = new pgBackRest::Protocol::RemoteMaster
     (
         commandWrite(
@@ -2667,13 +2677,17 @@ sub protocolGet
                 &OPTION_CONFIG =>
                     {value => optionSource(OPTION_CONFIG_REMOTE) eq SOURCE_DEFAULT ? undef : optionGet(OPTION_CONFIG_REMOTE)},
                 &OPTION_LOG_PATH => {},
-                &OPTION_LOCK_PATH => {}
+                &OPTION_LOCK_PATH => {},
+                &OPTION_DB_PATH => $bUseMaster ? undef : {value => optionGet(OPTION_DB_STANDBY_PATH)},
+                &OPTION_DB_SOCKET_PATH => $bUseMaster ? undef : {value => optionGet(OPTION_DB_STANDBY_SOCKET_PATH)},
+                &OPTION_DB_HOST => {},
+                &OPTION_DB_STANDBY_PATH => {},
             }),
         optionGet(OPTION_BUFFER_SIZE),
         commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL : optionGet(OPTION_COMPRESS_LEVEL),
         commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK : optionGet(OPTION_COMPRESS_LEVEL_NETWORK),
-        optionRemoteTypeTest(DB) ? optionGet(OPTION_DB_HOST) : optionGet(OPTION_BACKUP_HOST),
-        optionRemoteTypeTest(DB) ? optionGet(OPTION_DB_USER) : optionGet(OPTION_BACKUP_USER),
+        optionRemoteTypeTest(DB) ? $strDbHost : optionGet(OPTION_BACKUP_HOST),
+        optionRemoteTypeTest(DB) ? $strDbUser : optionGet(OPTION_BACKUP_USER),
         optionGet(OPTION_PROTOCOL_TIMEOUT)
     );
 

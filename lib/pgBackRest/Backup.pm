@@ -641,7 +641,7 @@ sub process
 
     # Database info
     my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) =
-        $self->{oDb}->info($self->{oFile}, optionGet(OPTION_DB_PATH));
+        $self->{oDb}->info($self->{oFile});
 
     my $iDbHistoryId = $oBackupInfo->check($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
 
@@ -679,8 +679,9 @@ sub process
     {
         # Start the backup
         ($strArchiveStart) =
-            $self->{oDb}->backupStart($self->{oFile}, optionGet(OPTION_DB_PATH), BACKREST_NAME . ' backup started at ' .
-                                      timestampFormat(undef, $lTimestampStart), optionGet(OPTION_START_FAST));
+            $self->{oDb}->backupStart(
+                $self->{oFile}, BACKREST_NAME . ' backup started at ' .
+                timestampFormat(undef, $lTimestampStart), optionGet(OPTION_START_FAST));
 
         # Record the archive start location
         $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LSN_START, undef, $strArchiveStart);

@@ -118,6 +118,19 @@ sub new
             OP_DB_NEW
         );
 
+    # Assign options based on local or standby
+    if (!commandTest(CMD_REMOTE))
+    {
+        if (optionGet(OPTION_BACKUP_STANDBY))
+        {
+            $self->{strDbPath} = optionGet(OPTION_DB_STANDBY_PATH);
+        }
+        else
+        {
+            $self->{strDbPath} = optionGet(OPTION_DB_PATH);
+        }
+    }
+
     # Return from function and log return values if any
     return logDebugReturn
     (
@@ -466,7 +479,7 @@ sub info
         (
             OP_DB_INFO, \@_,
             {name => 'oFile'},
-            {name => 'strDbPath'}
+            {name => 'strDbPath', default => $self->{strDbPath}}
         );
 
     # Get info if it is not cached
@@ -480,7 +493,7 @@ sub info
             # Build param hash
             my %oParamHash;
 
-            $oParamHash{'db-path'} = ${strDbPath};
+            $oParamHash{'db-path'} = $strDbPath;
 
             # Output remote trace info
             &log(TRACE, OP_DB_INFO . ": remote (" . $oFile->{oProtocol}->commandParamString(\%oParamHash) . ')');
@@ -614,7 +627,6 @@ sub backupStart
     (
         $strOperation,
         $oFile,
-        $strDbPath,
         $strLabel,
         $bStartFast
     ) =
@@ -622,13 +634,12 @@ sub backupStart
         (
             OP_DB_BACKUP_START, \@_,
             {name => 'oFile'},
-            {name => 'strDbPath'},
             {name => 'strLabel'},
             {name => 'bStartFast'}
         );
 
     # Validate the database configuration
-    $self->configValidate($oFile, $strDbPath);
+    $self->configValidate($oFile, $self->{strDbPath});
 
     # Only allow start-fast option for version >= 8.4
     if ($self->{strDbVersion} < PG_VERSION_84 && $bStartFast)
@@ -753,7 +764,7 @@ sub configValidate
         (
             __PACKAGE__ . '->configValidate', \@_,
             {name => 'oFile'},
-            {name => 'strDbPath'}
+            {name => 'strDbPath', default => $self->{strDbPath}}
         );
 
     # Get the version from the control file
