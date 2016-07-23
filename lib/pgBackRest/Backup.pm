@@ -68,7 +68,7 @@ sub new
     );
 
     # Initialize variables
-    $self->{oDb} = new pgBackRest::Db(true);
+    $self->{oDb} = new pgBackRest::Db();
 
     # Return from function and log return values if any
     return logDebugReturn
