@@ -14,6 +14,7 @@ use Carp qw(confess);
 use DBI;
 use Exporter qw(import);
     our @EXPORT = qw();
+use File::Basename qw(basename);
 
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
@@ -93,7 +94,7 @@ sub new
     $self->paramSet(HOST_PARAM_DB_PORT, HOST_DB_PORT);
 
     $self->paramSet(HOST_PARAM_DB_LOG_PATH, $self->testPath());
-    $self->paramSet(HOST_PARAM_DB_LOG_FILE, $self->dbLogPath() . '/postgresql-startup.log');
+    $self->paramSet(HOST_PARAM_DB_LOG_FILE, $self->dbLogPath() . '/postgresql.log');
 
     # Get Db version
     if (defined($strDbVersion))
@@ -437,6 +438,10 @@ sub clusterStart
     $strCommand .=
         ' -c max_wal_senders=3' .
         ' -c listen_addresses=\'*\'' .
+        ' -c log_directory=\'' . $self->dbLogPath() . "'" .
+        ' -c log_filename=\'' . basename($self->dbLogFile()) . "'" .
+        ' -c log_rotation_age=0' .
+        ' -c log_rotation_size=0' .
         ' -c log_error_verbosity=verbose' .
         ' -c unix_socket_director' . ($self->dbVersion() < PG_VERSION_93 ? 'y=\'' : 'ies=\'') . $self->dbPath() . '\'"' .
         ' -D ' . $self->dbBasePath() . ' -l ' . $self->dbLogFile() . ' -s';
