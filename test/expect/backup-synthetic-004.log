@@ -38,7 +38,7 @@ full backup - create pg_stat link, pg_clog dir (db-master host)
  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
- DEBUG:     Db->info(): oFile = [object], strDbPath = [TEST_PATH]/db-master/db/base
+ DEBUG:     Db->info(): oFile = [object], strDbPath = <[TEST_PATH]/db-master/db/base>
  DEBUG:     Db->info=>: iCatalogVersion = 201306121, iControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6156904820763115222
  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/postmaster.pid, strPathType = db:absolute
@@ -261,7 +261,7 @@ full backup - resume (db-master host)
  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
   WARN: backup [BACKUP-FULL-1] missing in repository removed from backup.info
  DEBUG:     BackupInfo->delete(): strBackupLabel = [BACKUP-FULL-1]
- DEBUG:     Db->info(): oFile = [object], strDbPath = [TEST_PATH]/db-master/db/base
+ DEBUG:     Db->info(): oFile = [object], strDbPath = <[TEST_PATH]/db-master/db/base>
  DEBUG:     Db->info=>: iCatalogVersion = 201306121, iControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6156904820763115222
  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/postmaster.pid, strPathType = db:absolute
@@ -812,7 +812,7 @@ incr backup - add tablespace 1 (db-master host)
  DEBUG:     BackupInfo->list=>: stryBackup = ([BACKUP-FULL-2])
  DEBUG:     BackupInfo->last=>: strBackup = [BACKUP-FULL-2]
   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
- DEBUG:     Db->info(): oFile = [object], strDbPath = [TEST_PATH]/db-master/db/base
+ DEBUG:     Db->info(): oFile = [object], strDbPath = <[TEST_PATH]/db-master/db/base>
  DEBUG:     Db->info=>: iCatalogVersion = 201306121, iControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6156904820763115222
  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/postmaster.pid, strPathType = db:absolute
@@ -1054,7 +1054,7 @@ incr backup - resume and add tablespace 2 (db-master host)
  DEBUG:     BackupInfo->list=>: stryBackup = ([BACKUP-FULL-2])
  DEBUG:     BackupInfo->last=>: strBackup = [BACKUP-FULL-2]
   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
- DEBUG:     Db->info(): oFile = [object], strDbPath = [TEST_PATH]/db-master/db/base
+ DEBUG:     Db->info(): oFile = [object], strDbPath = <[TEST_PATH]/db-master/db/base>
  DEBUG:     Db->info=>: iCatalogVersion = 201306121, iControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6156904820763115222
  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/postmaster.pid, strPathType = db:absolute
