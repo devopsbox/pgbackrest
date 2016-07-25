@@ -110,18 +110,21 @@ sub new
     bless $self, $class;
 
     # Assign function parameters, defaults, and log debug info
+    my
     (
-        my $strOperation
+        $strOperation,
+        $bForceMaster,
     ) =
         logDebugParam
         (
-            OP_DB_NEW
+            OP_DB_NEW, \@_,
+            {name => 'bForceMaster', default => false},
         );
 
     # Assign options based on local or standby
     if (!commandTest(CMD_REMOTE))
     {
-        if (optionGet(OPTION_BACKUP_STANDBY))
+        if (optionGet(OPTION_BACKUP_STANDBY) && !$bForceMaster)
         {
             $self->{strDbPath} = optionGet(OPTION_DB_STANDBY_PATH);
         }
@@ -130,6 +133,8 @@ sub new
             $self->{strDbPath} = optionGet(OPTION_DB_PATH);
         }
     }
+
+    $self->{oProtocol} = protocolGet({bForceMaster => $bForceMaster});
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -233,7 +238,7 @@ sub executeSql
         $oParamHash{'ignore-error'} = $bIgnoreError;
 
         # Execute the command
-        $strResult = protocolGet()->cmdExecute(OP_DB_EXECUTE_SQL, \%oParamHash, true);
+        $strResult = $self->{oProtocol}->cmdExecute(OP_DB_EXECUTE_SQL, \%oParamHash, true);
     }
     # Else run locally
     else
