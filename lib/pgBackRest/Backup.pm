@@ -73,9 +73,6 @@ sub new
         $self->{oProtocol}
     );
 
-    # Initialize database
-    $self->{oDb} = new pgBackRest::Db(true);
-
     # Return from function and log return values if any
     return logDebugReturn
     (
@@ -102,7 +99,6 @@ sub DESTROY
     );
 
     undef($self->{oFile});
-    undef($self->{oDb});
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -645,8 +641,12 @@ sub process
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ARCHIVE_CHECK, undef,
                               !optionGet(OPTION_ONLINE) || optionGet(OPTION_BACKUP_ARCHIVE_CHECK));
 
+
+    # Initialize database object
+    my $oDb = new pgBackRest::Db(true);
+
     # Database info
-    my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = $self->{oDb}->info();
+    my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = $oDb->info();
 
     my $iDbHistoryId = $oBackupInfo->check($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
 
@@ -684,7 +684,7 @@ sub process
     {
         # Start the backup
         ($strArchiveStart) =
-            $self->{oDb}->backupStart(
+            $oDb->backupStart(
                 BACKREST_NAME . ' backup started at ' . timestampFormat(undef, $lTimestampStart), optionGet(OPTION_START_FAST));
 
         # Record the archive start location
@@ -692,10 +692,10 @@ sub process
         &log(INFO, "archive start: ${strArchiveStart}");
 
         # Get tablespace map
-        $oTablespaceMap = $self->{oDb}->tablespaceMapGet();
+        $oTablespaceMap = $oDb->tablespaceMapGet();
 
         # Get database map
-        $oDatabaseMap = $self->{oDb}->databaseMapGet();
+        $oDatabaseMap = $oDb->databaseMapGet();
     }
 
     # Build the manifest
@@ -827,7 +827,7 @@ sub process
 
     if (optionGet(OPTION_ONLINE))
     {
-        ($strArchiveStop, my $strTimestampDbStop, my $oFileHash) = $self->{oDb}->backupStop();
+        ($strArchiveStop, my $strTimestampDbStop, my $oFileHash) = $oDb->backupStop();
 
         $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LSN_STOP, undef, $strArchiveStop);
         &log(INFO, 'archive stop: ' . $strArchiveStop);
