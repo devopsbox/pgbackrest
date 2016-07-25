@@ -61,6 +61,9 @@ sub new
     # Initialize protocol
     $self->{oProtocol} = protocolGet();
 
+    # Determine the database path
+    $self->{strDbPath} = optionGet(OPTION_BACKUP_STANDBY) ? optionGet(OPTION_DB_STANDBY_PATH) : optionGet(OPTION_DB_PATH);
+
     # Initialize default file object
     $self->{oFile} = new pgBackRest::File
     (
@@ -70,7 +73,7 @@ sub new
         $self->{oProtocol}
     );
 
-    # Initialize variables
+    # Initialize database
     $self->{oDb} = new pgBackRest::Db(true);
 
     # Return from function and log return values if any
@@ -643,8 +646,7 @@ sub process
                               !optionGet(OPTION_ONLINE) || optionGet(OPTION_BACKUP_ARCHIVE_CHECK));
 
     # Database info
-    my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) =
-        $self->{oDb}->info($self->{oFile});
+    my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = $self->{oDb}->info();
 
     my $iDbHistoryId = $oBackupInfo->check($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
 
@@ -662,7 +664,7 @@ sub process
     # Don't start the backup but do check if PostgreSQL is running
     if (!optionGet(OPTION_ONLINE))
     {
-        if ($self->{oFile}->exists(PATH_DB_ABSOLUTE, optionGet(OPTION_DB_PATH) . '/' . DB_FILE_POSTMASTERPID))
+        if ($self->{oFile}->exists(PATH_DB_ABSOLUTE, $self->{strDbPath} . '/' . DB_FILE_POSTMASTERPID))
         {
             if (optionGet(OPTION_FORCE))
             {
@@ -683,8 +685,7 @@ sub process
         # Start the backup
         ($strArchiveStart) =
             $self->{oDb}->backupStart(
-                $self->{oFile}, BACKREST_NAME . ' backup started at ' .
-                timestampFormat(undef, $lTimestampStart), optionGet(OPTION_START_FAST));
+                BACKREST_NAME . ' backup started at ' . timestampFormat(undef, $lTimestampStart), optionGet(OPTION_START_FAST));
 
         # Record the archive start location
         $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LSN_START, undef, $strArchiveStart);
@@ -698,7 +699,7 @@ sub process
     }
 
     # Build the manifest
-    $oBackupManifest->build($self->{oFile}, optionGet(OPTION_DB_PATH), $oLastManifest, optionGet(OPTION_ONLINE),
+    $oBackupManifest->build($self->{oFile}, $self->{strDbPath}, $oLastManifest, optionGet(OPTION_ONLINE),
                             $oTablespaceMap, $oDatabaseMap);
     &log(TEST, TEST_MANIFEST_BUILD);
 
@@ -818,7 +819,7 @@ sub process
     $oBackupManifest->save();
 
     # Perform the backup
-    my $lBackupSizeTotal = $self->processManifest(optionGet(OPTION_DB_PATH), $strType, $bCompress, $bHardLink, $oBackupManifest);
+    my $lBackupSizeTotal = $self->processManifest($self->{strDbPath}, $strType, $bCompress, $bHardLink, $oBackupManifest);
     &log(INFO, "${strType} backup size = " . fileSizeFormat($lBackupSizeTotal));
 
     # Stop backup (unless --no-online is set)

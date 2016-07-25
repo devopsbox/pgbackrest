@@ -2648,9 +2648,12 @@ sub protocolGet
     }
 
     # Return the remote if is already defined
-    if (defined($oProtocol) && $bUseMaster)
+    if ($bUseMaster)
     {
-        return $oProtocol;
+        if (defined($oProtocol))
+        {
+            return $oProtocol;
+        }
     }
     elsif (defined($oProtocolStandby))
     {

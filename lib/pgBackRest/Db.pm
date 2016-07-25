@@ -132,9 +132,13 @@ sub new
         {
             $self->{strDbPath} = optionGet(OPTION_DB_PATH);
         }
-    }
 
-    $self->{oProtocol} = protocolGet({bForceMaster => $bForceMaster});
+        $self->{oProtocol} = protocolGet({bForceMaster => $bForceMaster});
+    }
+    else
+    {
+        $self->{oProtocol} = protocolGet({bForceLocal => true});
+    }
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -477,13 +481,11 @@ sub info
     my
     (
         $strOperation,
-        $oFile,
         $strDbPath
     ) =
         logDebugParam
         (
             OP_DB_INFO, \@_,
-            {name => 'oFile'},
             {name => 'strDbPath', default => $self->{strDbPath}}
         );
 
@@ -491,6 +493,15 @@ sub info
     #-------------------------------------------------------------------------------------------------------------------------------
     if (!defined($self->{info}{$strDbPath}))
     {
+        # Initialize file object
+        my $oFile = new pgBackRest::File
+        (
+            optionGet(OPTION_STANZA),
+            optionGet(OPTION_REPO_PATH),
+            optionRemoteType(),
+            $self->{oProtocol}
+        );
+
         # Get info from remote
         #---------------------------------------------------------------------------------------------------------------------------
         if ($oFile->isRemote(PATH_DB_ABSOLUTE))
@@ -631,20 +642,18 @@ sub backupStart
     my
     (
         $strOperation,
-        $oFile,
         $strLabel,
         $bStartFast
     ) =
         logDebugParam
         (
             OP_DB_BACKUP_START, \@_,
-            {name => 'oFile'},
             {name => 'strLabel'},
             {name => 'bStartFast'}
         );
 
     # Validate the database configuration
-    $self->configValidate($oFile, $self->{strDbPath});
+    $self->configValidate($self->{strDbPath});
 
     # Only allow start-fast option for version >= 8.4
     if ($self->{strDbVersion} < PG_VERSION_84 && $bStartFast)
@@ -762,18 +771,16 @@ sub configValidate
     my
     (
         $strOperation,
-        $oFile,
         $strDbPath
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->configValidate', \@_,
-            {name => 'oFile'},
             {name => 'strDbPath', default => $self->{strDbPath}}
         );
 
     # Get the version from the control file
-    my ($strDbVersion) = $self->info($oFile, $strDbPath);
+    my ($strDbVersion) = $self->info($strDbPath);
 
     # Get version and db path from the database
     my ($fCompareDbVersion, $strCompareDbPath) = $self->versionGet();

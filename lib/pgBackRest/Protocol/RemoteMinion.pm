@@ -265,7 +265,7 @@ sub process
             elsif ($strCommand eq OP_DB_INFO)
             {
                 my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) =
-                    $oDb->info($oFile, paramGet(\%oParamHash, 'db-path'));
+                    $oDb->info(paramGet(\%oParamHash, 'db-path'));
 
                 $self->outputWrite("${strDbVersion}\t${iControlVersion}\t${iCatalogVersion}\t${ullDbSysId}");
             }

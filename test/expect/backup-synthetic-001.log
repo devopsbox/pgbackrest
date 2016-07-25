@@ -32,13 +32,15 @@ full backup - create pg_stat link, pg_clog dir (db-master host)
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+ DEBUG:     Db->new(): bForceMaster = true
  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
- DEBUG:     Db->info(): oFile = [object], strDbPath = <[TEST_PATH]/db-master/db/base>
+ DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
+ DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     Db->info=>: iCatalogVersion = 201306121, iControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6156904820763115222
  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/postmaster.pid, strPathType = db:absolute
@@ -262,6 +264,7 @@ full backup - abort backup - local (db-master host)
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+ DEBUG:     Db->new(): bForceMaster = true
  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
@@ -270,7 +273,8 @@ full backup - abort backup - local (db-master host)
  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-1]
  DEBUG:     BackupInfo->current=>: bTest = true
- DEBUG:     Db->info(): oFile = [object], strDbPath = <[TEST_PATH]/db-master/db/base>
+ DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
+ DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     Db->info=>: iCatalogVersion = 201306121, iControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6156904820763115222
  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/postmaster.pid, strPathType = db:absolute
@@ -380,6 +384,7 @@ full backup - resume (db-master host)
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+ DEBUG:     Db->new(): bForceMaster = true
  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
@@ -388,7 +393,8 @@ full backup - resume (db-master host)
  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
   WARN: backup [BACKUP-FULL-1] missing in repository removed from backup.info
  DEBUG:     BackupInfo->delete(): strBackupLabel = [BACKUP-FULL-1]
- DEBUG:     Db->info(): oFile = [object], strDbPath = <[TEST_PATH]/db-master/db/base>
+ DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
+ DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     Db->info=>: iCatalogVersion = 201306121, iControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6156904820763115222
  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/postmaster.pid, strPathType = db:absolute
@@ -1030,6 +1036,7 @@ incr backup - add tablespace 1 (db-master host)
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+ DEBUG:     Db->new(): bForceMaster = true
  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
@@ -1045,7 +1052,8 @@ incr backup - add tablespace 1 (db-master host)
  DEBUG:     BackupInfo->list=>: stryBackup = ([BACKUP-FULL-2])
  DEBUG:     BackupInfo->last=>: strBackup = [BACKUP-FULL-2]
   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
- DEBUG:     Db->info(): oFile = [object], strDbPath = <[TEST_PATH]/db-master/db/base>
+ DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
+ DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     Db->info=>: iCatalogVersion = 201306121, iControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6156904820763115222
  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/postmaster.pid, strPathType = db:absolute
@@ -1247,6 +1255,7 @@ incr backup - resume and add tablespace 2 (db-master host)
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+ DEBUG:     Db->new(): bForceMaster = true
  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
@@ -1264,7 +1273,8 @@ incr backup - resume and add tablespace 2 (db-master host)
  DEBUG:     BackupInfo->list=>: stryBackup = ([BACKUP-FULL-2])
  DEBUG:     BackupInfo->last=>: strBackup = [BACKUP-FULL-2]
   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
- DEBUG:     Db->info(): oFile = [object], strDbPath = <[TEST_PATH]/db-master/db/base>
+ DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
+ DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     Db->info=>: iCatalogVersion = 201306121, iControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6156904820763115222
  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/postmaster.pid, strPathType = db:absolute
