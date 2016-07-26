@@ -137,10 +137,10 @@ sub threadGroupThread
                 {
                     confess &log(ERROR, "unknown command");
                 }
-            }
 
-            # Keep the protocol layer from timing out while checksumming
-            $oProtocol->keepAlive();
+                # Keep the protocol layer from timing out while checksumming
+                $oProtocol->keepAlive();
+            }
 
             # Even numbered threads move up when they have finished a queue, odd numbered threads move down
             $iQueueIdx += $iDirection;
