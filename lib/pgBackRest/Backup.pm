@@ -58,13 +58,15 @@ sub new
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(OP_BACKUP_NEW);
 
-    # Initialize protocol
+    # Initialize protocol(s)
     $self->{oProtocol} = protocolGet();
+
+    $self->{oProtocolMaster} = optionGet(OPTION_BACKUP_STANDBY) ? protocolGet({bForceMaster => true}) : $self->{oProtocol};
 
     # Determine the database path
     $self->{strDbPath} = optionGet(OPTION_BACKUP_STANDBY) ? optionGet(OPTION_DB_STANDBY_PATH) : optionGet(OPTION_DB_PATH);
 
-    # Initialize default file object
+    # Initialize default file objects
     $self->{oFile} = new pgBackRest::File
     (
         optionGet(OPTION_STANZA),
@@ -72,6 +74,21 @@ sub new
         optionRemoteType(),
         $self->{oProtocol}
     );
+
+    if (optionGet(OPTION_BACKUP_STANDBY))
+    {
+        $self->{oFileMaster} = new pgBackRest::File
+        (
+            optionGet(OPTION_STANZA),
+            optionGet(OPTION_REPO_PATH),
+            optionRemoteType(),
+            $self->{oProtocolMaster}
+        );
+    }
+    else
+    {
+        $self->{oFileMaster} = $self->{oFile};
+    }
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -453,6 +470,7 @@ sub processManifest
 
                     # A keep-alive is required here because if there are a large number of resumed files that need to be checksummed
                     # then the remote might timeout while waiting for a command.
+                    $self->{oProtocolMaster}->keepAlive();
                     $self->{oProtocol}->keepAlive();
                 }
             }
@@ -474,12 +492,14 @@ sub processManifest
                 $oParam{result_queue} = $oResultQueue;
 
                 # Keep the protocol layer from timing out
+                $self->{oProtocolMaster}->keepAlive();
                 $self->{oProtocol}->keepAlive();
 
                 threadGroupRun($iThreadIdx, 'backup', \%oParam);
             }
 
             # Keep the protocol layer from timing out
+            $self->{oProtocolMaster}->keepAlive();
             $self->{oProtocol}->keepAlive();
 
             # Start backup test point
@@ -505,6 +525,7 @@ sub processManifest
 
                     # A keep-alive is required inside the loop because a flood of thread messages could prevent the keep-alive
                     # outside the loop from running in a timely fashion.
+                    $self->{oProtocolMaster}->keepAlive();
                     $self->{oProtocol}->keepAlive();
                     $bKeepAlive = true;
                 }
@@ -512,6 +533,7 @@ sub processManifest
                 # This keep-alive only runs if the keep-alive in the loop did not run
                 if (!$bKeepAlive)
                 {
+                    $self->{oProtocolMaster}->keepAlive();
                     $self->{oProtocol}->keepAlive();
                 }
             }
@@ -525,8 +547,10 @@ sub processManifest
     if (defined($oFileCopy))
     {
         my ($bCopied, $lSizeCurrent, $lCopySize, $lRepoSize, $strCopyChecksum) =
-            backupFile($self->{oFile}, $$oFileCopy{db_file}, $$oFileCopy{repo_file}, $bCompress, $$oFileCopy{checksum},
-                       $$oFileCopy{modification_time}, $$oFileCopy{size});
+            backupFile($self->{oFileMaster}, $$oFileCopy{db_file}, $$oFileCopy{repo_file}, $bCompress, $$oFileCopy{checksum},
+                       $$oFileCopy{modification_time}, $$oFileCopy{size}, undef, undef, false);
+
+!!! Try to figure out why passing false above does not work
 
         backupManifestUpdate($oBackupManifest, $$oFileCopy{repo_file}, $bCopied, $lCopySize, $lRepoSize, $strCopyChecksum);
 
