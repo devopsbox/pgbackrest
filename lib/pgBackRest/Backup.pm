@@ -375,18 +375,19 @@ sub processManifest
             {
                 $strFileKey = $strFile;
                 $oFileCopyMap{$strQueueKey}{$strFileKey}{skip} = true;
+                $oFileCopyMap{$strQueueKey}{$strFileKey}{db_file} = optionGet(OPTION_DB_PATH) . '/' . DB_FILE_PGCONTROL;
             }
             # Else continue normally
             else
             {
                 $strFileKey = sprintf("%016d-${strFile}", $lFileSize);
                 $oFileCopyMap{$strQueueKey}{$strFileKey}{skip} = false;
+                $oFileCopyMap{$strQueueKey}{$strFileKey}{db_file} = $oBackupManifest->dbPathGet($strDbPath, $strFile);
 
                 # Add file size to total size
                 $lSizeTotal += $lFileSize;
             }
 
-            $oFileCopyMap{$strQueueKey}{$strFileKey}{db_file} = $oBackupManifest->dbPathGet($strDbPath, $strFile);
             $oFileCopyMap{$strQueueKey}{$strFileKey}{repo_file} = $strFile;
             $oFileCopyMap{$strQueueKey}{$strFileKey}{size} = $lFileSize;
             $oFileCopyMap{$strQueueKey}{$strFileKey}{modification_time} =
@@ -898,7 +899,7 @@ sub process
         # After the backup has been stopped, need to make a copy of the archive logs to make the db consistent
         logDebugMisc($strOperation, "retrieve archive logs ${strArchiveStart}:${strArchiveStop}");
         my $oArchive = new pgBackRest::Archive();
-        my $strArchiveId = $oArchive->getCheck($self->{oFile});
+        my $strArchiveId = $oArchive->getArchiveId($self->{oFileMaster});
         my @stryArchive = $oArchive->range($strArchiveStart, $strArchiveStop, $strDbVersion < PG_VERSION_93);
 
         foreach my $strArchive (@stryArchive)
