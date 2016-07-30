@@ -21,6 +21,7 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Archive;
+use pgBackRest::ArchiveCommon;
 use pgBackRest::BackupCommon;
 use pgBackRest::BackupFile;
 use pgBackRest::BackupInfo;
@@ -719,6 +720,14 @@ sub process
 
         # Get database map
         $oDatabaseMap = $oDb->databaseMapGet();
+
+        # Wait for replay on the standby to catch up
+        if (optionGet(OPTION_BACKUP_STANDBY))
+        {
+            &log(INFO, "wait for replay on the standby to reach ${strArchiveStart}");
+            my $strReplayedLSN = $oDb->replayWait($strArchiveStart);
+            &log(INFO, "replay on the standby reached ${strReplayedLSN}");
+        }
     }
 
     # Build the manifest
@@ -900,7 +909,7 @@ sub process
         logDebugMisc($strOperation, "retrieve archive logs ${strArchiveStart}:${strArchiveStop}");
         my $oArchive = new pgBackRest::Archive();
         my $strArchiveId = $oArchive->getArchiveId($self->{oFileMaster});
-        my @stryArchive = $oArchive->range($strArchiveStart, $strArchiveStop, $strDbVersion < PG_VERSION_93);
+        my @stryArchive = lsnFileRange($strArchiveStart, $strArchiveStop, $strDbVersion);
 
         foreach my $strArchive (@stryArchive)
         {

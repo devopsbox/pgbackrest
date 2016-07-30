@@ -703,6 +703,12 @@ sub backupStart
             ($bStartFast ? ', true' : $self->{strDbVersion} >= PG_VERSION_84 ? ', false' : '') .
             ($self->{strDbVersion} >= PG_VERSION_96 ? ', false' : '') . ') as lsn');
 
+    # Create a restore point to ensure that the start backup location is replayed quickly
+    if (optionGet(OPTION_BACKUP_STANDBY) && $self->{strDbVersion} >= PG_VERSION_91)
+    {
+        $self->executeSql("select pg_create_restore_point('" . BACKREST_NAME . " Standby Backup Start');");
+    }
+
     # Return from function and log return values if any
     return logDebugReturn
     (
@@ -833,7 +839,7 @@ sub xlogSwitch
     # the user if there have been no writes since the last xlog switch.
     if ($self->{strDbVersion} >= PG_VERSION_91)
     {
-        $self->executeSql("select pg_create_restore_point('pgBackRest Archive Check');");
+        $self->executeSql("select pg_create_restore_point('" . BACKREST_NAME . " Archive Check');");
     }
 
     my $strWalFileName = $self->executeSqlRow('select pg_xlogfile_name from pg_xlogfile_name(pg_switch_xlog());');
@@ -845,6 +851,87 @@ sub xlogSwitch
     (
         $strOperation,
         {name => 'strXlogFileName', value => $strWalFileName}
+    );
+}
+
+####################################################################################################################################
+# replayWait
+#
+# Waits for replay on the standby to equal specified LSN
+####################################################################################################################################
+sub replayWait
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strTargetLSN
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->replayWait', \@_,
+            {name => 'strTargetLSN'}
+        );
+
+    # Load ArchiveCommon Module
+    require pgBackRest::ArchiveCommon;
+    pgBackRest::ArchiveCommon->import();
+
+    # Initialize working variables
+    my $oWait = waitInit(optionGet(OPTION_ARCHIVE_TIMEOUT));
+    my $bTimeout = true;
+    my $strReplayedLSN = undef;
+
+    # Monitor the replay location
+    do
+    {
+        # Get the replay location
+        my $strLastReplayedLSN = $self->executeSqlOne('select replay_location from pg_stat_replication');
+
+        # Error if the replay location could not be retrieved
+        if (!defined($strLastReplayedLSN))
+        {
+            confess &log(
+                ERROR,
+                "update to query replay location on the standby\n" .
+                    "Hint: Is the standy performing streaming replication?",
+                ERROR_ARCHIVE_TIMEOUT);
+        }
+
+        # Is the replay lsn >= target lsn?
+        if (lsnNormalize($strLastReplayedLSN) ge lsnNormalize($strTargetLSN))
+        {
+            $bTimeout = false;
+        }
+        else
+        {
+            # Reset the timer if the LSN is advancing
+            if (defined($strReplayedLSN) &&
+                lsnNormalize($strLastReplayedLSN) gt lsnNormalize($strReplayedLSN) &&
+                !waitMore($oWait))
+            {
+                $oWait = waitInit(optionGet(OPTION_ARCHIVE_TIMEOUT));
+            }
+        }
+
+        # Assigned last replayed to replayed
+        $strReplayedLSN = $strLastReplayedLSN;
+
+    } while ($bTimeout && waitMore($oWait));
+
+    if ($bTimeout == true)
+    {
+        confess &log(
+            ERROR, "timeout before standby replayed ${strTargetLSN} - only reached ${strReplayedLSN}", ERROR_ARCHIVE_TIMEOUT);
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strReplayedLSN', value => $strReplayedLSN}
     );
 }
 

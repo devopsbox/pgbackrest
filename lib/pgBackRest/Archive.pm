@@ -17,6 +17,7 @@ use lib dirname($0);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
+use pgBackRest::ArchiveCommon;
 use pgBackRest::ArchiveInfo;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
@@ -42,7 +43,6 @@ use constant OP_ARCHIVE_PUSH                                        => OP_ARCHIV
 use constant OP_ARCHIVE_PUSH_CHECK                                  => OP_ARCHIVE . '->pushCheck';
     push @EXPORT, qw(OP_ARCHIVE_PUSH_CHECK);
 use constant OP_ARCHIVE_PUSH_PROCESS                                => OP_ARCHIVE . '->pushProcess';
-use constant OP_ARCHIVE_RANGE                                       => OP_ARCHIVE . '->range';
 use constant OP_ARCHIVE_WAL_FILE_NAME                               => OP_ARCHIVE . '->walFileName';
 use constant OP_ARCHIVE_WAL_INFO                                    => OP_ARCHIVE . '->walInfo';
 use constant OP_ARCHIVE_XFER                                        => OP_ARCHIVE . '->xfer';
@@ -1048,70 +1048,6 @@ sub xfer
     (
         $strOperation,
         {name => 'lFileTotal', value => $lFileTotal}
-    );
-}
-
-####################################################################################################################################
-# range
-#
-# Generates a range of archive log file names given the start and end log file name.  For pre-9.3 databases, use bSkipFF to exclude
-# the FF that prior versions did not generate.
-####################################################################################################################################
-sub range
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strArchiveStart,
-        $strArchiveStop,
-        $bSkipFF
-    ) =
-        logDebugParam
-        (
-            OP_ARCHIVE_RANGE, \@_,
-            {name => 'strArchiveStart'},
-            {name => 'strArchiveStop'},
-            {name => 'bSkipFF', default => false}
-        );
-
-    # Working variables
-    my @stryArchive;
-    my $iArchiveIdx = 0;
-
-    # Iterate through all archive logs between start and stop
-    my @stryArchiveSplit = split('/', $strArchiveStart);
-    my $iStartMajor = hex($stryArchiveSplit[0]);
-    my $iStartMinor = hex(substr(sprintf("%08s", $stryArchiveSplit[1]), 0, 2));
-
-    @stryArchiveSplit = split('/', $strArchiveStop);
-    my $iStopMajor = hex($stryArchiveSplit[0]);
-    my $iStopMinor = hex(substr(sprintf("%08s", $stryArchiveSplit[1]), 0, 2));
-
-    $stryArchive[$iArchiveIdx] = uc(sprintf("%08x%08x", $iStartMajor, $iStartMinor));
-    $iArchiveIdx += 1;
-
-    while (!($iStartMajor == $iStopMajor && $iStartMinor == $iStopMinor))
-    {
-        $iStartMinor += 1;
-
-        if ($bSkipFF && $iStartMinor == 255 || !$bSkipFF && $iStartMinor == 256)
-        {
-            $iStartMajor += 1;
-            $iStartMinor = 0;
-        }
-
-        $stryArchive[$iArchiveIdx] = uc(sprintf("%08x%08x", $iStartMajor, $iStartMinor));
-        $iArchiveIdx += 1;
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'stryArchive', value => \@stryArchive}
     );
 }
 
