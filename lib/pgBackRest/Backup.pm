@@ -550,8 +550,6 @@ sub processManifest
             backupFile($self->{oFileMaster}, $$oFileCopy{db_file}, $$oFileCopy{repo_file}, $bCompress, $$oFileCopy{checksum},
                        $$oFileCopy{modification_time}, $$oFileCopy{size}, undef, undef, false);
 
-!!! Try to figure out why passing false above does not work
-
         backupManifestUpdate($oBackupManifest, $$oFileCopy{repo_file}, $bCopied, $lCopySize, $lRepoSize, $strCopyChecksum);
 
         $lSizeTotal += $$oFileCopy{size};

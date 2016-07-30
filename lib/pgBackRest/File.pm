@@ -1658,7 +1658,7 @@ sub copy
 
             eval
             {
-                $strOutput = $self->{oProtocol}->outputRead(true, true);
+                $strOutput = $self->{oProtocol}->outputRead(true, $bIgnoreMissingSource);
 
                 # Check the result of the remote call
                 if (substr($strOutput, 0, 1) eq 'Y')
