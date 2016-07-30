@@ -125,23 +125,16 @@ sub new
         );
 
     # Assign options based on local or standby
-    if (!commandTest(CMD_REMOTE))
+    if (optionTest(OPTION_BACKUP_STANDBY) && optionGet(OPTION_BACKUP_STANDBY) && !$bForceMaster)
     {
-        if (optionGet(OPTION_BACKUP_STANDBY) && !$bForceMaster)
-        {
-            $self->{strDbPath} = optionGet(OPTION_DB_STANDBY_PATH);
-        }
-        else
-        {
-            $self->{strDbPath} = optionGet(OPTION_DB_PATH);
-        }
+        $self->{strDbPath} = optionGet(OPTION_DB_STANDBY_PATH);
+    }
+    elsif (optionTest(OPTION_DB_PATH))
+    {
+        $self->{strDbPath} = optionGet(OPTION_DB_PATH);
+    }
 
-        $self->{oProtocol} = protocolGet({bForceMaster => $bForceMaster});
-    }
-    else
-    {
-        $self->{oProtocol} = protocolGet({bForceLocal => true});
-    }
+    $self->{oProtocol} = protocolGet({bForceMaster => $bForceMaster});
 
     # Return from function and log return values if any
     return logDebugReturn

@@ -20,6 +20,7 @@ use Time::HiRes qw(gettimeofday);
 
 use pgBackRest::Archive;
 use pgBackRest::ArchiveInfo;
+use pgBackRest::BackupInfo;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
@@ -109,7 +110,6 @@ sub archiveCheck
 sub backupTestRun
 {
     my $strTest = shift;
-    my $iThreadMax = shift;
     my $bVmOut = shift;
 
     # If no test was specified, then run them all
@@ -121,6 +121,7 @@ sub backupTestRun
     # Setup global variables
     my $oHostGroup = hostGroupGet();
     my $strTestPath = $oHostGroup->paramGet(HOST_PARAM_TEST_PATH);
+    my $iThreadMax = $oHostGroup->paramGet(HOST_PARAM_THREAD_MAX);
 
     # Setup test variables
     my $iRun;
@@ -224,17 +225,10 @@ sub backupTestRun
 
                         if ($iArchive == $iBackup)
                         {
-                            # load the archive info file so it can be munged for testing
-                            my $strInfoFile = $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE);
-                            executeTest("sudo chmod 660 ${strInfoFile}");
-                            my %oInfo;
-                            iniLoad($strInfoFile, \%oInfo);
-                            my $strDbVersion = $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_VERSION};
-                            my $ullDbSysId = $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_SYSTEM_ID};
-
-                            # Break the database version
-                            $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_VERSION} = '8.0';
-                            testIniSave($strInfoFile, \%oInfo, true);
+                            # load the archive info file and munge it for testing by breaking the database version
+                            $oHostBackup->infoMunge(
+                                $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE),
+                                {&INFO_ARCHIVE_SECTION_DB => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'}});
 
                             &log(INFO, '        test db version mismatch error');
 
@@ -242,10 +236,11 @@ sub backupTestRun
                                 $strCommand . " ${strSourceFile}",
                                 {iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH, oLogTest => $oLogTest});
 
-                            # Break the system id
-                            $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_VERSION} = $strDbVersion;
-                            $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_SYSTEM_ID} = '5000900090001855000';
-                            testIniSave($strInfoFile, \%oInfo, true);
+
+                            # break the system id
+                            $oHostBackup->infoMunge(
+                                $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE),
+                                {&INFO_ARCHIVE_SECTION_DB => {&INFO_BACKUP_KEY_SYSTEM_ID => 5000900090001855000}});
 
                             &log(INFO, '        test db system-id mismatch error');
 
@@ -253,9 +248,8 @@ sub backupTestRun
                                 $strCommand . " ${strSourceFile}",
                                 {iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH, oLogTest => $oLogTest});
 
-                            # Move settings back to original
-                            $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_SYSTEM_ID} = $ullDbSysId;
-                            testIniSave($strInfoFile, \%oInfo, true);
+                            # Restore the file to its original condition
+                            $oHostBackup->infoRestore($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
 
                             # Fail because the process was killed
                             if ($iBackup == 1 && !$bCompress)
@@ -475,6 +469,12 @@ sub backupTestRun
                 my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
                 filePathCreate($strXlogPath, undef, false, true);
 
+                # Create the test path for pg_control
+                filePathCreate(($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL), undef, false, true);
+
+                # Copy pg_control
+                executeTest('cp ' . testDataPath() . '/pg_control ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+
                 my $strCommand =
                     $oHostDbMaster->backrestExe() .
                     ' --config=' . $oHostDbMaster->backrestConfig() .
@@ -486,7 +486,7 @@ sub backupTestRun
 
                 # Create the archive info file
                 filePathCreate($oFile->pathGet(PATH_BACKUP_ARCHIVE), '0770', undef, true);
-                (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE)))->check(PG_VERSION_93, 1234567890123456789);
+                (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE)))->check(PG_VERSION_93, 6156904820763115222);
 
                 if (defined($oLogTest))
                 {
@@ -678,7 +678,7 @@ sub backupTestRun
 
             # Create hosts, file object, and config
             my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = backupTestSetup(
-                $bRemote, true, $oLogTest, {bCompress => $bCompress, bHardLink => $bHardLink, iThreadMax => $iThreadMax});
+                $bRemote, true, $oLogTest, {bCompress => $bCompress, bHardLink => $bHardLink});
 
             # Determine if this is a neutral test, i.e. we only want to do it once for local and once for remote.  Neutral means
             # that options such as compression and hardlinks are disabled
@@ -756,8 +756,7 @@ sub backupTestRun
                                                   '56fe5780b8dca9705e0c22032a83828860a21235', $lTime - 100);
 
             # Copy pg_control
-            executeTest('cp ' . testDataPath() . '/pg_control ' .
-                        $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+            executeTest('cp ' . testDataPath() . '/pg_control ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
             utime($lTime - 100, $lTime - 100, $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL)
                 or confess &log(ERROR, "unable to set time");
             $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/' . DB_FILE_PGCONTROL}
@@ -854,7 +853,7 @@ sub backupTestRun
                 my $oExecuteBackup = $oHostBackup->backupBegin(
                     $strType, 'abort backup - local',
                     {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_START, fTestDelay => 5,
-                        iExpectedExitStatus => ERROR_TERM});
+                        iExpectedExitStatus => $bRemote && $iThreadMax > 1 ? ERROR_STOP : ERROR_TERM});
 
                 $oHostDbMaster->stop({bForce => true});
 
@@ -1085,58 +1084,48 @@ sub backupTestRun
             $strType = BACKUP_TYPE_INCR;
             $oHostDbMaster->manifestReference(\%oManifest, $strFullBackup);
 
-            my $strInfoFile = $oHostBackup->repoPath() . "/backup/${strStanza}/backup.info";
-            executeTest("sudo chmod 660 $strInfoFile");
-            my %oInfo;
-            iniLoad($strInfoFile, \%oInfo);
-
             # Break the database version
-            my $strDbVersion = $oInfo{'db'}{&MANIFEST_KEY_DB_VERSION};
-
-            $oInfo{db}{&MANIFEST_KEY_DB_VERSION} = '8.0';
-            testIniSave($strInfoFile, \%oInfo, true);
+            $oHostBackup->infoMunge(
+                $oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO),
+                {&INFO_BACKUP_SECTION_DB => {&INFO_BACKUP_KEY_DB_VERSION => '8.0'}});
 
             $oHostBackup->backup(
                 $strType, 'invalid database version',
                 {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_BACKUP_MISMATCH,
                     strOptionalParam => '--log-level-console=detail'});
-            $oInfo{db}{&MANIFEST_KEY_DB_VERSION} = $strDbVersion;
 
             # Break the database system id
-            my $ullDbSysId = $oInfo{'db'}{&MANIFEST_KEY_SYSTEM_ID};
-            $oInfo{db}{&MANIFEST_KEY_SYSTEM_ID} = 6999999999999999999;
-            testIniSave($strInfoFile, \%oInfo, true);
+            $oHostBackup->infoMunge(
+                $oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO),
+                {&INFO_BACKUP_SECTION_DB => {&INFO_BACKUP_KEY_SYSTEM_ID => 6999999999999999999}});
 
             $oHostBackup->backup(
                 $strType, 'invalid system id',
                 {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_BACKUP_MISMATCH,
                     strOptionalParam => '--log-level-console=detail'});
-            $oInfo{db}{&MANIFEST_KEY_SYSTEM_ID} = $ullDbSysId;
 
             # Break the control version
-            my $iControlVersion = $oInfo{'db'}{&MANIFEST_KEY_CONTROL};
-            $oInfo{db}{&MANIFEST_KEY_CONTROL} = 842;
-            testIniSave($strInfoFile, \%oInfo, true);
+            $oHostBackup->infoMunge(
+                $oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO),
+                {&INFO_BACKUP_SECTION_DB => {&INFO_BACKUP_KEY_CONTROL => 842}});
 
             $oHostBackup->backup(
                 $strType, 'invalid control version',
                 {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_BACKUP_MISMATCH,
                     strOptionalParam => '--log-level-console=detail'});
-            $oInfo{db}{&MANIFEST_KEY_CONTROL} = $iControlVersion;
 
             # Break the catalog version
-            my $iCatalogVersion = $oInfo{'db'}{&MANIFEST_KEY_CATALOG};
-            $oInfo{db}{&MANIFEST_KEY_CATALOG} = 197208141;
-            testIniSave($strInfoFile, \%oInfo, true);
+            $oHostBackup->infoMunge(
+                $oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO),
+                {&INFO_BACKUP_SECTION_DB => {&INFO_BACKUP_KEY_CATALOG => 197208141}});
 
             $oHostBackup->backup(
                 $strType, 'invalid catalog version',
                 {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_BACKUP_MISMATCH,
                     strOptionalParam => '--log-level-console=detail'});
 
-            # Fix up info file for next test
-            $oInfo{db}{&MANIFEST_KEY_CATALOG} = $iCatalogVersion;
-            testIniSave($strInfoFile, \%oInfo, true);
+            # Restore the file to its original condition
+            $oHostBackup->infoRestore($oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO));
 
             # Test broken tablespace configuration
             #-----------------------------------------------------------------------------------------------------------------------
@@ -1558,14 +1547,13 @@ sub backupTestRun
 
             # Create hosts, file object, and config
             my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = backupTestSetup(
-                $bRemote, false, undef,
-                {bStandby => $bRemote, bCompress => $bCompress, iThreadMax => $iThreadMax, bArchiveAsync => $bArchiveAsync});
+                $bRemote, false, undef, {bCompress => $bCompress, bArchiveAsync => $bArchiveAsync});
 
-            # Determine if check tests are performed
-            my $bTestCheck = !$bRemote && !$bCompress || $bRemote && $bCompress;
+            # Determine if extra tests are performed.  Extra tests should not be primary tests for compression or async archiving.
+            my $bTestExtra = !$bCompress && !$bArchiveAsync && $iThreadMax == 1;
 
             # For the 'fail on missing archive.info file' test, the archive.info file must not be found so set archive invalid.
-            $oHostDbMaster->clusterCreate({bArchiveInvalid => $bTestCheck});
+            $oHostDbMaster->clusterCreate({bArchiveInvalid => $bTestExtra});
 
             # Static backup parameters
             my $fTestDelay = 1;
@@ -1595,9 +1583,9 @@ sub backupTestRun
             $oHostDbMaster->sqlExecute('create database test1', {bAutoCommit => true});
             $oHostDbMaster->sqlExecute('create database test2', {bAutoCommit => true});
 
-            # Test invalid archive command
+            # Test invalid check command
             #-----------------------------------------------------------------------------------------------------------------------
-            if ($bTestCheck)
+            if ($bTestExtra)
             {
                 $strType = BACKUP_TYPE_FULL;
 
@@ -1644,10 +1632,29 @@ sub backupTestRun
                     $oHostBackup->check($strComment, {iTimeout => 5});
                 }
 
-                # Check archive_timeout error
+                # Check archive mismatch due to upgrade error
+                $strComment = 'fail on archive mismatch after upgrade';
+
+                # load the archive info file and munge it for testing by breaking the database version
+                $oHostBackup->infoMunge(
+                    $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE),
+                    {&INFO_ARCHIVE_SECTION_DB => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'}});
+
+                $oHostDbMaster->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH});
+
+                # If running the remote tests then also need to run check locally
+                if ($bRemote)
+                {
+                    $oHostBackup->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH});
+                }
+
+                # Restore the file to its original condition
+                $oHostBackup->infoRestore($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
+
+                # Check archive_timeout error when WAL segment is not found
                 $strComment = 'fail on archive timeout';
 
-                $oHostDbMaster->clusterRestart({bArchiveInvalid => true});
+                $oHostDbMaster->clusterRestart({bIgnoreLogError => true, bArchiveInvalid => true});
                 $oHostDbMaster->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_TIMEOUT});
 
                 # If running the remote tests then also need to run check locally
@@ -1658,6 +1665,38 @@ sub backupTestRun
 
                 # Restart the cluster ignoring any errors in the postgresql log
                 $oHostDbMaster->clusterRestart({bIgnoreLogError => true});
+
+                # If local, then with a valid archive info, create the backup.info file by running a backup then munge the
+                # backup.info file.
+                if (!$bRemote)
+                {
+                    # Check backup mismatch error
+                    $strComment = 'fail on backup info mismatch';
+
+                    # First run a successful backup to create the backup.info file
+                    $oHostBackup->backup($strType, 'run a successful backup');
+
+                    # Load the backup.info file and munge it for testing by breaking the database version and system id
+                    $oHostBackup->infoMunge(
+                        $oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO),
+                        {&INFO_BACKUP_SECTION_DB =>
+                            {&INFO_BACKUP_KEY_DB_VERSION => '8.0', &INFO_BACKUP_KEY_SYSTEM_ID => 6999999999999999999}});
+
+                    # Run the test
+                    $oHostBackup->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_BACKUP_MISMATCH});
+
+                    # Restore the file to its original condition
+                    $oHostBackup->infoRestore($oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO));
+
+                    # Providing a sufficient archive-timeout, verify that the check command runs successfully now with valid
+                    # archive.info and backup.info files
+                    $strComment = 'verify success after backup';
+
+                    $oHostBackup->check($strComment, {iTimeout => 5});
+
+                    # Restart the cluster ignoring any errors in the postgresql log
+                    $oHostDbMaster->clusterRestart({bIgnoreLogError => true});
+                }
             }
 
             # Full backup
@@ -1669,7 +1708,7 @@ sub backupTestRun
             $oHostDbMaster->sqlXlogRotate();
             $oHostDbMaster->sqlExecute("insert into test values ('$strDefaultMessage')");
 
-            if (!$bArchiveAsync && (!$bRemote && !$bCompress || $bRemote && $bCompress))
+            if ($bTestExtra)
             {
                 # Acquire the backup advisory lock so it looks like a backup is running
                 if (!$oHostDbMaster->sqlSelectOne('select pg_try_advisory_lock(' . DB_BACKUP_ADVISORY_LOCK . ')'))
@@ -1682,7 +1721,7 @@ sub backupTestRun
                 # Release the backup advisory lock so the next backup will succeed
                 if (!$oHostDbMaster->sqlSelectOne('select pg_advisory_unlock(' . DB_BACKUP_ADVISORY_LOCK . ')'))
                 {
-                    confess 'unable to acquire advisory lock for testing';
+                    confess 'unable to release advisory lock';
                 }
             }
 
@@ -1738,13 +1777,16 @@ sub backupTestRun
             #-----------------------------------------------------------------------------------------------------------------------
             # Restart the cluster to check for any errors before continuing since the stop tests will definitely create errors and
             # the logs will to be deleted to avoid causing issues further down the line.
-            $oHostDbMaster->clusterRestart();
+            if ($bTestExtra)
+            {
+                $oHostDbMaster->clusterRestart();
 
-            $oHostDbMaster->stop();
+                $oHostDbMaster->stop();
 
-            $oHostBackup->backup($strType, 'attempt backup when stopped', {iExpectedExitStatus => ERROR_STOP});
+                $oHostBackup->backup($strType, 'attempt backup when stopped', {iExpectedExitStatus => ERROR_STOP});
 
-            $oHostDbMaster->start();
+                $oHostDbMaster->start();
+            }
 
             # Setup the time target
             #-----------------------------------------------------------------------------------------------------------------------
@@ -1755,7 +1797,7 @@ sub backupTestRun
 
             # Incr backup - fail on archive_mode=always when version >= 9.5
             #-----------------------------------------------------------------------------------------------------------------------
-            if ($oHostDbMaster->dbVersion() >= PG_VERSION_95)
+            if ($bTestExtra && $oHostDbMaster->dbVersion() >= PG_VERSION_95)
             {
                 $strType = BACKUP_TYPE_INCR;
 
@@ -1788,7 +1830,7 @@ sub backupTestRun
 
             # Start a backup so the next backup has to restart it.  This test is not required for PostgreSQL >= 9.6 since backups
             # are run in non-exlusive mode.
-            if ($oHostDbMaster->dbVersion() >= PG_VERSION_93 && $oHostDbMaster->dbVersion() < PG_VERSION_96)
+            if ($bTestExtra && $oHostDbMaster->dbVersion() >= PG_VERSION_93 && $oHostDbMaster->dbVersion() < PG_VERSION_96)
             {
                 $oHostDbMaster->sqlSelectOne("select pg_start_backup('test backup that will be cancelled', true)");
 
@@ -1812,25 +1854,33 @@ sub backupTestRun
 
             # Setup the xid target
             #-----------------------------------------------------------------------------------------------------------------------
-            $oHostDbMaster->sqlExecute("update test set message = '$strXidMessage'", {bCommit => false});
-            $oHostDbMaster->sqlXlogRotate();
-            my $strXidTarget = $oHostDbMaster->sqlSelectOne("select txid_current()");
-            $oHostDbMaster->sqlCommit();
-            &log(INFO, "        xid target is ${strXidTarget}");
+            my $strXidTarget = undef;
+
+            if ($bTestExtra)
+            {
+                $oHostDbMaster->sqlExecute("update test set message = '$strXidMessage'", {bCommit => false});
+                $oHostDbMaster->sqlXlogRotate();
+                $strXidTarget = $oHostDbMaster->sqlSelectOne("select txid_current()");
+                $oHostDbMaster->sqlCommit();
+                &log(INFO, "        xid target is ${strXidTarget}");
+            }
 
             # Setup the name target
             #-----------------------------------------------------------------------------------------------------------------------
             my $strNameTarget = 'backrest';
 
-            $oHostDbMaster->sqlExecute("update test set message = '$strNameMessage'", {bCommit => true});
-            $oHostDbMaster->sqlXlogRotate();
-
-            if ($oHostDbMaster->dbVersion() >= PG_VERSION_91)
+            if ($bTestExtra)
             {
-                $oHostDbMaster->sqlExecute("select pg_create_restore_point('${strNameTarget}')");
-            }
+                $oHostDbMaster->sqlExecute("update test set message = '$strNameMessage'", {bCommit => true});
+                $oHostDbMaster->sqlXlogRotate();
 
-            &log(INFO, "        name target is ${strNameTarget}");
+                if ($oHostDbMaster->dbVersion() >= PG_VERSION_91)
+                {
+                    $oHostDbMaster->sqlExecute("select pg_create_restore_point('${strNameTarget}')");
+                }
+
+                &log(INFO, "        name target is ${strNameTarget}");
+            }
 
             # Create a table and data in database test2
             #-----------------------------------------------------------------------------------------------------------------------
@@ -1855,25 +1905,31 @@ sub backupTestRun
             $strComment = undef;
             $iExpectedExitStatus = undef;
 
-            &log(INFO, "    testing recovery type = ${strType}");
+                # &log(INFO, "    testing recovery type = ${strType}");
 
-            # Expect failure because postmaster.pid exists
-            $strComment = 'postmaster running';
-            $iExpectedExitStatus = ERROR_POSTMASTER_RUNNING;
+            if ($bTestExtra)
+            {
+                # Expect failure because postmaster.pid exists
+                $strComment = 'postmaster running';
+                $iExpectedExitStatus = ERROR_POSTMASTER_RUNNING;
 
-            $oHostDbMaster->restore(
-                OPTION_DEFAULT_RESTORE_SET, undef, undef, $bDelta, $bForce, $strType, $strTarget, $bTargetExclusive,
-                $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
+                $oHostDbMaster->restore(
+                    OPTION_DEFAULT_RESTORE_SET, undef, undef, $bDelta, $bForce, $strType, $strTarget, $bTargetExclusive,
+                    $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
+            }
 
             $oHostDbMaster->clusterStop();
 
-            # Expect failure because db path is not empty
-            $strComment = 'path not empty';
-            $iExpectedExitStatus = ERROR_RESTORE_PATH_NOT_EMPTY;
+            if ($bTestExtra)
+            {
+                # Expect failure because db path is not empty
+                $strComment = 'path not empty';
+                $iExpectedExitStatus = ERROR_RESTORE_PATH_NOT_EMPTY;
 
-            $oHostDbMaster->restore(
-                OPTION_DEFAULT_RESTORE_SET, undef, undef, $bDelta, $bForce, $strType, $strTarget, $bTargetExclusive,
-                $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
+                $oHostDbMaster->restore(
+                    OPTION_DEFAULT_RESTORE_SET, undef, undef, $bDelta, $bForce, $strType, $strTarget, $bTargetExclusive,
+                    $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
+            }
 
             # Drop and recreate db path
             testPathRemove($oHostDbMaster->dbBasePath());
@@ -1892,7 +1948,7 @@ sub backupTestRun
                 $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus, ' --db-include=test1');
 
             $oHostDbMaster->clusterStart();
-            $oHostDbMaster->sqlSelectOneTest('select message from test', $strNameMessage);
+            $oHostDbMaster->sqlSelectOneTest('select message from test', $bTestExtra ? $strNameMessage : $strIncrMessage);
 
             # Now it should be OK to drop database test2
             $oHostDbMaster->sqlExecute('drop database test2', {bAutoCommit => true});
@@ -1913,7 +1969,7 @@ sub backupTestRun
 
             # Restore (restore type = immediate, inclusive)
             #-----------------------------------------------------------------------------------------------------------------------
-            if ($oHostDbMaster->dbVersion() >= PG_VERSION_94)
+            if ($bTestExtra && $oHostDbMaster->dbVersion() >= PG_VERSION_94)
             {
                 $bDelta = false;
                 $bForce = true;
@@ -1940,71 +1996,77 @@ sub backupTestRun
 
             # Restore (restore type = xid, inclusive)
             #-----------------------------------------------------------------------------------------------------------------------
-            $bDelta = false;
-            $bForce = true;
-            $strType = RECOVERY_TYPE_XID;
-            $strTarget = $strXidTarget;
-            $bTargetExclusive = undef;
-            $strTargetAction = $oHostDbMaster->dbVersion() >= PG_VERSION_91 ? 'promote' : undef;
-            $strTargetTimeline = undef;
-            $oRecoveryHashRef = undef;
-            $strComment = undef;
-            $iExpectedExitStatus = undef;
+            if ($bTestExtra)
+            {
+                $bDelta = false;
+                $bForce = true;
+                $strType = RECOVERY_TYPE_XID;
+                $strTarget = $strXidTarget;
+                $bTargetExclusive = undef;
+                $strTargetAction = $oHostDbMaster->dbVersion() >= PG_VERSION_91 ? 'promote' : undef;
+                $strTargetTimeline = undef;
+                $oRecoveryHashRef = undef;
+                $strComment = undef;
+                $iExpectedExitStatus = undef;
 
-            &log(INFO, "    testing recovery type = ${strType}");
+                &log(INFO, "    testing recovery type = ${strType}");
 
-            $oHostDbMaster->clusterStop();
+                $oHostDbMaster->clusterStop();
 
-            executeTest('rm -rf ' . $oHostDbMaster->dbBasePath() . "/*");
-            executeTest('rm -rf ' . $oHostDbMaster->dbPath() . "/pg_xlog/*");
+                executeTest('rm -rf ' . $oHostDbMaster->dbBasePath() . "/*");
+                executeTest('rm -rf ' . $oHostDbMaster->dbPath() . "/pg_xlog/*");
 
-            $oHostDbMaster->restore(
-                $strIncrBackup, undef, undef, $bDelta, $bForce, $strType, $strTarget, $bTargetExclusive, $strTargetAction,
-                $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus, '--tablespace-map-all=../../tablespace',
-                false);
+                $oHostDbMaster->restore(
+                    $strIncrBackup, undef, undef, $bDelta, $bForce, $strType, $strTarget, $bTargetExclusive, $strTargetAction,
+                    $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus,
+                    '--tablespace-map-all=../../tablespace', false);
 
-            # Save recovery file to test so we can use it in the next test
-            $oFile->copy(PATH_ABSOLUTE, $oHostDbMaster->dbBasePath() . '/recovery.conf',
-                         PATH_ABSOLUTE, "${strTestPath}/recovery.conf");
+                # Save recovery file to test so we can use it in the next test
+                $oFile->copy(PATH_ABSOLUTE, $oHostDbMaster->dbBasePath() . '/recovery.conf',
+                             PATH_ABSOLUTE, "${strTestPath}/recovery.conf");
 
-            $oHostDbMaster->clusterStart();
-            $oHostDbMaster->sqlSelectOneTest('select message from test', $strXidMessage);
+                $oHostDbMaster->clusterStart();
+                $oHostDbMaster->sqlSelectOneTest('select message from test', $strXidMessage);
 
-            $oHostDbMaster->sqlExecute("update test set message = '$strTimelineMessage'");
+                $oHostDbMaster->sqlExecute("update test set message = '$strTimelineMessage'");
+            }
 
             # Restore (restore type = preserve, inclusive)
             #-----------------------------------------------------------------------------------------------------------------------
-            $bDelta = false;
-            $bForce = false;
-            $strType = RECOVERY_TYPE_PRESERVE;
-            $strTarget = undef;
-            $bTargetExclusive = undef;
-            $strTargetAction = undef;
-            $strTargetTimeline = undef;
-            $oRecoveryHashRef = undef;
-            $strComment = undef;
-            $iExpectedExitStatus = undef;
+            if ($bTestExtra)
+            {
+                $bDelta = false;
+                $bForce = false;
+                $strType = RECOVERY_TYPE_PRESERVE;
+                $strTarget = undef;
+                $bTargetExclusive = undef;
+                $strTargetAction = undef;
+                $strTargetTimeline = undef;
+                $oRecoveryHashRef = undef;
+                $strComment = undef;
+                $iExpectedExitStatus = undef;
 
-            &log(INFO, "    testing recovery type = ${strType}");
+                &log(INFO, "    testing recovery type = ${strType}");
 
-            $oHostDbMaster->clusterStop();
+                $oHostDbMaster->clusterStop();
 
-            executeTest('rm -rf ' . $oHostDbMaster->dbBasePath() . "/*");
-            executeTest('rm -rf ' . $oHostDbMaster->dbPath() . "/pg_xlog/*");
-            executeTest('rm -rf ' . $oHostDbMaster->tablespacePath(1) . "/*");
+                executeTest('rm -rf ' . $oHostDbMaster->dbBasePath() . "/*");
+                executeTest('rm -rf ' . $oHostDbMaster->dbPath() . "/pg_xlog/*");
+                executeTest('rm -rf ' . $oHostDbMaster->tablespacePath(1) . "/*");
 
-            # Restore recovery file that was saved in last test
-            $oFile->move(PATH_ABSOLUTE, "${strTestPath}/recovery.conf",
-                         PATH_ABSOLUTE, $oHostDbMaster->dbBasePath() . '/recovery.conf');
+                # Restore recovery file that was saved in last test
+                $oFile->move(PATH_ABSOLUTE, "${strTestPath}/recovery.conf",
+                             PATH_ABSOLUTE, $oHostDbMaster->dbBasePath() . '/recovery.conf');
 
-            $oHostDbMaster->restore(
-                OPTION_DEFAULT_RESTORE_SET, undef, undef, $bDelta, $bForce, $strType, $strTarget, $bTargetExclusive,
-                $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
+                $oHostDbMaster->restore(
+                    OPTION_DEFAULT_RESTORE_SET, undef, undef, $bDelta, $bForce, $strType, $strTarget, $bTargetExclusive,
+                    $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
 
-            $oHostDbMaster->clusterStart();
-            $oHostDbMaster->sqlSelectOneTest('select message from test', $strXidMessage);
+                $oHostDbMaster->clusterStart();
+                $oHostDbMaster->sqlSelectOneTest('select message from test', $strXidMessage);
 
-            $oHostDbMaster->sqlExecute("update test set message = '$strTimelineMessage'");
+                $oHostDbMaster->sqlExecute("update test set message = '$strTimelineMessage'");
+            }
 
             # Restore (restore type = time, inclusive) - there is no exclusive time test because I can't find a way to find the
             # exact commit time of a transaction.
@@ -2033,31 +2095,34 @@ sub backupTestRun
 
             # Restore (restore type = xid, exclusive)
             #-----------------------------------------------------------------------------------------------------------------------
-            $bDelta = true;
-            $bForce = false;
-            $strType = RECOVERY_TYPE_XID;
-            $strTarget = $strXidTarget;
-            $bTargetExclusive = true;
-            $strTargetAction = undef;
-            $strTargetTimeline = undef;
-            $oRecoveryHashRef = undef;
-            $strComment = undef;
-            $iExpectedExitStatus = undef;
+            if ($bTestExtra)
+            {
+                $bDelta = true;
+                $bForce = false;
+                $strType = RECOVERY_TYPE_XID;
+                $strTarget = $strXidTarget;
+                $bTargetExclusive = true;
+                $strTargetAction = undef;
+                $strTargetTimeline = undef;
+                $oRecoveryHashRef = undef;
+                $strComment = undef;
+                $iExpectedExitStatus = undef;
 
-            &log(INFO, "    testing recovery type = ${strType}");
+                &log(INFO, "    testing recovery type = ${strType}");
 
-            $oHostDbMaster->clusterStop();
+                $oHostDbMaster->clusterStop();
 
-            $oHostDbMaster->restore(
-                $strIncrBackup, undef, undef, $bDelta, $bForce, $strType, $strTarget, $bTargetExclusive, $strTargetAction,
-                $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
+                $oHostDbMaster->restore(
+                    $strIncrBackup, undef, undef, $bDelta, $bForce, $strType, $strTarget, $bTargetExclusive, $strTargetAction,
+                    $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
 
-            $oHostDbMaster->clusterStart();
-            $oHostDbMaster->sqlSelectOneTest('select message from test', $strIncrMessage);
+                $oHostDbMaster->clusterStart();
+                $oHostDbMaster->sqlSelectOneTest('select message from test', $strIncrMessage);
+            }
 
             # Restore (restore type = name)
             #-----------------------------------------------------------------------------------------------------------------------
-            if ($oHostDbMaster->dbVersion() >= PG_VERSION_91)
+            if ($bTestExtra && $oHostDbMaster->dbVersion() >= PG_VERSION_91)
             {
                 $bDelta = true;
                 $bForce = true;
@@ -2084,7 +2149,7 @@ sub backupTestRun
 
             # Restore (restore type = default, timeline = 3)
             #-----------------------------------------------------------------------------------------------------------------------
-            if ($oHostDbMaster->dbVersion() >= PG_VERSION_84)
+            if ($bTestExtra && $oHostDbMaster->dbVersion() >= PG_VERSION_84)
             {
                 $bDelta = true;
                 $bForce = false;
@@ -2111,19 +2176,25 @@ sub backupTestRun
 
             # Incr backup - make sure a --no-online backup fails
             #-----------------------------------------------------------------------------------------------------------------------
-            $strType = BACKUP_TYPE_INCR;
+            if ($bTestExtra)
+            {
+                $strType = BACKUP_TYPE_INCR;
 
-            $oHostBackup->backup(
-                $strType, 'fail on --no-' . OPTION_ONLINE,
-                {iExpectedExitStatus => ERROR_POSTMASTER_RUNNING, strOptionalParam => '--no-' . OPTION_ONLINE});
+                $oHostBackup->backup(
+                    $strType, 'fail on --no-' . OPTION_ONLINE,
+                    {iExpectedExitStatus => ERROR_POSTMASTER_RUNNING, strOptionalParam => '--no-' . OPTION_ONLINE});
+            }
 
             # Incr backup - allow --no-online backup to succeed with --force
             #-----------------------------------------------------------------------------------------------------------------------
-            $strType = BACKUP_TYPE_INCR;
+            if ($bTestExtra)
+            {
+                $strType = BACKUP_TYPE_INCR;
 
-            $oHostBackup->backup(
-                $strType, 'succeed on --no-' . OPTION_ONLINE . ' with --' . OPTION_FORCE,
-                {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+                $oHostBackup->backup(
+                    $strType, 'succeed on --no-' . OPTION_ONLINE . ' with --' . OPTION_FORCE,
+                    {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+            }
         }
         }
         }

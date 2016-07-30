@@ -331,24 +331,34 @@ sub pathGet
         {name => 'bTemp', default => false, trace => true}
     );
 
-    # Make sure that any absolute path starts with /, otherwise it will actually be relative
+    # Is this an absolute path type?
     my $bAbsolute = $strType =~ /.*absolute.*/;
 
-    if ($bAbsolute && $strFile !~ /^\/.*/)
+    # Make sure a temp file is valid for this type and file
+    if ($bTemp)
     {
-        confess &log(ASSERT, "absolute path ${strType}:${strFile} must start with /");
-    }
+        # Only allow temp files for PATH_BACKUP_ARCHIVE, PATH_BACKUP_ARCHIVE_OUT, PATH_BACKUP_TMP and any absolute path
+        if (!($strType eq PATH_BACKUP_ARCHIVE || $strType eq PATH_BACKUP_ARCHIVE_OUT || $strType eq PATH_BACKUP_TMP || $bAbsolute))
+        {
+            confess &log(ASSERT, 'temp file not supported for path type ' . $strType);
+        }
 
-    # Only allow temp files for PATH_BACKUP_ARCHIVE, PATH_BACKUP_ARCHIVE_OUT, PATH_BACKUP_TMP and any absolute path
-    if ($bTemp && !($strType eq PATH_BACKUP_ARCHIVE || $strType eq PATH_BACKUP_ARCHIVE_OUT || $strType eq PATH_BACKUP_TMP ||
-        $bAbsolute))
-    {
-        confess &log(ASSERT, 'temp file not supported on path ' . $strType);
+        # The file must be defined
+        if (!defined($strFile))
+        {
+            confess &log(ASSERT, 'strFile must be defined when temp file requested');
+        }
     }
 
     # Get absolute path
     if ($bAbsolute)
     {
+        # Make sure that any absolute path starts with /, otherwise it will actually be relative
+        if ($strFile !~ /^\/.*/)
+        {
+            confess &log(ASSERT, "absolute path ${strType}:${strFile} must start with /");
+        }
+
         if (defined($bTemp) && $bTemp)
         {
             return $strFile . '.backrest.tmp';
@@ -378,14 +388,9 @@ sub pathGet
     # Get the backup tmp path
     if ($strType eq PATH_BACKUP_TMP)
     {
-        my $strTempPath = "$self->{strBackupPath}/temp/$self->{strStanza}.tmp";
-
-        if ($bTemp)
-        {
-            return "${strTempPath}/file.tmp" . (defined($self->{iThreadIdx}) ? ".$self->{iThreadIdx}" : '');
-        }
-
-        return "${strTempPath}" . (defined($strFile) ? "/${strFile}" : '');
+        return
+            "$self->{strBackupPath}/temp/$self->{strStanza}.tmp" . (defined($strFile) ? "/${strFile}" : '') .
+            ($bTemp ? (defined($self->{iThreadIdx}) ? ".$self->{iThreadIdx}" : '') . '.tmp' : '');
     }
 
     # Get the backup archive path
@@ -737,7 +742,7 @@ sub pathCreate
         }
 
         # Execute the command
-        $self->{oProtocol}->cmdExecute(OP_FILE_PATH_CREATE, \%oParamHash, false);
+        $self->{oProtocol}->cmdExecute(OP_FILE_PATH_CREATE, \%oParamHash);
     }
     else
     {
@@ -1060,7 +1065,7 @@ sub list
         }
 
         # Execute the command
-        my $strOutput = $self->{oProtocol}->cmdExecute(OP_FILE_LIST, \%oParamHash, false);
+        my $strOutput = $self->{oProtocol}->cmdExecute(OP_FILE_LIST, \%oParamHash);
 
         if (defined($strOutput))
         {
@@ -1653,7 +1658,7 @@ sub copy
 
             eval
             {
-                $strOutput = $self->{oProtocol}->outputRead(true, undef, true);
+                $strOutput = $self->{oProtocol}->outputRead(true, true);
 
                 # Check the result of the remote call
                 if (substr($strOutput, 0, 1) eq 'Y')

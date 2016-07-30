@@ -12,6 +12,7 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname basename);
 use Getopt::Long qw(GetOptions);
+use Storable qw(dclone);
 
 use lib dirname($0) . '/../lib';
 use pgBackRest::Common::Exception;
@@ -1315,7 +1316,6 @@ my %oOptionRule =
             &CMD_CHECK => true,
             &CMD_EXPIRE => true,
             &CMD_INFO => true,
-            &CMD_REMOTE => true,
             &CMD_RESTORE => true,
             &CMD_START => true,
             &CMD_STOP => true,
@@ -1566,7 +1566,6 @@ my %oOptionRule =
             &CMD_BACKUP => true,
             &CMD_CHECK => true,
             &CMD_EXPIRE => true,
-            &CMD_REMOTE => true,
             &CMD_START => true,
             &CMD_STOP => true,
         }
@@ -1873,6 +1872,12 @@ sub configLoad
     else
     {
         $strRemoteType = NONE;
+    }
+
+    # Remote type should always be none when command is remote
+    if (commandTest(CMD_REMOTE) && !optionRemoteTypeTest(NONE))
+    {
+        confess &log(ASSERT, 'Remote type must be none for remote command');
     }
 
     return true;
@@ -2563,7 +2568,6 @@ push @EXPORT, qw(optionTest);
 ####################################################################################################################################
 sub optionRuleGet
 {
-    use Storable qw(dclone);
     return dclone(\%oOptionRule);
 }
 
@@ -2921,9 +2925,6 @@ sub commandWriteOptionFormat
 ####################################################################################################################################
 sub commandHashGet
 {
-    require Storable;
-    Storable->import();
-
     return dclone(\%oCommandHash);
 }
 
