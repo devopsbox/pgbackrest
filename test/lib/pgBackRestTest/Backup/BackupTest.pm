@@ -1767,7 +1767,8 @@ sub backupTestRun
                 $oHostDbMaster->sqlSelectOneTest(
                     "select client_addr || '-' || state from pg_stat_replication", $oHostDbStandby->ipGet() . '/32-streaming');
 
-                # docker exec -u backrest test-0-backup /backrest/bin/pgbackrest --config=/home/vagrant/test/test-0/backup/pgbackrest.conf --stop-auto --type=incr --no-resume --stanza=db --backup-standby --db-standby-host=db-standby --db-standby-path=/home/vagrant/test/test-0/db-standby/db/base --db-standby-socket-path=/home/vagrant/test/test-0/db-standby/db --db-standby-user=vagrant --test --log-level-console=info backup
+                # /backrest/test/test.pl --vm=u14 --module=backup --vm-out --db-version=9.4 --no-lint --thread-max=1 --test=full --run=6 --no-cleanup
+                # docker exec -u backrest test-0-backup /backrest/bin/pgbackrest --config=/home/vagrant/test/test-0/backup/pgbackrest.conf --stop-auto --no-resume --stanza=db --backup-standby --db-standby-host=db-standby --db-standby-path=/home/vagrant/test/test-0/db-standby/db/base --db-standby-socket-path=/home/vagrant/test/test-0/db-standby/db --db-standby-user=vagrant --test backup --type=incr --log-level-console=info
 
                 # !!! REMOVE THIS
                 exit 0;

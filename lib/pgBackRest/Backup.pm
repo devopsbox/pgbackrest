@@ -13,6 +13,8 @@ use Fcntl 'SEEK_CUR';
 use File::Basename;
 use File::Path qw(remove_tree);
 use Thread::Queue;
+use Socket qw(inet_ntoa);
+use Sys::Hostname qw(hostname);
 
 use lib dirname($0);
 use pgBackRest::Common::Exception;
@@ -724,9 +726,14 @@ sub process
         # Wait for replay on the standby to catch up
         if (optionGet(OPTION_BACKUP_STANDBY))
         {
-            &log(INFO, "wait for replay on the standby to reach ${strArchiveStart}");
-            my $strReplayedLSN = $oDb->replayWait($strArchiveStart);
-            &log(INFO, "replay on the standby reached ${strReplayedLSN}");
+            my $strStandbyHostAddr = inet_ntoa(scalar(gethostbyname(
+                optionGet(OPTION_DB_STANDBY_HOST) ? optionGet(OPTION_DB_STANDBY_HOST) : hostname())));
+
+            &log(INFO, "wait for replay on the standby ($strStandbyHostAddr) to reach ${strArchiveStart}");
+
+            my $strReplayedLSN = $oDb->replayWait($strArchiveStart, $strStandbyHostAddr);
+
+            &log(INFO, "replay on the standby ($strStandbyHostAddr) reached ${strReplayedLSN}");
         }
     }
 

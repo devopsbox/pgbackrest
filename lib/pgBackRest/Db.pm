@@ -867,12 +867,14 @@ sub replayWait
     my
     (
         $strOperation,
-        $strTargetLSN
+        $strTargetLSN,
+        $strStandbyHostAddr,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->replayWait', \@_,
-            {name => 'strTargetLSN'}
+            {name => 'strTargetLSN'},
+            {name => 'strStandbyHostAddr'},
         );
 
     # Load ArchiveCommon Module
@@ -888,14 +890,18 @@ sub replayWait
     do
     {
         # Get the replay location
-        my $strLastReplayedLSN = $self->executeSqlOne('select replay_location from pg_stat_replication');
+        my $strLastReplayedLSN = $self->executeSqlOne(
+            "select coalesce(pg_stat_replication.replay_location::text, '<NONE>')" .
+            " from (select '${strStandbyHostAddr}'::inet as client_addr) as standby" .
+            " left outer join pg_stat_replication on pg_stat_replication.client_addr = standby.client_addr" .
+            " order by pg_stat_replication.replay_location limit 1");
 
         # Error if the replay location could not be retrieved
-        if (!defined($strLastReplayedLSN))
+        if ($strLastReplayedLSN eq '<NONE>')
         {
             confess &log(
                 ERROR,
-                "update to query replay location on the standby\n" .
+                "unable to query replay location on the standby ($strStandbyHostAddr)\n" .
                     "Hint: Is the standy performing streaming replication?",
                 ERROR_ARCHIVE_TIMEOUT);
         }
