@@ -1547,7 +1547,7 @@ sub backupTestRun
 
             # Create hosts, file object, and config
             my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = backupTestSetup(
-                $bRemote, false, undef, {bCompress => $bCompress, bArchiveAsync => $bArchiveAsync});
+                $bRemote, false, undef, {bStandby => $bRemote, bCompress => $bCompress, bArchiveAsync => $bArchiveAsync});
 
             # Determine if extra tests are performed.  Extra tests should not be primary tests for compression or async archiving.
             my $bTestExtra = !$bCompress && !$bArchiveAsync && $iThreadMax == 1;
