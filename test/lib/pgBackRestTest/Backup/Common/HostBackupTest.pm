@@ -682,7 +682,6 @@ sub configCreate
     my $bCompress = shift;
     my $bHardlink = shift;
     my $bArchiveAsync = shift;
-    my $bCompressAsync = shift;
 
     my %oParamHash;
     my $strStanza = $self->stanza();
