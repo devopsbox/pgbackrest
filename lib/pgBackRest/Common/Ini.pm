@@ -572,9 +572,13 @@ sub remove
     {
         delete(${$oContent}{$strSection}{$strKey}{$strSubKey});
     }
-    else
+    elsif (defined($strKey))
     {
         delete(${$oContent}{$strSection}{$strKey});
+    }
+    else
+    {
+        delete(${$oContent}{$strSection});
     }
 }
 

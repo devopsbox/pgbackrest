@@ -384,9 +384,8 @@ sub restore
         # Change mode on the backup path so it can be read
         my $oExpectedManifest = new pgBackRest::Manifest(
             $self->{oFile}->pathGet(
-                PATH_BACKUP_CLUSTER,
-                ($strBackup eq 'latest' ? $oHostBackup->backupLast() : $strBackup) . '/' . FILE_MANIFEST),
-                true);
+                PATH_BACKUP_CLUSTER, ($strBackup eq 'latest' ? $oHostBackup->backupLast() : $strBackup) . '/' . FILE_MANIFEST),
+            true);
 
         $oExpectedManifestRef = $oExpectedManifest->{oContent};
 

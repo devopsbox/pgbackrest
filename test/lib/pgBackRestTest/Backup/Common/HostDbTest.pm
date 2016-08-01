@@ -353,7 +353,9 @@ sub clusterCreate
 
     # Don't link pg_xlog for versions < 9.2 because some recovery scenarios won't work.
     $self->executeSimple(
-        $self->dbBinPath() . '/initdb' . ($self->dbVersion() >= PG_VERSION_92 ? " --xlogdir=${strXlogPath}" : '') .
+        $self->dbBinPath() . '/initdb ' .
+        ($self->dbVersion() >= PG_VERSION_93 ? ' -k' : '') .
+        ($self->dbVersion() >= PG_VERSION_92 ? " --xlogdir=${strXlogPath}" : '') .
         ' --pgdata=' . $self->dbBasePath() . ' --auth=trust');
 
     if (!$self->standby())

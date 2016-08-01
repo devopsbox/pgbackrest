@@ -218,6 +218,7 @@ sub backupBegin
         ' --config=' . $self->backrestConfig() .
         (defined($oExpectedManifest) ? " --no-online" : '') .
         (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
+        (defined($$oParam{bStandby}) && $$oParam{bStandby} ? " --backup-standby" : '') .
         ($strType ne 'incr' ? " --type=${strType}" : '') .
         ' --stanza=' . $self->stanza() . ' backup' .
         (defined($strTest) ? " --test --test-delay=${fTestDelay} --test-point=" . lc($strTest) . '=y' : ''),
@@ -671,37 +672,36 @@ sub stop
     return logDebugReturn($strOperation);
 }
 
-
 ####################################################################################################################################
 # configCreate
 ####################################################################################################################################
 sub configCreate
 {
     my $self = shift;
-    my $oHostRemote = shift;
-    my $bCompress = shift;
-    my $bHardlink = shift;
-    my $bArchiveAsync = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oParam,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->stop', \@_,
+            {name => 'oParam', required => false},
+        );
 
     my %oParamHash;
     my $strStanza = $self->stanza();
+    my $oHostGroup = hostGroupGet();
+    my $oHostBackup = $oHostGroup->hostGet(HOST_BACKUP);
+    my $oHostDbMaster = $oHostGroup->hostGet(HOST_DB_MASTER);
+    my $oHostDbStandby = $oHostGroup->hostGet(HOST_DB_STANDBY);
 
-    if (defined($oHostRemote))
-    {
-        $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_COMMAND_REMOTE} = $self->backrestExe();
-    }
+    my $bArchiveAsync = defined($$oParam{bArchiveAsync}) ? $$oParam{ArchiveAsync} : false;
 
-    if (defined($oHostRemote) && $oHostRemote->nameTest(HOST_BACKUP))
-    {
-        $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_BACKUP_HOST} = $oHostRemote->nameGet();
-        $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_BACKUP_USER} = $oHostRemote->userGet();
-    }
-    elsif (defined($oHostRemote))
-    {
-        $oParamHash{$strStanza}{&OPTION_DB_HOST} = $oHostRemote->nameGet();
-        $oParamHash{$strStanza}{&OPTION_DB_USER} = $oHostRemote->userGet();
-    }
-
+    # General options
+    # ------------------------------------------------------------------------------------------------------------------------------
     $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_LEVEL_CONSOLE} = lc(DEBUG);
     $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_LEVEL_FILE} = lc(TRACE);
 
@@ -709,64 +709,89 @@ sub configCreate
     $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_PATH} = $self->logPath();
     $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_LOCK_PATH} = $self->lockPath();
 
-    if ($self->nameTest(HOST_BACKUP))
-    {
-        $oParamHash{$strStanza}{&OPTION_DB_PATH} = $oHostRemote->dbBasePath();
-
-        if (!$self->synthetic())
-        {
-            $oParamHash{$strStanza}{&OPTION_DB_SOCKET_PATH} = $oHostRemote->dbSocketPath();
-            $oParamHash{$strStanza}{&OPTION_DB_PORT} = $oHostRemote->dbPort();
-        }
-    }
-    else
-    {
-        if ($oHostRemote)
-        {
-            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_PATH} = $self->logPath();
-            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_LOCK_PATH} = $self->lockPath();
-        }
-
-        if ($bArchiveAsync)
-        {
-            $oParamHash{&CONFIG_SECTION_GLOBAL . ':' . &CMD_ARCHIVE_PUSH}{&OPTION_ARCHIVE_ASYNC} = 'y';
-            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_SPOOL_PATH} =
-                defined($oHostRemote) ? $self->spoolPath() : $self->repoPath();
-        }
-
-        $oParamHash{$strStanza}{&OPTION_DB_PATH} = $self->dbBasePath();
-
-        if (!$self->synthetic())
-        {
-            $oParamHash{$strStanza}{&OPTION_DB_SOCKET_PATH} = $self->dbSocketPath();
-            $oParamHash{$strStanza}{&OPTION_DB_PORT} = $self->dbPort();
-        }
-    }
-
-    if (defined($oHostRemote))
-    {
-        $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_CONFIG_REMOTE} = $oHostRemote->backrestConfig();
-    }
-
     if ($self->threadMax() > 1)
     {
         $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_THREAD_MAX} = $self->threadMax();
     }
 
-    if ($self->nameTest(HOST_BACKUP) || !defined($oHostRemote))
-    {
-        if (defined($bHardlink) && $bHardlink)
-        {
-            $oParamHash{&CONFIG_SECTION_GLOBAL . ':' . &CMD_BACKUP}{&OPTION_HARDLINK} = 'y';
-        }
-
-        $oParamHash{&CONFIG_SECTION_GLOBAL . ':' . &CMD_BACKUP}{&OPTION_BACKUP_ARCHIVE_COPY} = 'y';
-        $oParamHash{&CONFIG_SECTION_GLOBAL . ':' . &CMD_BACKUP}{&OPTION_START_FAST} = 'y';
-    }
-
-    if (defined($bCompress) && !$bCompress)
+    if (defined($$oParam{bCompress}) && !$$oParam{bCompress})
     {
         $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_COMPRESS} = 'n';
+    }
+
+    # if (defined($oHostRemote))
+    # {
+        $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_COMMAND_REMOTE} = $self->backrestExe();
+    # }
+
+    if (defined($$oParam{bHardlink}) && $$oParam{bHardlink})
+    {
+        $oParamHash{&CONFIG_SECTION_GLOBAL . ':' . &CMD_BACKUP}{&OPTION_HARDLINK} = 'y';
+    }
+
+    $oParamHash{&CONFIG_SECTION_GLOBAL . ':' . &CMD_BACKUP}{&OPTION_BACKUP_ARCHIVE_COPY} = 'y';
+    $oParamHash{&CONFIG_SECTION_GLOBAL . ':' . &CMD_BACKUP}{&OPTION_START_FAST} = 'y';
+
+    # Host specific options
+    # ------------------------------------------------------------------------------------------------------------------------------
+
+    # If this is the backup host
+    if ($self->nameTest(HOST_BACKUP))
+    {
+        $oParamHash{$strStanza}{&OPTION_DB_HOST} = $oHostDbMaster->nameGet();
+        $oParamHash{$strStanza}{&OPTION_DB_USER} = $oHostDbMaster->userGet();
+        $oParamHash{$strStanza}{&OPTION_DB_PATH} = $oHostDbMaster->dbBasePath();
+        $oParamHash{$strStanza}{&OPTION_DB_SOCKET_PATH} = $oHostDbMaster->dbSocketPath();
+        $oParamHash{$strStanza}{&OPTION_DB_PORT} = $oHostDbMaster->dbPort();
+
+        # !! Need to add this for standby as well - for now just give all params so standby works
+        $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_CONFIG_REMOTE} = $oHostDbStandby->backrestConfig();
+
+        if (defined($oHostDbStandby))
+        {
+            $oParamHash{$strStanza}{&OPTION_DB_STANDBY_HOST} = $oHostDbStandby->nameGet();
+            $oParamHash{$strStanza}{&OPTION_DB_STANDBY_USER} = $oHostDbStandby->userGet();
+            $oParamHash{$strStanza}{&OPTION_DB_STANDBY_PATH} = $oHostDbStandby->dbBasePath();
+            $oParamHash{$strStanza}{&OPTION_DB_STANDBY_SOCKET_PATH} = $oHostDbStandby->dbSocketPath();
+            $oParamHash{$strStanza}{&OPTION_DB_STANDBY_PORT} = $oHostDbStandby->dbPort();
+        }
+
+    }
+    # Else if this is a database host
+    else
+    {
+        $oParamHash{$strStanza}{&OPTION_DB_PATH} = $self->dbBasePath();
+        $oParamHash{$strStanza}{&OPTION_DB_SOCKET_PATH} = $self->dbSocketPath();
+        $oParamHash{$strStanza}{&OPTION_DB_PORT} = $self->dbPort();
+
+        if ($bArchiveAsync)
+        {
+            $oParamHash{&CONFIG_SECTION_GLOBAL . ':' . &CMD_ARCHIVE_PUSH}{&OPTION_ARCHIVE_ASYNC} = 'y';
+        }
+
+        # If the the backup host is remote
+        if (defined($oHostBackup))
+        {
+            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_BACKUP_HOST} = $oHostBackup->nameGet();
+            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_BACKUP_USER} = $oHostBackup->userGet();
+
+            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_PATH} = $self->logPath();
+            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_LOCK_PATH} = $self->lockPath();
+
+            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_CONFIG_REMOTE} = $oHostBackup->backrestConfig();
+
+            if ($bArchiveAsync)
+            {
+                $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_SPOOL_PATH} = $self->spoolPath();
+            }
+        }
+        # Else if the backups are being done on the database host
+        {
+            if ($bArchiveAsync)
+            {
+                $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_SPOOL_PATH} = $self->repoPath();
+            }
+        }
     }
 
     # Write out the configuration file

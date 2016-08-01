@@ -73,9 +73,6 @@ sub backupTestSetup
         $oHostGroup->hostAdd($oHostDbStandby);
     }
 
-    # If backup host is not defined set it to db-master
-    $oHostBackup = defined($oHostBackup) ? $oHostBackup : $oHostDbMaster;
-
     # Create the local file object
     my $oFile =
         new pgBackRest::File
@@ -93,29 +90,31 @@ sub backupTestSetup
         );
 
     # Create db master config
-    $oHostDbMaster->configCreate(
-        ($bRemote ? $oHostBackup : undef),
-        $$oConfigParam{bCompress},
-        $bRemote ? undef : $$oConfigParam{bHardLink},
-        $$oConfigParam{bArchiveAsync},
-        undef);
+    $oHostDbMaster->configCreate({
+        bCompress => $$oConfigParam{bCompress},
+        bHardlink => $bRemote ? undef : $$oConfigParam{bHardLink},
+        bArchiveAsync => $$oConfigParam{bArchiveAsync}});
 
-    # Create backup config
-    if ($bRemote)
+    # Create backup config if backup host exists
+    if (defined($oHostBackup))
     {
-        $oHostBackup->configCreate(
-            $oHostDbMaster,
-            $$oConfigParam{bCompress},
-            $$oConfigParam{bHardLink});
+        $oHostBackup->configCreate({
+            bCompress => $$oConfigParam{bCompress},
+            bHardlink => $$oConfigParam{bHardLink}});
+    }
+    # If backup host is not defined set it to db-master
+    else
+    {
+        $oHostBackup = defined($oHostBackup) ? $oHostBackup : $oHostDbMaster;
+    }
 
-        if (defined($oHostDbStandby))
-        {
-            $oHostDbStandby->configCreate(
-                $oHostBackup,
-                $$oConfigParam{bCompress},
-                $$oConfigParam{bHardLink},
-                $$oConfigParam{bArchiveAsync});
-        }
+    # Create db-standby config
+    if (defined($oHostDbStandby))
+    {
+        $oHostDbStandby->configCreate({
+            bCompress => $$oConfigParam{bCompress},
+            bHardlink => $bRemote ? undef : $$oConfigParam{bHardLink},
+            bArchiveAsync => $$oConfigParam{bArchiveAsync}});
     }
 
     return $oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile;
