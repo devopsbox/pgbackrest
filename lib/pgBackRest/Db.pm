@@ -889,8 +889,8 @@ sub replayWait
         {
             confess &log(
                 ERROR,
-                "unable to query replay location on the standby\n" .
-                    "Hint: Is the standy performing streaming replication?",
+                "unable to query replay location on the standby using pg_last_xlog_replay_location()\n" .
+                    "Hint: Is this a standby?",
                 ERROR_ARCHIVE_TIMEOUT);
         }
 

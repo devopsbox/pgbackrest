@@ -713,7 +713,7 @@ sub process
 
         # Record the archive start location
         $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LSN_START, undef, $strArchiveStart);
-        &log(INFO, "archive start: ${strArchiveStart}");
+        &log(INFO, "backup lsn start: ${strArchiveStart}");
 
         # Get tablespace map
         $oTablespaceMap = $oDb->tablespaceMapGet();
@@ -869,7 +869,7 @@ sub process
         ($strArchiveStop, my $strTimestampDbStop, my $oFileHash) = $oDb->backupStop();
 
         $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LSN_STOP, undef, $strArchiveStop);
-        &log(INFO, 'archive stop: ' . $strArchiveStop);
+        &log(INFO, 'backup lsn stop: ' . $strArchiveStop);
 
         # Write out files returned from stop backup
         foreach my $strFile (sort(keys(%{$oFileHash})))
