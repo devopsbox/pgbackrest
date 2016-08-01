@@ -66,6 +66,7 @@ sub new
 
     # Determine the database path
     $self->{strDbPath} = optionGet(OPTION_BACKUP_STANDBY) ? optionGet(OPTION_DB_STANDBY_PATH) : optionGet(OPTION_DB_PATH);
+    $self->{strDbMasterPath} = optionGet(OPTION_DB_PATH);
 
     # Initialize default file objects
     $self->{oFile} = new pgBackRest::File
@@ -593,20 +594,20 @@ sub process
     my $bHardLink = optionGet(OPTION_HARDLINK);
 
     # Not supporting remote backup hosts yet
-    if ($self->{oFile}->isRemote(PATH_BACKUP))
+    if ($self->{oFileMaster}->isRemote(PATH_BACKUP))
     {
         confess &log(ERROR, 'remote backup host not currently supported');
     }
 
     # Create the cluster backup and history path
-    $self->{oFile}->pathCreate(PATH_BACKUP_CLUSTER, PATH_BACKUP_HISTORY, undef, true, true);
+    $self->{oFileMaster}->pathCreate(PATH_BACKUP_CLUSTER, PATH_BACKUP_HISTORY, undef, true, true);
 
     # Load or build backup.info
-    my $oBackupInfo = new pgBackRest::BackupInfo($self->{oFile}->pathGet(PATH_BACKUP_CLUSTER));
+    my $oBackupInfo = new pgBackRest::BackupInfo($self->{oFileMaster}->pathGet(PATH_BACKUP_CLUSTER));
 
     # Build backup tmp and config
-    my $strBackupTmpPath = $self->{oFile}->pathGet(PATH_BACKUP_TMP);
-    my $strBackupConfFile = $self->{oFile}->pathGet(PATH_BACKUP_TMP, 'backup.manifest');
+    my $strBackupTmpPath = $self->{oFileMaster}->pathGet(PATH_BACKUP_TMP);
+    my $strBackupConfFile = $self->{oFileMaster}->pathGet(PATH_BACKUP_TMP, 'backup.manifest');
 
     # Declare the backup manifest
     my $oBackupManifest = new pgBackRest::Manifest($strBackupConfFile, false);
@@ -622,7 +623,7 @@ sub process
         if (defined($strBackupLastPath))
         {
             $oLastManifest = new pgBackRest::Manifest(
-                $self->{oFile}->pathGet(PATH_BACKUP_CLUSTER, "${strBackupLastPath}/" . FILE_MANIFEST));
+                $self->{oFileMaster}->pathGet(PATH_BACKUP_CLUSTER, "${strBackupLastPath}/" . FILE_MANIFEST));
 
             &log(INFO, 'last backup label = ' . $oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL) .
                        ', version = ' . $oLastManifest->get(INI_SECTION_BACKREST, INI_KEY_VERSION));
@@ -688,7 +689,7 @@ sub process
     # Don't start the backup but do check if PostgreSQL is running
     if (!optionGet(OPTION_ONLINE))
     {
-        if ($self->{oFile}->exists(PATH_DB_ABSOLUTE, $self->{strDbPath} . '/' . DB_FILE_POSTMASTERPID))
+        if ($self->{oFileMaster}->exists(PATH_DB_ABSOLUTE, $self->{strDbMasterPath} . '/' . DB_FILE_POSTMASTERPID))
         {
             if (optionGet(OPTION_FORCE))
             {
@@ -738,7 +739,7 @@ sub process
     }
 
     # Build the manifest
-    $oBackupManifest->build($self->{oFile}, $self->{strDbPath}, $oLastManifest, optionGet(OPTION_ONLINE),
+    $oBackupManifest->build($self->{oFileMaster}, $self->{strDbMasterPath}, $oLastManifest, optionGet(OPTION_ONLINE),
                             $oTablespaceMap, $oDatabaseMap);
     &log(TEST, TEST_MANIFEST_BUILD);
 
@@ -842,16 +843,16 @@ sub process
             &log(WARN, "aborted backup exists, but cannot be resumed (${strReason}) - will be dropped and recreated");
             &log(TEST, TEST_BACKUP_NORESUME);
 
-            remove_tree($self->{oFile}->pathGet(PATH_BACKUP_TMP))
+            remove_tree($self->{oFileMaster}->pathGet(PATH_BACKUP_TMP))
                 or confess &log(ERROR, "unable to delete tmp path: ${strBackupTmpPath}");
-            $self->{oFile}->pathCreate(PATH_BACKUP_TMP, undef, undef, false, true);
+            $self->{oFileMaster}->pathCreate(PATH_BACKUP_TMP, undef, undef, false, true);
         }
     }
     # Else create the backup tmp path
     else
     {
         logDebugMisc($strOperation, "create temp backup path ${strBackupTmpPath}");
-        $self->{oFile}->pathCreate(PATH_BACKUP_TMP, undef, undef, false, true);
+        $self->{oFileMaster}->pathCreate(PATH_BACKUP_TMP, undef, undef, false, true);
     }
 
     # Save the backup manifest
@@ -877,7 +878,7 @@ sub process
             # Only save the file if it has content
             if (defined($$oFileHash{$strFile}))
             {
-                my $strFileName = $self->{oFile}->pathGet(PATH_BACKUP_TMP, $strFile);
+                my $strFileName = $self->{oFileMaster}->pathGet(PATH_BACKUP_TMP, $strFile);
 
                 # Write content out to a file
                 fileStringWrite($strFileName, $$oFileHash{$strFile});
@@ -885,8 +886,8 @@ sub process
                 # Compress if required
                 if ($bCompress)
                 {
-                    $self->{oFile}->compress(PATH_BACKUP_ABSOLUTE, $strFileName);
-                    $strFileName .= '.' . $self->{oFile}->{strCompressExtension};
+                    $self->{oFileMaster}->compress(PATH_BACKUP_ABSOLUTE, $strFileName);
+                    $strFileName .= '.' . $self->{oFileMaster}->{strCompressExtension};
                 }
 
                 # Add file to manifest
@@ -894,7 +895,7 @@ sub process
                     $strFile,
                     (fileStat($strFileName))->mtime,
                     length($$oFileHash{$strFile}),
-                    $self->{oFile}->hash(PATH_BACKUP_ABSOLUTE, $strFileName, $bCompress));
+                    $self->{oFileMaster}->hash(PATH_BACKUP_ABSOLUTE, $strFileName, $bCompress));
 
                 &log(DETAIL, "wrote '${strFile}' file returned from pg_stop_backup()");
             }
@@ -921,7 +922,7 @@ sub process
         foreach my $strArchive (@stryArchive)
         {
             my $strArchiveFile =
-                $oArchive->walFileName($self->{oFile}, $strArchiveId, $strArchive, false, optionGet(OPTION_ARCHIVE_TIMEOUT));
+                $oArchive->walFileName($self->{oFileMaster}, $strArchiveId, $strArchive, false, optionGet(OPTION_ARCHIVE_TIMEOUT));
             $strArchive = substr($strArchiveFile, 0, 24);
 
             if (!$oBackupManifest->test(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START))
@@ -940,11 +941,11 @@ sub process
 
                 # Copy the log file from the archive repo to the backup
                 my $strDestinationFile = MANIFEST_TARGET_PGDATA . "/pg_xlog/${strArchive}" .
-                                         ($bCompress ? ".$self->{oFile}->{strCompressExtension}" : '');
-                my $bArchiveCompressed = $strArchiveFile =~ "^.*\.$self->{oFile}->{strCompressExtension}\$";
+                                         ($bCompress ? ".$self->{oFileMaster}->{strCompressExtension}" : '');
+                my $bArchiveCompressed = $strArchiveFile =~ "^.*\.$self->{oFileMaster}->{strCompressExtension}\$";
 
                 my ($bCopyResult, $strCopyChecksum, $lCopySize) =
-                    $self->{oFile}->copy(PATH_BACKUP_ARCHIVE, "${strArchiveId}/${strArchiveFile}",
+                    $self->{oFileMaster}->copy(PATH_BACKUP_ARCHIVE, "${strArchiveId}/${strArchiveFile}",
                                  PATH_BACKUP_TMP, $strDestinationFile,
                                  $bArchiveCompressed, $bCompress,
                                  undef, $lModificationTime, undef, true);
@@ -954,7 +955,7 @@ sub process
                 my $strFileLog = "${strPathLog}/${strArchive}";
 
                 # Compare the checksum against the one already in the archive log name
-                if ($strArchiveFile !~ "^${strArchive}-${strCopyChecksum}(\\.$self->{oFile}->{strCompressExtension}){0,1}\$")
+                if ($strArchiveFile !~ "^${strArchive}-${strCopyChecksum}(\\.$self->{oFileMaster}->{strCompressExtension}){0,1}\$")
                 {
                     confess &log(ERROR, "error copying WAL segment '${strArchiveFile}' to backup - checksum recorded with " .
                                         "file does not match actual checksum of '${strCopyChecksum}'", ERROR_CHECKSUM);
@@ -974,11 +975,11 @@ sub process
     # already a wait after the manifest is built but it's still possible if the remote and local systems don't have synchronized
     # clocks.  In practice this is most useful for making offline testing faster since it allows the wait after manifest build to
     # be skipped by dealing with any backup label collisions here.
-    if (fileList($self->{oFile}->pathGet(PATH_BACKUP_CLUSTER),
+    if (fileList($self->{oFileMaster}->pathGet(PATH_BACKUP_CLUSTER),
                  ($strType eq BACKUP_TYPE_FULL ? '^' : '_') .
                  timestampFileFormat(undef, $lTimestampStop) .
                  ($strType eq BACKUP_TYPE_FULL ? 'F' : '(D|I)$')) ||
-        fileList($self->{oFile}->pathGet(PATH_BACKUP_CLUSTER, PATH_BACKUP_HISTORY . '/' . timestampFormat('%4d', $lTimestampStop)),
+        fileList($self->{oFileMaster}->pathGet(PATH_BACKUP_CLUSTER, PATH_BACKUP_HISTORY . '/' . timestampFormat('%4d', $lTimestampStop)),
                  ($strType eq BACKUP_TYPE_FULL ? '^' : '_') .
                  timestampFileFormat(undef, $lTimestampStop) .
                  ($strType eq BACKUP_TYPE_FULL ? 'F' : '(D|I)\.manifest\.gz$'), undef, true))
@@ -997,22 +998,22 @@ sub process
     &log(INFO, "new backup label = ${strBackupLabel}");
 
     # Make a compressed copy of the manifest for history
-    $self->{oFile}->copy(PATH_BACKUP_TMP, FILE_MANIFEST,
+    $self->{oFileMaster}->copy(PATH_BACKUP_TMP, FILE_MANIFEST,
                          PATH_BACKUP_TMP, FILE_MANIFEST . '.gz',
                          undef, true);
 
     # Move the backup tmp path to complete the backup
-    logDebugMisc($strOperation, "move ${strBackupTmpPath} to " . $self->{oFile}->pathGet(PATH_BACKUP_CLUSTER, $strBackupLabel));
-    $self->{oFile}->move(PATH_BACKUP_TMP, undef, PATH_BACKUP_CLUSTER, $strBackupLabel);
+    logDebugMisc($strOperation, "move ${strBackupTmpPath} to " . $self->{oFileMaster}->pathGet(PATH_BACKUP_CLUSTER, $strBackupLabel));
+    $self->{oFileMaster}->move(PATH_BACKUP_TMP, undef, PATH_BACKUP_CLUSTER, $strBackupLabel);
 
     # Copy manifest to history
-    $self->{oFile}->move(PATH_BACKUP_CLUSTER, "${strBackupLabel}/" . FILE_MANIFEST . '.gz',
+    $self->{oFileMaster}->move(PATH_BACKUP_CLUSTER, "${strBackupLabel}/" . FILE_MANIFEST . '.gz',
                          PATH_BACKUP_CLUSTER, PATH_BACKUP_HISTORY . qw{/} . substr($strBackupLabel, 0, 4) .
                          "/${strBackupLabel}.manifest.gz", true);
 
     # Create a link to the most recent backup
-    $self->{oFile}->remove(PATH_BACKUP_CLUSTER, "latest");
-    $self->{oFile}->linkCreate(PATH_BACKUP_CLUSTER, $strBackupLabel, PATH_BACKUP_CLUSTER, "latest", undef, true);
+    $self->{oFileMaster}->remove(PATH_BACKUP_CLUSTER, "latest");
+    $self->{oFileMaster}->linkCreate(PATH_BACKUP_CLUSTER, $strBackupLabel, PATH_BACKUP_CLUSTER, "latest", undef, true);
 
     # Save backup info
     $oBackupInfo->add($oBackupManifest);
