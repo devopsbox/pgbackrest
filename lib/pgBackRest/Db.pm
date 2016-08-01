@@ -703,12 +703,6 @@ sub backupStart
             ($bStartFast ? ', true' : $self->{strDbVersion} >= PG_VERSION_84 ? ', false' : '') .
             ($self->{strDbVersion} >= PG_VERSION_96 ? ', false' : '') . ') as lsn');
 
-    # !!! REMOVE Create a restore point to ensure that the start backup location is replayed quickly
-    # if (optionGet(OPTION_BACKUP_STANDBY) && $self->{strDbVersion} >= PG_VERSION_91)
-    # {
-    #     $self->executeSql("select pg_create_restore_point('" . BACKREST_NAME . " Standby Backup Start');");
-    # }
-
     # Return from function and log return values if any
     return logDebugReturn
     (
