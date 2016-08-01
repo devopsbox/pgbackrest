@@ -1861,16 +1861,11 @@
         </execute-list>
 
         <execute-list host="{[host-db-standby]}">
-            <title>Checkpoint and make sure REDO location has advanced to location on master</title>
+            <title>Check pg_last_xlog_replay_location() on standby</title>
 
-            <execute output="y">
-                <exe-cmd>psql -c "checkpoint"</exe-cmd>
-            </execute>
-
-            <execute user="postgres" output="y">
-                <exe-cmd>/usr/lib/postgresql/{[pg-version]}/bin/pg_controldata
-                    /var/lib/postgresql/{[pg-version]}/demo</exe-cmd>
-                <exe-highlight>Minimum recovery ending location|REDO location</exe-highlight>
+            <execute output="y" filter="n">
+                <exe-cmd>psql -c "
+                    select * from pg_last_xlog_replay_location()"</exe-cmd>
             </execute>
         </execute-list>
 

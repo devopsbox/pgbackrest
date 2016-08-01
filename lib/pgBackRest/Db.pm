@@ -703,11 +703,11 @@ sub backupStart
             ($bStartFast ? ', true' : $self->{strDbVersion} >= PG_VERSION_84 ? ', false' : '') .
             ($self->{strDbVersion} >= PG_VERSION_96 ? ', false' : '') . ') as lsn');
 
-    # Create a restore point to ensure that the start backup location is replayed quickly
-    if (optionGet(OPTION_BACKUP_STANDBY) && $self->{strDbVersion} >= PG_VERSION_91)
-    {
-        $self->executeSql("select pg_create_restore_point('" . BACKREST_NAME . " Standby Backup Start');");
-    }
+    # !!! REMOVE Create a restore point to ensure that the start backup location is replayed quickly
+    # if (optionGet(OPTION_BACKUP_STANDBY) && $self->{strDbVersion} >= PG_VERSION_91)
+    # {
+    #     $self->executeSql("select pg_create_restore_point('" . BACKREST_NAME . " Standby Backup Start');");
+    # }
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -868,13 +868,11 @@ sub replayWait
     (
         $strOperation,
         $strTargetLSN,
-        $strStandbyHostAddr,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->replayWait', \@_,
-            {name => 'strTargetLSN'},
-            {name => 'strStandbyHostAddr'},
+            {name => 'strTargetLSN'}
         );
 
     # Load ArchiveCommon Module
@@ -890,18 +888,14 @@ sub replayWait
     do
     {
         # Get the replay location
-        my $strLastReplayedLSN = $self->executeSqlOne(
-            "select coalesce(pg_stat_replication.replay_location::text, '<NONE>')" .
-            " from (select '${strStandbyHostAddr}'::inet as client_addr) as standby" .
-            " left outer join pg_stat_replication on pg_stat_replication.client_addr = standby.client_addr" .
-            " order by pg_stat_replication.replay_location limit 1");
+        my $strLastReplayedLSN = $self->executeSqlOne("select coalesce(pg_last_xlog_replay_location()::text, '<NONE>')");
 
         # Error if the replay location could not be retrieved
         if ($strLastReplayedLSN eq '<NONE>')
         {
             confess &log(
                 ERROR,
-                "unable to query replay location on the standby ($strStandbyHostAddr)\n" .
+                "unable to query replay location on the standby\n" .
                     "Hint: Is the standy performing streaming replication?",
                 ERROR_ARCHIVE_TIMEOUT);
         }

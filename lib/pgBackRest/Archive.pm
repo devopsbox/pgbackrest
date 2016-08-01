@@ -1078,7 +1078,7 @@ sub check
     my $oDb = new pgBackRest::Db();
 
     # Validate the database configuration
-    $oDb->configValidate($oFile, optionGet(OPTION_DB_PATH));
+    $oDb->configValidate(optionGet(OPTION_DB_PATH));
 
     # Force archiving
     my $strWalSegment = $oDb->xlogSwitch();
