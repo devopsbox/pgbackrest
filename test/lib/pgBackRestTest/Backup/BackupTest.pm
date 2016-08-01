@@ -1731,6 +1731,9 @@ sub backupTestRun
 
             $oHostDbMaster->sqlExecute("update test set message = '$strFullMessage'");
 
+            # Required to set hint bits to be sent to the standby to make the heap match on both sides
+            $oHostDbMaster->sqlSelectOneTest('select message from test', $strFullMessage);
+
             my $strFullBackup = $oHostBackup->backupEnd($strType, $oExecuteBackup);
 
             # Setup replica
