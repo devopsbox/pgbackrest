@@ -293,71 +293,6 @@ my $oConfigHelpData =
                     "directory was explicitly modified with the unix_socket_directory setting in postgressql.conf."
         },
 
-        # DB-STANDBY-HOST Option Help
-        #---------------------------------------------------------------------------------------------------------------------------
-        'db-standby-host' =>
-        {
-            section => 'stanza',
-            summary =>
-                "Cluster host for operating remotely via SSH.",
-            description =>
-                "Used for backups where the database cluster host is different from the backup host."
-        },
-
-        # DB-STANDBY-PATH Option Help
-        #---------------------------------------------------------------------------------------------------------------------------
-        'db-standby-path' =>
-        {
-            section => 'stanza',
-            summary =>
-                "Cluster data directory.",
-            description =>
-                "This should be the same as the data_directory setting in postgresql.conf. Even though this value can be read " .
-                    "from postgresql.conf or the database cluster it is prudent to set it in case those resources are not " .
-                    "available during a restore or offline backup scenario.\n" .
-                "\n" .
-                "The db-path option is tested against the value reported by PostgreSQL on every online backup so it should " .
-                    "always be current."
-        },
-
-        # DB-STANDBY-PORT Option Help
-        #---------------------------------------------------------------------------------------------------------------------------
-        'db-standby-port' =>
-        {
-            section => 'stanza',
-            summary =>
-                "Cluster port.",
-            description =>
-                "Port that PostgreSQL is running on. This usually does not need to be specified as most database clusters run " .
-                    "on the default port."
-        },
-
-        # DB-STANDBY-SOCKET-PATH Option Help
-        #---------------------------------------------------------------------------------------------------------------------------
-        'db-standby-socket-path' =>
-        {
-            section => 'stanza',
-            summary =>
-                "Cluster unix socket path.",
-            description =>
-                "The unix socket directory that was specified when PostgreSQL was started. pgBackRest will automatically look " .
-                    "in the standard location for your OS so there usually no need to specify this setting unless the socket " .
-                    "directory was explicitly modified with the unix_socket_directory setting in postgressql.conf."
-        },
-
-        # DB-STANDBY-USER Option Help
-        #---------------------------------------------------------------------------------------------------------------------------
-        'db-standby-user' =>
-        {
-            section => 'stanza',
-            summary =>
-                "Cluster host logon user when db-host is set.",
-            description =>
-                "This user will also own the remote pgBackRest process and will initiate connections to PostgreSQL. For this to " .
-                    "work correctly the user should be the PostgreSQL database cluster owner which is generally postgres, the " .
-                    "default."
-        },
-
         # DB-TIMEOUT Option Help
         #---------------------------------------------------------------------------------------------------------------------------
         'db-timeout' =>
@@ -790,7 +725,6 @@ my $oConfigHelpData =
                 'config' => 'default',
                 'config-remote' => 'section',
                 'db-path' => 'section',
-                'db-standby-path' => 'section',
                 'lock-path' => 'section',
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
@@ -826,7 +760,6 @@ my $oConfigHelpData =
                 'config' => 'default',
                 'config-remote' => 'section',
                 'db-path' => 'section',
-                'db-standby-path' => 'section',
                 'lock-path' => 'section',
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
@@ -867,11 +800,6 @@ my $oConfigHelpData =
                 'db-path' => 'section',
                 'db-port' => 'section',
                 'db-socket-path' => 'section',
-                'db-standby-host' => 'section',
-                'db-standby-path' => 'section',
-                'db-standby-port' => 'section',
-                'db-standby-socket-path' => 'section',
-                'db-standby-user' => 'section',
                 'db-timeout' => 'section',
                 'db-user' => 'section',
 
@@ -963,11 +891,6 @@ my $oConfigHelpData =
                 'db-path' => 'section',
                 'db-port' => 'section',
                 'db-socket-path' => 'section',
-                'db-standby-host' => 'section',
-                'db-standby-path' => 'section',
-                'db-standby-port' => 'section',
-                'db-standby-socket-path' => 'section',
-                'db-standby-user' => 'section',
                 'db-timeout' => 'section',
                 'db-user' => 'section',
                 'log-level-console' => 'section',
@@ -1094,7 +1017,6 @@ my $oConfigHelpData =
                 'config-remote' => 'section',
                 'db-include' => 'section',
                 'db-path' => 'section',
-                'db-standby-path' => 'section',
 
                 # DELTA Option Help
                 #-------------------------------------------------------------------------------------------------------------------
@@ -1248,7 +1170,6 @@ my $oConfigHelpData =
                 'backup-host' => 'section',
                 'config' => 'default',
                 'db-host' => 'section',
-                'db-standby-host' => 'section',
                 'lock-path' => 'section',
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
@@ -1275,7 +1196,6 @@ my $oConfigHelpData =
                 'backup-host' => 'section',
                 'config' => 'default',
                 'db-host' => 'section',
-                'db-standby-host' => 'section',
 
                 # FORCE Option Help
                 #-------------------------------------------------------------------------------------------------------------------
