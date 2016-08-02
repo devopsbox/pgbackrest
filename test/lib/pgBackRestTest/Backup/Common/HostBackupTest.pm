@@ -694,9 +694,11 @@ sub configCreate
     my %oParamHash;
     my $strStanza = $self->stanza();
     my $oHostGroup = hostGroupGet();
-    my $oHostBackup = $oHostGroup->hostGet(HOST_BACKUP);
-    my $oHostDbMaster = $oHostGroup->hostGet(HOST_DB_MASTER);
-    my $oHostDbStandby = $oHostGroup->hostGet(HOST_DB_STANDBY);
+    my $oHostBackup = $oHostGroup->hostGet(HOST_BACKUP, true);
+    my $oHostDbMaster = $oHostGroup->hostGet(HOST_DB_MASTER, true);
+    my $oHostDbStandby = $oHostGroup->hostGet(HOST_DB_STANDBY, true);
+
+    my $bRemote
 
     my $bArchiveAsync = defined($$oParam{bArchiveAsync}) ? $$oParam{ArchiveAsync} : false;
 
@@ -741,8 +743,12 @@ sub configCreate
         $oParamHash{$strStanza}{&OPTION_DB_HOST . "-1"} = $oHostDbMaster->nameGet();
         $oParamHash{$strStanza}{&OPTION_DB_USER . "-1"} = $oHostDbMaster->userGet();
         $oParamHash{$strStanza}{&OPTION_DB_PATH . "-1"} = $oHostDbMaster->dbBasePath();
-        $oParamHash{$strStanza}{&OPTION_DB_SOCKET_PATH . "-1"} = $oHostDbMaster->dbSocketPath();
-        $oParamHash{$strStanza}{&OPTION_DB_PORT . "-1"} = $oHostDbMaster->dbPort();
+
+        if (!$oHostDbMaster->synthetic())
+        {
+            $oParamHash{$strStanza}{&OPTION_DB_SOCKET_PATH . "-1"} = $oHostDbMaster->dbSocketPath();
+            $oParamHash{$strStanza}{&OPTION_DB_PORT . "-1"} = $oHostDbMaster->dbPort();
+        }
 
         # !! Need to add this for standby as well - for now just give all params so standby works
         $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_CONFIG_REMOTE} = $oHostDbStandby->backrestConfig();
@@ -752,8 +758,12 @@ sub configCreate
             $oParamHash{$strStanza}{&OPTION_DB_HOST . "-2"} = $oHostDbStandby->nameGet();
             $oParamHash{$strStanza}{&OPTION_DB_USER . "-2"} = $oHostDbStandby->userGet();
             $oParamHash{$strStanza}{&OPTION_DB_PATH . "-2"} = $oHostDbStandby->dbBasePath();
-            $oParamHash{$strStanza}{&OPTION_DB_SOCKET_PATH . "-2"} = $oHostDbStandby->dbSocketPath();
-            $oParamHash{$strStanza}{&OPTION_DB_PORT . "-2"} = $oHostDbStandby->dbPort();
+
+            if (!$oHostDbStandby->synthetic())
+            {
+                $oParamHash{$strStanza}{&OPTION_DB_SOCKET_PATH . "-2"} = $oHostDbStandby->dbSocketPath();
+                $oParamHash{$strStanza}{&OPTION_DB_PORT . "-2"} = $oHostDbStandby->dbPort();
+            }
         }
 
     }
@@ -761,8 +771,12 @@ sub configCreate
     else
     {
         $oParamHash{$strStanza}{&OPTION_DB_PATH} = $self->dbBasePath();
-        $oParamHash{$strStanza}{&OPTION_DB_SOCKET_PATH} = $self->dbSocketPath();
-        $oParamHash{$strStanza}{&OPTION_DB_PORT} = $self->dbPort();
+
+        if (!$self->synthetic())
+        {
+            $oParamHash{$strStanza}{&OPTION_DB_SOCKET_PATH} = $self->dbSocketPath();
+            $oParamHash{$strStanza}{&OPTION_DB_PORT} = $self->dbPort();
+        }
 
         if ($bArchiveAsync)
         {
