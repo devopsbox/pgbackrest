@@ -524,63 +524,6 @@
 
                         <example>/var/run/postgresql</example>
                     </config-key>
-
-                    <!-- CONFIG - STANZA SECTION - DB-STANDBY-HOST KEY -->
-                    <config-key id="db-standby-host" name="Database Standby Host">
-                        <summary>Cluster host for operating remotely via SSH.</summary>
-
-                        <!-- !!! WORK NEEDED HERE !!! -->
-
-                        <text>Used for backups where the database cluster host is different from the backup host.</text>
-
-                        <example>db.domain.com</example>
-                    </config-key>
-
-                    <!-- CONFIG - STANZA SECTION - DB-STANDBY-USER KEY -->
-                    <config-key id="db-standby-user" name="Database Standby User">
-                        <summary>Cluster host logon user when <setting>db-host</setting> is set.</summary>
-
-                        <!-- !!! WORK NEEDED HERE !!! -->
-
-                        <text>This user will also own the remote <backrest/> process and will initiate connections to <postgres/>.  For this to work correctly the user should be the <postgres/> database cluster owner which is generally <id>postgres</id>, the default.</text>
-
-                        <example>db_owner</example>
-                    </config-key>
-
-                    <!-- CONFIG - STANZA SECTION - DB-STANDBY-PATH KEY -->
-                    <config-key id="db-standby-path" name="Database Standby Path">
-                        <summary>Cluster data directory.</summary>
-
-                        <!-- !!! WORK NEEDED HERE !!! -->
-
-                        <text>This should be the same as the <setting>data_directory</setting> setting in <file>postgresql.conf</file>.  Even though this value can be read from <file>postgresql.conf</file> or the database cluster it is prudent to set it in case those resources are not available during a restore or offline backup scenario.
-
-                        The <setting>db-path</setting> option is tested against the value reported by <postgres/> on every online backup so it should always be current.</text>
-
-                        <example>/data/db</example>
-                    </config-key>
-
-                    <!-- CONFIG - STANZA SECTION - DB-STANDBY-PORT KEY -->
-                    <config-key id="db-standby-port" name="Database Standby Port">
-                        <summary>Cluster port.</summary>
-
-                        <!-- !!! WORK NEEDED HERE !!! -->
-
-                        <text>Port that <postgres/> is running on.  This usually does not need to be specified as most database clusters run on the default port.</text>
-
-                        <example>6543</example>
-                    </config-key>
-
-                    <!-- CONFIG - STANZA SECTION - DB-SOCKET-PATH KEY -->
-                    <config-key id="db-standby-socket-path" name="Database Standby Socket Path">
-                        <summary>Cluster unix socket path.</summary>
-
-                        <!-- !!! WORK NEEDED HERE !!! -->
-
-                        <text>The unix socket directory that was specified when <postgres/> was started.  <backrest/> will automatically look in the standard location for your OS so there usually no need to specify this setting unless the socket directory was explicitly modified with the <setting>unix_socket_directory</setting> setting in <file>postgressql.conf</file>.</text>
-
-                        <example>/var/run/postgresql</example>
-                    </config-key>
                 </config-key-list>
             </config-section>
         </config-section-list>

@@ -356,15 +356,15 @@ use constant OPTION_DB_SOCKET_PATH                                  => 'db-socke
 use constant OPTION_DB_USER                                         => 'db-user';
     push @EXPORT, qw(OPTION_DB_USER);
 
-use constant OPTION_DB_STANDBY_HOST                                 => 'db-standby-host';
+use constant OPTION_DB_STANDBY_HOST                                 => 'db-host-2';
     push @EXPORT, qw(OPTION_DB_STANDBY_HOST);
-use constant OPTION_DB_STANDBY_PATH                                 => 'db-standby-path';
+use constant OPTION_DB_STANDBY_PATH                                 => 'db-path-2';
     push @EXPORT, qw(OPTION_DB_STANDBY_PATH);
-use constant OPTION_DB_STANDBY_PORT                                 => 'db-standby-port';
+use constant OPTION_DB_STANDBY_PORT                                 => 'db-port-2';
     push @EXPORT, qw(OPTION_DB_STANDBY_PORT);
-use constant OPTION_DB_STANDBY_SOCKET_PATH                          => 'db-standby-socket-path';
+use constant OPTION_DB_STANDBY_SOCKET_PATH                          => 'db-socket-path-2';
     push @EXPORT, qw(OPTION_DB_STANDBY_SOCKET_PATH);
-use constant OPTION_DB_STANDBY_USER                                 => 'db-standby-user';
+use constant OPTION_DB_STANDBY_USER                                 => 'db-user-2';
     push @EXPORT, qw(OPTION_DB_STANDBY_USER);
 
 ####################################################################################################################################
@@ -1632,111 +1632,6 @@ my %oOptionRule =
         &OPTION_RULE_DEPEND =>
         {
             &OPTION_RULE_DEPEND_OPTION => OPTION_DB_HOST
-        }
-    },
-
-    &OPTION_DB_STANDBY_HOST =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true,
-            &CMD_CHECK => true,
-            &CMD_START => true,
-            &CMD_STOP => true,
-        },
-        &OPTION_RULE_DEPEND =>
-        {
-            &OPTION_RULE_DEPEND_OPTION  => OPTION_BACKUP_STANDBY,
-            &OPTION_RULE_DEPEND_VALUE   => true
-        },
-    },
-
-    &OPTION_DB_STANDBY_PATH =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_HINT => "does this stanza exist?",
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_GET =>
-            {
-                &OPTION_RULE_REQUIRED => false,
-            },
-            &CMD_ARCHIVE_PUSH =>
-            {
-                &OPTION_RULE_REQUIRED => false,
-            },
-            &CMD_BACKUP => true,
-            &CMD_CHECK =>
-            {
-                &OPTION_RULE_REQUIRED => false,
-            },
-            &CMD_RESTORE => true,
-        },
-        &OPTION_RULE_DEPEND =>
-        {
-            &OPTION_RULE_DEPEND_OPTION  => OPTION_BACKUP_STANDBY,
-            &OPTION_RULE_DEPEND_VALUE   => true
-        },
-    },
-
-    &OPTION_DB_STANDBY_PORT =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
-        &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_DB_PORT,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true,
-            &CMD_CHECK => true,
-        },
-        &OPTION_RULE_DEPEND =>
-        {
-            &OPTION_RULE_DEPEND_OPTION  => OPTION_BACKUP_STANDBY,
-            &OPTION_RULE_DEPEND_VALUE   => true
-        },
-    },
-
-    &OPTION_DB_STANDBY_SOCKET_PATH =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true,
-            &CMD_CHECK => true,
-        },
-        &OPTION_RULE_DEPEND =>
-        {
-            &OPTION_RULE_DEPEND_OPTION  => OPTION_BACKUP_STANDBY,
-            &OPTION_RULE_DEPEND_VALUE   => true
-        },
-    },
-
-    &OPTION_DB_STANDBY_USER =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_DB_USER,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true,
-            &CMD_CHECK => true,
-        },
-        &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_DEPEND =>
-        {
-            &OPTION_RULE_DEPEND_OPTION => OPTION_DB_HOST,
-        },
-        &OPTION_RULE_DEPEND =>
-        {
-            &OPTION_RULE_DEPEND_OPTION  => OPTION_BACKUP_STANDBY,
-            &OPTION_RULE_DEPEND_VALUE   => true
         },
     },
 );
@@ -1759,6 +1654,31 @@ sub configLoad
 {
     # Clear option in case it was loaded before
     %oOption = ();
+
+    # Build options for all possible db configurations
+    foreach my $strKey (sort(keys(%oOptionRule)))
+    {
+        if ($strKey =~ /^db-/)
+        {
+            # $oOptionRule{$strKey}{&OPTION_RULE_ALT_NAME} =
+
+            # For now only allow one replica
+            for (my $iIndex = 2; $iIndex <= 2; $iIndex++)
+            {
+                my $strKeyNew = "${strKey}-${iIndex}";
+
+                $oOptionRule{$strKeyNew} = dclone($oOptionRule{$strKey});
+                $oOptionRule{$strKeyNew}{&OPTION_RULE_REQUIRED} = false;
+
+                if (defined($oOptionRule{$strKeyNew}{&OPTION_RULE_DEPEND}) &&
+                    defined($oOptionRule{$strKeyNew}{&OPTION_RULE_DEPEND}{&OPTION_RULE_DEPEND_OPTION}))
+                {
+                    $oOptionRule{$strKeyNew}{&OPTION_RULE_DEPEND}{&OPTION_RULE_DEPEND_OPTION} =
+                        $oOptionRule{$strKeyNew}{&OPTION_RULE_DEPEND}{&OPTION_RULE_DEPEND_OPTION} . "-${iIndex}";
+                }
+            }
+        }
+    }
 
     # Build hash with all valid command-line options
     my %oOptionAllow;
