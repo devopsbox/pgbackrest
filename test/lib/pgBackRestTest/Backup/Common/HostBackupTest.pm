@@ -738,22 +738,22 @@ sub configCreate
     # If this is the backup host
     if ($self->nameTest(HOST_BACKUP))
     {
-        $oParamHash{$strStanza}{&OPTION_DB_HOST} = $oHostDbMaster->nameGet();
-        $oParamHash{$strStanza}{&OPTION_DB_USER} = $oHostDbMaster->userGet();
-        $oParamHash{$strStanza}{&OPTION_DB_PATH} = $oHostDbMaster->dbBasePath();
-        $oParamHash{$strStanza}{&OPTION_DB_SOCKET_PATH} = $oHostDbMaster->dbSocketPath();
-        $oParamHash{$strStanza}{&OPTION_DB_PORT} = $oHostDbMaster->dbPort();
+        $oParamHash{$strStanza}{&OPTION_DB_HOST . "-1"} = $oHostDbMaster->nameGet();
+        $oParamHash{$strStanza}{&OPTION_DB_USER . "-1"} = $oHostDbMaster->userGet();
+        $oParamHash{$strStanza}{&OPTION_DB_PATH . "-1"} = $oHostDbMaster->dbBasePath();
+        $oParamHash{$strStanza}{&OPTION_DB_SOCKET_PATH . "-1"} = $oHostDbMaster->dbSocketPath();
+        $oParamHash{$strStanza}{&OPTION_DB_PORT . "-1"} = $oHostDbMaster->dbPort();
 
         # !! Need to add this for standby as well - for now just give all params so standby works
         $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_CONFIG_REMOTE} = $oHostDbStandby->backrestConfig();
 
         if (defined($oHostDbStandby))
         {
-            $oParamHash{$strStanza}{&OPTION_DB_STANDBY_HOST} = $oHostDbStandby->nameGet();
-            $oParamHash{$strStanza}{&OPTION_DB_STANDBY_USER} = $oHostDbStandby->userGet();
-            $oParamHash{$strStanza}{&OPTION_DB_STANDBY_PATH} = $oHostDbStandby->dbBasePath();
-            $oParamHash{$strStanza}{&OPTION_DB_STANDBY_SOCKET_PATH} = $oHostDbStandby->dbSocketPath();
-            $oParamHash{$strStanza}{&OPTION_DB_STANDBY_PORT} = $oHostDbStandby->dbPort();
+            $oParamHash{$strStanza}{&OPTION_DB_HOST . "-2"} = $oHostDbStandby->nameGet();
+            $oParamHash{$strStanza}{&OPTION_DB_USER . "-2"} = $oHostDbStandby->userGet();
+            $oParamHash{$strStanza}{&OPTION_DB_PATH . "-2"} = $oHostDbStandby->dbBasePath();
+            $oParamHash{$strStanza}{&OPTION_DB_SOCKET_PATH . "-2"} = $oHostDbStandby->dbSocketPath();
+            $oParamHash{$strStanza}{&OPTION_DB_PORT . "-2"} = $oHostDbStandby->dbPort();
         }
 
     }

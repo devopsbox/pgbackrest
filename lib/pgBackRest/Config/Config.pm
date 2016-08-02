@@ -134,6 +134,8 @@ use constant RECOVERY_ACTION_SHUTDOWN                               => 'shutdown
 ####################################################################################################################################
 # Option Rules
 ####################################################################################################################################
+use constant OPTION_RULE_ALT_NAME                                   => 'alt-name';
+    push @EXPORT, qw(OPTION_RULE_ALT_NAME);
 use constant OPTION_RULE_ALLOW_LIST                                 => 'allow-list';
     push @EXPORT, qw(OPTION_RULE_ALLOW_LIST);
 use constant OPTION_RULE_ALLOW_RANGE                                => 'allow-range';
@@ -1575,6 +1577,7 @@ my %oOptionRule =
     {
         &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
         &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
+        &OPTION_RULE_REQUIRED => true,
         &OPTION_RULE_HINT => "does this stanza exist?",
         &OPTION_RULE_COMMAND =>
         {
@@ -1658,10 +1661,8 @@ sub configLoad
     # Build options for all possible db configurations
     foreach my $strKey (sort(keys(%oOptionRule)))
     {
-        if ($strKey =~ /^db-/)
+        if ($strKey =~ /^db-/ && $strKey ne OPTION_DB_INCLUDE && $strKey ne OPTION_DB_TIMEOUT)
         {
-            # $oOptionRule{$strKey}{&OPTION_RULE_ALT_NAME} =
-
             # For now only allow one replica
             for (my $iIndex = 2; $iIndex <= 2; $iIndex++)
             {
@@ -1677,6 +1678,9 @@ sub configLoad
                         $oOptionRule{$strKeyNew}{&OPTION_RULE_DEPEND}{&OPTION_RULE_DEPEND_OPTION} . "-${iIndex}";
                 }
             }
+
+            # Create an alternate name for the base db option
+            $oOptionRule{$strKey}{&OPTION_RULE_ALT_NAME} = "${strKey}-1";
         }
     }
 
@@ -1685,32 +1689,47 @@ sub configLoad
 
     foreach my $strKey (keys(%oOptionRule))
     {
-        my $strOption = $strKey;
+        foreach my $bAltName ((false, true))
+        {
+            my $strOptionName = $strKey;
 
-        if (!defined($oOptionRule{$strKey}{&OPTION_RULE_TYPE}))
-        {
-            confess  &log(ASSERT, "Option ${strKey} does not have a defined type", ERROR_ASSERT);
-        }
-        elsif ($oOptionRule{$strKey}{&OPTION_RULE_TYPE} eq OPTION_TYPE_HASH)
-        {
-            $strOption .= '=s@';
-        }
-        elsif ($oOptionRule{$strKey}{&OPTION_RULE_TYPE} ne OPTION_TYPE_BOOLEAN)
-        {
-            $strOption .= '=s';
-        }
+            if ($bAltName)
+            {
+                if (!defined($oOptionRule{$strKey}{&OPTION_RULE_ALT_NAME}))
+                {
+                    next;
+                }
 
-        $oOptionAllow{$strOption} = $strOption;
+                $strOptionName = $oOptionRule{$strKey}{&OPTION_RULE_ALT_NAME};
+            }
 
-        # Check if the option can be negated
-        if ((defined($oOptionRule{$strKey}{&OPTION_RULE_NEGATE}) &&
-             $oOptionRule{$strKey}{&OPTION_RULE_NEGATE}) ||
-            ($oOptionRule{$strKey}{&OPTION_RULE_TYPE} eq OPTION_TYPE_BOOLEAN &&
-             defined($oOptionRule{$strKey}{&OPTION_RULE_SECTION})))
-        {
-            $strOption = "no-${strKey}";
+            my $strOption = $strOptionName;
+
+            if (!defined($oOptionRule{$strKey}{&OPTION_RULE_TYPE}))
+            {
+                confess  &log(ASSERT, "Option ${strKey} does not have a defined type", ERROR_ASSERT);
+            }
+            elsif ($oOptionRule{$strKey}{&OPTION_RULE_TYPE} eq OPTION_TYPE_HASH)
+            {
+                $strOption .= '=s@';
+            }
+            elsif ($oOptionRule{$strKey}{&OPTION_RULE_TYPE} ne OPTION_TYPE_BOOLEAN)
+            {
+                $strOption .= '=s';
+            }
+
             $oOptionAllow{$strOption} = $strOption;
-            $oOptionRule{$strKey}{&OPTION_RULE_NEGATE} = true;
+
+            # Check if the option can be negated
+            if ((defined($oOptionRule{$strKey}{&OPTION_RULE_NEGATE}) &&
+                 $oOptionRule{$strKey}{&OPTION_RULE_NEGATE}) ||
+                ($oOptionRule{$strKey}{&OPTION_RULE_TYPE} eq OPTION_TYPE_BOOLEAN &&
+                 defined($oOptionRule{$strKey}{&OPTION_RULE_SECTION})))
+            {
+                $strOption = 'no-' . $strOptionName;
+                $oOptionAllow{$strOption} = $strOption;
+                $oOptionRule{$strKey}{&OPTION_RULE_NEGATE} = true;
+            }
         }
     }
 
@@ -1731,23 +1750,21 @@ sub configLoad
             commandSet(CMD_HELP);
             return false;
         }
+
         # Validate and store options
-        else
+        my $bHelp = false;
+
+        if (defined($ARGV[0]) && $ARGV[0] eq CMD_HELP && defined($ARGV[1]))
         {
-            my $bHelp = false;
+            $bHelp = true;
+            $ARGV[0] = $ARGV[1];
+        }
 
-            if (defined($ARGV[0]) && $ARGV[0] eq CMD_HELP && defined($ARGV[1]))
-            {
-                $bHelp = true;
-                $ARGV[0] = $ARGV[1];
-            }
+        optionValidate(\%oOptionTest, $bHelp);
 
-            optionValidate(\%oOptionTest, $bHelp);
-
-            if ($bHelp)
-            {
-                commandSet(CMD_HELP);
-            }
+        if ($bHelp)
+        {
+            commandSet(CMD_HELP);
         }
     }
 
@@ -1804,6 +1821,41 @@ sub configLoad
 }
 
 push @EXPORT, qw(configLoad);
+
+####################################################################################################################################
+# optionValueGet
+#
+# Find the value of an option using both the regular and alt values.  Error if both are defined.
+####################################################################################################################################
+sub optionValueGet
+{
+    my $strOption = shift;
+    my $hOption = shift;
+
+    my $strValue = $$hOption{$strOption};
+
+    # Some options have an alternate name so check for that as well
+    if (defined($oOptionRule{$strOption}{&OPTION_RULE_ALT_NAME}))
+    {
+        my $strAltValue = $$hOption{$oOptionRule{$strOption}{&OPTION_RULE_ALT_NAME}};
+
+        if (defined($strAltValue))
+        {
+            if (!defined($strValue))
+            {
+                $strValue = $strAltValue;
+            }
+            else
+            {
+                confess &log(
+                    ERROR, "'${strOption}' and '" . $oOptionRule{$strOption}{&OPTION_RULE_ALT_NAME} .
+                    ' cannot both be defined', ERROR_OPTION_INVALID_VALUE);
+            }
+        }
+    }
+
+    return $strValue;
+}
 
 ####################################################################################################################################
 # optionValidate
@@ -1867,8 +1919,8 @@ sub optionValidate
 
             $oOption{$strOption}{valid} = true;
 
-            # Store the option value since it is used a lot
-            my $strValue = $$oOptionTest{$strOption};
+            # Store the option value
+            my $strValue = optionValueGet($strOption, $oOptionTest);
 
             # Check to see if an option can be negated.  Make sure that it is not set and negated at the same time.
             my $bNegate = false;
@@ -1969,10 +2021,10 @@ sub optionValidate
                     # Get the section that the value should be in
                     my $strSection = $oOptionRule{$strOption}{&OPTION_RULE_SECTION};
 
-                    # Always search the stanza section when it exists
+                    # Always check for the option in the sanza section first
                     if (optionTest(OPTION_STANZA))
                     {
-                        $strValue = $$oConfig{optionGet(OPTION_STANZA)}{$strOption};
+                        $strValue = optionValueGet($strOption, $$oConfig{optionGet(OPTION_STANZA)});
                     }
 
                     # Only continue searching when strSection != CONFIG_SECTION_STANZA.  Some options (e.g. db-path) can only be
@@ -1987,20 +2039,20 @@ sub optionValidate
                             # Check the stanza command section
                             if (optionTest(OPTION_STANZA))
                             {
-                                $strValue = $$oConfig{optionGet(OPTION_STANZA) . ":${strCommand}"}{$strOption};
+                                $strValue = optionValueGet($strOption, $$oConfig{optionGet(OPTION_STANZA) . ":${strCommand}"});
                             }
 
                             # Check the global command section
                             if (!defined($strValue))
                             {
-                                $strValue = $$oConfig{&CONFIG_SECTION_GLOBAL . ":${strCommand}"}{$strOption};
+                                $strValue = optionValueGet($strOption, $$oConfig{&CONFIG_SECTION_GLOBAL . ":${strCommand}"});
                             }
                         }
 
                         # Finally check the global section
                         if (!defined($strValue))
                         {
-                            $strValue = $$oConfig{&CONFIG_SECTION_GLOBAL}{$strOption};
+                            $strValue = optionValueGet($strOption, $$oConfig{&CONFIG_SECTION_GLOBAL});
                         }
                     }
 
