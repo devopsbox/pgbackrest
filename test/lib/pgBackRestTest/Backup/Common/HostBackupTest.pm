@@ -700,7 +700,7 @@ sub configCreate
 
     my $bRemote = (defined($oHostBackup) ? 1 : 0) + (defined($oHostDbMaster) ? 1 : 0) + (defined($oHostDbStandby) ? 1 : 0) > 1;
 
-    my $bArchiveAsync = defined($$oParam{bArchiveAsync}) ? $$oParam{ArchiveAsync} : false;
+    my $bArchiveAsync = defined($$oParam{bArchiveAsync}) ? $$oParam{bArchiveAsync} : false;
 
     # General options
     # ------------------------------------------------------------------------------------------------------------------------------
@@ -784,6 +784,7 @@ sub configCreate
         if ($bArchiveAsync)
         {
             $oParamHash{&CONFIG_SECTION_GLOBAL . ':' . &CMD_ARCHIVE_PUSH}{&OPTION_ARCHIVE_ASYNC} = 'y';
+            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_SPOOL_PATH} = $self->spoolPath();
         }
 
         # If the the backup host is remote
@@ -796,18 +797,6 @@ sub configCreate
             $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_LOCK_PATH} = $self->lockPath();
 
             $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_CONFIG_REMOTE} = $oHostBackup->backrestConfig();
-
-            if ($bArchiveAsync)
-            {
-                $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_SPOOL_PATH} = $self->spoolPath();
-            }
-        }
-        # Else if the backups are being done on the database host
-        {
-            if ($bArchiveAsync)
-            {
-                $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_SPOOL_PATH} = $self->repoPath();
-            }
         }
     }
 
