@@ -148,9 +148,9 @@ repo-path=[TEST_PATH]/backup/repo
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db-host-1=db-master
-db-path-1=[TEST_PATH]/db-master/db/base
-db-user-1=vagrant
+db1-host=db-master
+db1-path=[TEST_PATH]/db-master/db/base
+db1-user=vagrant
 
 [global]
 cmd-remote=[BACKREST-BIN]
@@ -401,9 +401,9 @@ repo-path=[TEST_PATH]/backup/repo
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db-host-1=db-master
-db-path-1=[TEST_PATH]/db-master/db/base
-db-user-1=vagrant
+db1-host=db-master
+db1-path=[TEST_PATH]/db-master/db/base
+db1-user=vagrant
 
 [global]
 cmd-remote=[BACKREST-BIN]
@@ -956,9 +956,9 @@ repo-path=[TEST_PATH]/backup/repo
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db-host-1=db-master
-db-path-1=[TEST_PATH]/db-master/db/base
-db-user-1=vagrant
+db1-host=db-master
+db1-path=[TEST_PATH]/db-master/db/base
+db1-user=vagrant
 
 [global]
 cmd-remote=[BACKREST-BIN]
@@ -1249,9 +1249,9 @@ repo-path=[TEST_PATH]/backup/repo
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db-host-1=db-master
-db-path-1=[TEST_PATH]/db-master/db/base
-db-user-1=vagrant
+db1-host=db-master
+db1-path=[TEST_PATH]/db-master/db/base
+db1-user=vagrant
 
 [global]
 cmd-remote=[BACKREST-BIN]
@@ -1411,9 +1411,9 @@ repo-path=[TEST_PATH]/backup/repo
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db-host-1=db-master
-db-path-1=[TEST_PATH]/db-master/db/base
-db-user-1=vagrant
+db1-host=db-master
+db1-path=[TEST_PATH]/db-master/db/base
+db1-user=vagrant
 
 [global]
 cmd-remote=[BACKREST-BIN]
@@ -1573,9 +1573,9 @@ repo-path=[TEST_PATH]/backup/repo
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db-host-1=db-master
-db-path-1=[TEST_PATH]/db-master/db/base
-db-user-1=vagrant
+db1-host=db-master
+db1-path=[TEST_PATH]/db-master/db/base
+db1-user=vagrant
 
 [global]
 cmd-remote=[BACKREST-BIN]
@@ -1829,9 +1829,9 @@ repo-path=[TEST_PATH]/backup/repo
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db-host-1=db-master
-db-path-1=[TEST_PATH]/db-master/db/base-2
-db-user-1=vagrant
+db1-host=db-master
+db1-path=[TEST_PATH]/db-master/db/base-2
+db1-user=vagrant
 
 [global]
 cmd-remote=[BACKREST-BIN]
@@ -1988,9 +1988,9 @@ repo-path=[TEST_PATH]/backup/repo
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db-host-1=db-master
-db-path-1=[TEST_PATH]/db-master/db/base-2
-db-user-1=vagrant
+db1-host=db-master
+db1-path=[TEST_PATH]/db-master/db/base-2
+db1-user=vagrant
 
 [global]
 cmd-remote=[BACKREST-BIN]
@@ -2152,9 +2152,9 @@ repo-path=[TEST_PATH]/backup/repo
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db-host-1=db-master
-db-path-1=[TEST_PATH]/db-master/db/base-2
-db-user-1=vagrant
+db1-host=db-master
+db1-path=[TEST_PATH]/db-master/db/base-2
+db1-user=vagrant
 
 [global]
 cmd-remote=[BACKREST-BIN]
@@ -2312,9 +2312,9 @@ repo-path=[TEST_PATH]/backup/repo
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db-host-1=db-master
-db-path-1=[TEST_PATH]/db-master/db/base-2
-db-user-1=vagrant
+db1-host=db-master
+db1-path=[TEST_PATH]/db-master/db/base-2
+db1-user=vagrant
 
 [global]
 cmd-remote=[BACKREST-BIN]
@@ -2477,9 +2477,9 @@ repo-path=[TEST_PATH]/backup/repo
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db-host-1=db-master
-db-path-1=[TEST_PATH]/db-master/db/base-2
-db-user-1=vagrant
+db1-host=db-master
+db1-path=[TEST_PATH]/db-master/db/base-2
+db1-user=vagrant
 
 [global]
 cmd-remote=[BACKREST-BIN]
@@ -2649,9 +2649,9 @@ repo-path=[TEST_PATH]/backup/repo
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db-host-1=db-master
-db-path-1=[TEST_PATH]/db-master/db/base-2
-db-user-1=vagrant
+db1-host=db-master
+db1-path=[TEST_PATH]/db-master/db/base-2
+db1-user=vagrant
 
 [global]
 cmd-remote=[BACKREST-BIN]
@@ -3147,9 +3147,9 @@ repo-path=[TEST_PATH]/backup/repo
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db-host-1=db-master
-db-path-1=[TEST_PATH]/db-master/db/base-2
-db-user-1=vagrant
+db1-host=db-master
+db1-path=[TEST_PATH]/db-master/db/base-2
+db1-user=vagrant
 
 [global]
 cmd-remote=[BACKREST-BIN]

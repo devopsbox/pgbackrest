@@ -358,20 +358,21 @@ use constant OPTION_DB_SOCKET_PATH                                  => 'db-socke
 use constant OPTION_DB_USER                                         => 'db-user';
     push @EXPORT, qw(OPTION_DB_USER);
 
-use constant OPTION_DB_STANDBY_HOST                                 => 'db-host-2';
+use constant OPTION_DB_STANDBY_HOST                                 => 'db2-host';
     push @EXPORT, qw(OPTION_DB_STANDBY_HOST);
-use constant OPTION_DB_STANDBY_PATH                                 => 'db-path-2';
+use constant OPTION_DB_STANDBY_PATH                                 => 'db2-path';
     push @EXPORT, qw(OPTION_DB_STANDBY_PATH);
-use constant OPTION_DB_STANDBY_PORT                                 => 'db-port-2';
+use constant OPTION_DB_STANDBY_PORT                                 => 'db2-port';
     push @EXPORT, qw(OPTION_DB_STANDBY_PORT);
-use constant OPTION_DB_STANDBY_SOCKET_PATH                          => 'db-socket-path-2';
+use constant OPTION_DB_STANDBY_SOCKET_PATH                          => 'db2-socket-path';
     push @EXPORT, qw(OPTION_DB_STANDBY_SOCKET_PATH);
-use constant OPTION_DB_STANDBY_USER                                 => 'db-user-2';
+use constant OPTION_DB_STANDBY_USER                                 => 'db2-user';
     push @EXPORT, qw(OPTION_DB_STANDBY_USER);
 
 ####################################################################################################################################
 # Option Defaults
 ####################################################################################################################################
+
 # Command-line only
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant OPTION_DEFAULT_BACKUP_TYPE                             => BACKUP_TYPE_INCR;
@@ -1666,7 +1667,7 @@ sub configLoad
             # For now only allow one replica
             for (my $iIndex = 2; $iIndex <= 2; $iIndex++)
             {
-                my $strKeyNew = "${strKey}-${iIndex}";
+                my $strKeyNew = "db${iIndex}" . substr($strKey, 2);
 
                 $oOptionRule{$strKeyNew} = dclone($oOptionRule{$strKey});
                 $oOptionRule{$strKeyNew}{&OPTION_RULE_REQUIRED} = false;
@@ -1675,12 +1676,12 @@ sub configLoad
                     defined($oOptionRule{$strKeyNew}{&OPTION_RULE_DEPEND}{&OPTION_RULE_DEPEND_OPTION}))
                 {
                     $oOptionRule{$strKeyNew}{&OPTION_RULE_DEPEND}{&OPTION_RULE_DEPEND_OPTION} =
-                        $oOptionRule{$strKeyNew}{&OPTION_RULE_DEPEND}{&OPTION_RULE_DEPEND_OPTION} . "-${iIndex}";
+                        "db${iIndex}" . substr($oOptionRule{$strKeyNew}{&OPTION_RULE_DEPEND}{&OPTION_RULE_DEPEND_OPTION}, 2);
                 }
             }
 
             # Create an alternate name for the base db option
-            $oOptionRule{$strKey}{&OPTION_RULE_ALT_NAME} = "${strKey}-1";
+            $oOptionRule{$strKey}{&OPTION_RULE_ALT_NAME} = "db1" . substr($strKey, 2);
         }
     }
 

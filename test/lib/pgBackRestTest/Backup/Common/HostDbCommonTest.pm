@@ -266,7 +266,7 @@ sub configRemap
 
             if ($oHostBackup->nameTest(HOST_BACKUP))
             {
-                $oRemoteConfig{$strStanza}{'db-path-1'} = $strRemapPath;
+                $oRemoteConfig{$strStanza}{'db1-path'} = $strRemapPath;
             }
         }
         else
