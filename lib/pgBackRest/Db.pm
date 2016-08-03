@@ -127,9 +127,9 @@ sub new
     # Assign options based on local or standby
     if (optionTest(OPTION_BACKUP_STANDBY) && optionGet(OPTION_BACKUP_STANDBY) && !$bForceMaster)
     {
-        if (optionTest(OPTION_DB_STANDBY_PATH))
+        if (optionTest(optionIndex(OPTION_DB_PATH, 2)))
         {
-            $self->{strDbPath} = optionGet(OPTION_DB_STANDBY_PATH);
+            $self->{strDbPath} = optionGet(optionIndex(OPTION_DB_PATH, 2));
         }
     }
     elsif (optionTest(OPTION_DB_PATH))

@@ -363,17 +363,6 @@ use constant OPTION_DB_SOCKET_PATH                                  => OPTION_PR
 use constant OPTION_DB_USER                                         => OPTION_PREFIX_DB . '-user';
     push @EXPORT, qw(OPTION_DB_USER);
 
-use constant OPTION_DB_STANDBY_HOST                                 => 'db2-host';
-    push @EXPORT, qw(OPTION_DB_STANDBY_HOST);
-use constant OPTION_DB_STANDBY_PATH                                 => 'db2-path';
-    push @EXPORT, qw(OPTION_DB_STANDBY_PATH);
-use constant OPTION_DB_STANDBY_PORT                                 => 'db2-port';
-    push @EXPORT, qw(OPTION_DB_STANDBY_PORT);
-use constant OPTION_DB_STANDBY_SOCKET_PATH                          => 'db2-socket-path';
-    push @EXPORT, qw(OPTION_DB_STANDBY_SOCKET_PATH);
-use constant OPTION_DB_STANDBY_USER                                 => 'db2-user';
-    push @EXPORT, qw(OPTION_DB_STANDBY_USER);
-
 ####################################################################################################################################
 # Option Defaults
 ####################################################################################################################################
@@ -2686,8 +2675,8 @@ sub protocolGet
 
     if (optionRemoteTypeTest(DB))
     {
-        $strDbHost = $bUseMaster ? optionGet(OPTION_DB_HOST) : optionGet(OPTION_DB_STANDBY_HOST);
-        $strDbUser = $bUseMaster ? optionGet(OPTION_DB_USER) : optionGet(OPTION_DB_STANDBY_USER);
+        $strDbHost = $bUseMaster ? optionGet(OPTION_DB_HOST) : optionGet(optionIndex(OPTION_DB_HOST, 2));
+        $strDbUser = $bUseMaster ? optionGet(OPTION_DB_USER) : optionGet(optionIndex(OPTION_DB_USER, 2));
     }
 
     my $oProtocolTemp = new pgBackRest::Protocol::RemoteMaster
@@ -2701,10 +2690,9 @@ sub protocolGet
                     {value => optionSource(OPTION_CONFIG_REMOTE) eq SOURCE_DEFAULT ? undef : optionGet(OPTION_CONFIG_REMOTE)},
                 &OPTION_LOG_PATH => {},
                 &OPTION_LOCK_PATH => {},
-                &OPTION_DB_PATH => $bUseMaster ? undef : {value => optionGet(OPTION_DB_STANDBY_PATH)},
-                &OPTION_DB_SOCKET_PATH => $bUseMaster ? undef : {value => optionGet(OPTION_DB_STANDBY_SOCKET_PATH)},
-                &OPTION_DB_HOST => {},
-                &OPTION_DB_STANDBY_PATH => {},
+                &OPTION_DB_PATH => $bUseMaster ? undef : {value => optionGet(optionIndex(OPTION_DB_PATH, 2))},
+                &OPTION_DB_SOCKET_PATH => $bUseMaster ? undef : {value => optionGet(optionIndex(OPTION_DB_SOCKET_PATH, 2))},
+                &OPTION_DB_HOST => {}
             }),
         optionGet(OPTION_BUFFER_SIZE),
         commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL : optionGet(OPTION_COMPRESS_LEVEL),

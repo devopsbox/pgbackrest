@@ -65,7 +65,7 @@ sub new
     $self->{oProtocolMaster} = optionGet(OPTION_BACKUP_STANDBY) ? protocolGet({bForceMaster => true}) : $self->{oProtocol};
 
     # Determine the database path
-    $self->{strDbPath} = optionGet(OPTION_BACKUP_STANDBY) ? optionGet(OPTION_DB_STANDBY_PATH) : optionGet(OPTION_DB_PATH);
+    $self->{strDbPath} = optionGet(OPTION_BACKUP_STANDBY) ? optionGet(optionIndex(OPTION_DB_PATH, 2)) : optionGet(OPTION_DB_PATH);
     $self->{strDbMasterPath} = optionGet(OPTION_DB_PATH);
 
     # Initialize default file objects
