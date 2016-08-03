@@ -156,6 +156,8 @@ use constant OPTION_RULE_HINT                                       => 'hint';
     push @EXPORT, qw(OPTION_RULE_HINT);
 use constant OPTION_RULE_NEGATE                                     => 'negate';
     push @EXPORT, qw(OPTION_RULE_NEGATE);
+use constant OPTION_RULE_PREFIX                                     => 'prefix';
+    push @EXPORT, qw(OPTION_RULE_PREFIX);
 use constant OPTION_RULE_COMMAND                                    => 'command';
     push @EXPORT, qw(OPTION_RULE_COMMAND);
 use constant OPTION_RULE_REQUIRED                                   => 'required';
@@ -347,15 +349,18 @@ use constant OPTION_RESTORE_RECOVERY_OPTION                         => 'recovery
 
 # STANZA Section
 #-----------------------------------------------------------------------------------------------------------------------------------
-use constant OPTION_DB_HOST                                         => 'db-host';
+use constant OPTION_PREFIX_DB                                       => 'db';
+    push @EXPORT, qw(OPTION_PREFIX_DB);
+
+use constant OPTION_DB_HOST                                         => OPTION_PREFIX_DB . '-host';
     push @EXPORT, qw(OPTION_DB_HOST);
-use constant OPTION_DB_PATH                                         => 'db-path';
+use constant OPTION_DB_PATH                                         => OPTION_PREFIX_DB . '-path';
     push @EXPORT, qw(OPTION_DB_PATH);
-use constant OPTION_DB_PORT                                         => 'db-port';
+use constant OPTION_DB_PORT                                         => OPTION_PREFIX_DB . '-port';
     push @EXPORT, qw(OPTION_DB_PORT);
-use constant OPTION_DB_SOCKET_PATH                                  => 'db-socket-path';
+use constant OPTION_DB_SOCKET_PATH                                  => OPTION_PREFIX_DB . '-socket-path';
     push @EXPORT, qw(OPTION_DB_SOCKET_PATH);
-use constant OPTION_DB_USER                                         => 'db-user';
+use constant OPTION_DB_USER                                         => OPTION_PREFIX_DB . '-user';
     push @EXPORT, qw(OPTION_DB_USER);
 
 use constant OPTION_DB_STANDBY_HOST                                 => 'db2-host';
@@ -1563,6 +1568,7 @@ my %oOptionRule =
     {
         &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
         &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
+        &OPTION_RULE_PREFIX => OPTION_PREFIX_DB,
         &OPTION_RULE_REQUIRED => false,
         &OPTION_RULE_COMMAND =>
         {
@@ -1578,6 +1584,7 @@ my %oOptionRule =
     {
         &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
         &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
+        &OPTION_RULE_PREFIX => OPTION_PREFIX_DB,
         &OPTION_RULE_REQUIRED => true,
         &OPTION_RULE_HINT => "does this stanza exist?",
         &OPTION_RULE_COMMAND =>
@@ -1600,6 +1607,7 @@ my %oOptionRule =
     {
         &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
         &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
+        &OPTION_RULE_PREFIX => OPTION_PREFIX_DB,
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_DB_PORT,
         &OPTION_RULE_COMMAND =>
         {
@@ -1612,6 +1620,7 @@ my %oOptionRule =
     &OPTION_DB_SOCKET_PATH =>
     {
         &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
+        &OPTION_RULE_PREFIX => OPTION_PREFIX_DB,
         &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
         &OPTION_RULE_REQUIRED => false,
         &OPTION_RULE_COMMAND =>
@@ -1625,6 +1634,7 @@ my %oOptionRule =
     &OPTION_DB_USER =>
     {
         &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
+        &OPTION_RULE_PREFIX => OPTION_PREFIX_DB,
         &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_DB_USER,
         &OPTION_RULE_COMMAND =>
@@ -1662,12 +1672,14 @@ sub configLoad
     # Build options for all possible db configurations
     foreach my $strKey (sort(keys(%oOptionRule)))
     {
-        if ($strKey =~ /^db-/ && $strKey ne OPTION_DB_INCLUDE && $strKey ne OPTION_DB_TIMEOUT)
+        if (defined($oOptionRule{$strKey}{&OPTION_RULE_PREFIX}) && $oOptionRule{$strKey}{&OPTION_RULE_PREFIX} eq OPTION_PREFIX_DB)
         {
+            my $strPrefix = $oOptionRule{$strKey}{&OPTION_RULE_PREFIX};
+
             # For now only allow one replica
             for (my $iIndex = 2; $iIndex <= 2; $iIndex++)
             {
-                my $strKeyNew = "db${iIndex}" . substr($strKey, 2);
+                my $strKeyNew = "${strPrefix}${iIndex}" . substr($strKey, length($strPrefix));
 
                 $oOptionRule{$strKeyNew} = dclone($oOptionRule{$strKey});
                 $oOptionRule{$strKeyNew}{&OPTION_RULE_REQUIRED} = false;
@@ -1676,12 +1688,13 @@ sub configLoad
                     defined($oOptionRule{$strKeyNew}{&OPTION_RULE_DEPEND}{&OPTION_RULE_DEPEND_OPTION}))
                 {
                     $oOptionRule{$strKeyNew}{&OPTION_RULE_DEPEND}{&OPTION_RULE_DEPEND_OPTION} =
-                        "db${iIndex}" . substr($oOptionRule{$strKeyNew}{&OPTION_RULE_DEPEND}{&OPTION_RULE_DEPEND_OPTION}, 2);
+                        "${strPrefix}${iIndex}" .
+                        substr($oOptionRule{$strKeyNew}{&OPTION_RULE_DEPEND}{&OPTION_RULE_DEPEND_OPTION}, length($strPrefix));
                 }
             }
 
             # Create an alternate name for the base db option
-            $oOptionRule{$strKey}{&OPTION_RULE_ALT_NAME} = "db1" . substr($strKey, 2);
+            $oOptionRule{$strKey}{&OPTION_RULE_ALT_NAME} = "${strPrefix}1" . substr($strKey, length($strPrefix));
         }
     }
 
@@ -2368,6 +2381,36 @@ sub optionTypeTest
 }
 
 push @EXPORT, qw(optionTypeTest);
+
+####################################################################################################################################
+# optionIndex
+#
+# Return name for options that can be indexed (e.g. db1-host, db2-host).
+####################################################################################################################################
+sub optionIndex
+{
+    my $strOption = shift;
+    my $iIndex = shift;
+    my $bForce = shift;
+
+    # If the option doesn't have a prefix it can't be indexed
+    my $strPrefix = $oOptionRule{$strOption}{&OPTION_RULE_PREFIX};
+
+    if (!defined($strPrefix))
+    {
+        confess &log(ASSERT, "'${strOption}' option does not allow indexing");
+    }
+
+    # Index 1 is the same name as the option unless forced to include the index
+    if ($iIndex == 1 && (!defined($bForce) || !$bForce))
+    {
+        return $strOption;
+    }
+
+    return "${strPrefix}${iIndex}" . substr($strOption, length($strPrefix));
+}
+
+push @EXPORT, qw(optionIndex);
 
 ####################################################################################################################################
 # optionDefault
