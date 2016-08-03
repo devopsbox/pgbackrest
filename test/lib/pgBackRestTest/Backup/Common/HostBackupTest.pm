@@ -698,7 +698,7 @@ sub configCreate
     my $oHostDbMaster = $oHostGroup->hostGet(HOST_DB_MASTER, true);
     my $oHostDbStandby = $oHostGroup->hostGet(HOST_DB_STANDBY, true);
 
-    my $bRemote
+    my $bRemote = (defined($oHostBackup) ? 1 : 0) + (defined($oHostDbMaster) ? 1 : 0) + (defined($oHostDbStandby) ? 1 : 0) > 1;
 
     my $bArchiveAsync = defined($$oParam{bArchiveAsync}) ? $$oParam{ArchiveAsync} : false;
 
@@ -721,18 +721,21 @@ sub configCreate
         $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_COMPRESS} = 'n';
     }
 
-    # if (defined($oHostRemote))
-    # {
-        $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_COMMAND_REMOTE} = $self->backrestExe();
-    # }
-
-    if (defined($$oParam{bHardlink}) && $$oParam{bHardlink})
+    if ($bRemote)
     {
-        $oParamHash{&CONFIG_SECTION_GLOBAL . ':' . &CMD_BACKUP}{&OPTION_HARDLINK} = 'y';
+        $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_COMMAND_REMOTE} = $self->backrestExe();
     }
 
-    $oParamHash{&CONFIG_SECTION_GLOBAL . ':' . &CMD_BACKUP}{&OPTION_BACKUP_ARCHIVE_COPY} = 'y';
-    $oParamHash{&CONFIG_SECTION_GLOBAL . ':' . &CMD_BACKUP}{&OPTION_START_FAST} = 'y';
+    if ($self->nameTest(HOST_BACKUP) || !defined($oHostBackup))
+    {
+        if (defined($$oParam{bHardlink}) && $$oParam{bHardlink})
+        {
+            $oParamHash{&CONFIG_SECTION_GLOBAL . ':' . &CMD_BACKUP}{&OPTION_HARDLINK} = 'y';
+        }
+
+        $oParamHash{&CONFIG_SECTION_GLOBAL . ':' . &CMD_BACKUP}{&OPTION_BACKUP_ARCHIVE_COPY} = 'y';
+        $oParamHash{&CONFIG_SECTION_GLOBAL . ':' . &CMD_BACKUP}{&OPTION_START_FAST} = 'y';
+    }
 
     # Host specific options
     # ------------------------------------------------------------------------------------------------------------------------------
@@ -751,7 +754,7 @@ sub configCreate
         }
 
         # !! Need to add this for standby as well - for now just give all params so standby works
-        $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_CONFIG_REMOTE} = $oHostDbStandby->backrestConfig();
+        $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_CONFIG_REMOTE} = $oHostDbMaster->backrestConfig();
 
         if (defined($oHostDbStandby))
         {
