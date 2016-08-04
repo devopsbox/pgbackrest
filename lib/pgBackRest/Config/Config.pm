@@ -252,8 +252,6 @@ use constant OPTION_ARCHIVE_TIMEOUT                                 => 'archive-
     push @EXPORT, qw(OPTION_ARCHIVE_TIMEOUT);
 use constant OPTION_BUFFER_SIZE                                     => 'buffer-size';
     push @EXPORT, qw(OPTION_BUFFER_SIZE);
-use constant OPTION_CONFIG_REMOTE                                   => 'config-remote';
-    push @EXPORT, qw(OPTION_CONFIG_REMOTE);
 use constant OPTION_DB_TIMEOUT                                      => 'db-timeout';
     push @EXPORT, qw(OPTION_DB_TIMEOUT);
 use constant OPTION_COMPRESS                                        => 'compress';
@@ -281,10 +279,6 @@ use constant OPTION_REPO_PATH                                       => 'repo-pat
 use constant OPTION_SPOOL_PATH                                      => 'spool-path';
     push @EXPORT, qw(OPTION_SPOOL_PATH);
 
-# Remote command
-use constant OPTION_COMMAND_REMOTE                                  => 'cmd-remote';
-    push @EXPORT, qw(OPTION_COMMAND_REMOTE);
-
 # Log level
 use constant OPTION_LOG_LEVEL_CONSOLE                               => 'log-level-console';
     push @EXPORT, qw(OPTION_LOG_LEVEL_CONSOLE);
@@ -304,6 +298,10 @@ use constant OPTION_BACKUP_ARCHIVE_CHECK                            => 'archive-
     push @EXPORT, qw(OPTION_BACKUP_ARCHIVE_CHECK);
 use constant OPTION_BACKUP_ARCHIVE_COPY                             => 'archive-copy';
     push @EXPORT, qw(OPTION_BACKUP_ARCHIVE_COPY);
+use constant OPTION_BACKUP_CMD                                      => 'backup-cmd';
+    push @EXPORT, qw(OPTION_BACKUP_CMD);
+use constant OPTION_BACKUP_CONFIG                                   => 'backup-config';
+    push @EXPORT, qw(OPTION_BACKUP_CONFIG);
 use constant OPTION_BACKUP_HOST                                     => 'backup-host';
     push @EXPORT, qw(OPTION_BACKUP_HOST);
 use constant OPTION_BACKUP_STANDBY                                  => 'backup-standby';
@@ -352,6 +350,10 @@ use constant OPTION_RESTORE_RECOVERY_OPTION                         => 'recovery
 use constant OPTION_PREFIX_DB                                       => 'db';
     push @EXPORT, qw(OPTION_PREFIX_DB);
 
+use constant OPTION_DB_CMD                                          => OPTION_PREFIX_DB . '-cmd';
+    push @EXPORT, qw(OPTION_DB_CMD);
+use constant OPTION_DB_CONFIG                                       => OPTION_PREFIX_DB . '-config';
+    push @EXPORT, qw(OPTION_DB_CONFIG);
 use constant OPTION_DB_HOST                                         => OPTION_PREFIX_DB . '-host';
     push @EXPORT, qw(OPTION_DB_HOST);
 use constant OPTION_DB_PATH                                         => OPTION_PREFIX_DB . '-path';
@@ -462,11 +464,6 @@ use constant OPTION_DEFAULT_THREAD_MAX_MIN                          => 1;
     push @EXPORT, qw(OPTION_DEFAULT_THREAD_MAX_MIN);
 use constant OPTION_DEFAULT_THREAD_MAX_MAX                          => 256;
     push @EXPORT, qw(OPTION_DEFAULT_THREAD_MAX_MAX);
-
-# COMMAND Section
-#-----------------------------------------------------------------------------------------------------------------------------------
-use constant OPTION_DEFAULT_COMMAND_REMOTE                          => abs_path($0);
-    push @EXPORT, qw(OPTION_DEFAULT_COMMAND_REMOTE);
 
 # LOG Section
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -1006,22 +1003,6 @@ my %oOptionRule =
         }
     },
 
-    &OPTION_CONFIG_REMOTE =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_CONFIG,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_GET => true,
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_BACKUP => true,
-            &CMD_CHECK => true,
-            &CMD_INFO => true,
-            &CMD_RESTORE => true
-        },
-    },
-
     &OPTION_NEUTRAL_UMASK =>
     {
         &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
@@ -1161,24 +1142,6 @@ my %oOptionRule =
         }
     },
 
-    # COMMAND Section
-    #-------------------------------------------------------------------------------------------------------------------------------
-    &OPTION_COMMAND_REMOTE =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_COMMAND_REMOTE,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_GET => true,
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_BACKUP => true,
-            &CMD_CHECK => true,
-            &CMD_INFO => true,
-            &CMD_RESTORE => true
-        }
-    },
-
     # LOG Section
     #-------------------------------------------------------------------------------------------------------------------------------
     &OPTION_LOG_LEVEL_CONSOLE =>
@@ -1300,6 +1263,50 @@ my %oOptionRule =
         }
     },
 
+    &OPTION_BACKUP_CMD =>
+    {
+        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
+        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
+        &OPTION_RULE_DEFAULT => BACKREST_BIN,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_ARCHIVE_GET => true,
+            &CMD_ARCHIVE_PUSH => true,
+            &CMD_BACKUP => true,
+            &CMD_CHECK => true,
+            &CMD_INFO => true,
+            &CMD_RESTORE => true,
+            &CMD_START => true,
+            &CMD_STOP => true,
+        },
+        &OPTION_RULE_DEPEND =>
+        {
+            &OPTION_RULE_DEPEND_OPTION => OPTION_BACKUP_HOST
+        },
+    },
+
+    &OPTION_BACKUP_CONFIG =>
+    {
+        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
+        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_CONFIG,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_ARCHIVE_GET => true,
+            &CMD_ARCHIVE_PUSH => true,
+            &CMD_BACKUP => true,
+            &CMD_CHECK => true,
+            &CMD_INFO => true,
+            &CMD_RESTORE => true,
+            &CMD_START => true,
+            &CMD_STOP => true,
+        },
+        &OPTION_RULE_DEPEND =>
+        {
+            &OPTION_RULE_DEPEND_OPTION => OPTION_BACKUP_HOST
+        },
+    },
+
     &OPTION_BACKUP_HOST =>
     {
         &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
@@ -1343,7 +1350,9 @@ my %oOptionRule =
             &CMD_ARCHIVE_PUSH => true,
             &CMD_CHECK => true,
             &CMD_INFO => true,
-            &CMD_RESTORE => true
+            &CMD_RESTORE => true,
+            &CMD_START => true,
+            &CMD_STOP => true,
         },
         &OPTION_RULE_REQUIRED => false,
         &OPTION_RULE_DEPEND =>
@@ -1553,6 +1562,46 @@ my %oOptionRule =
 
     # STANZA Section
     #-------------------------------------------------------------------------------------------------------------------------------
+    &OPTION_DB_CMD =>
+    {
+        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
+        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
+        &OPTION_RULE_PREFIX => OPTION_PREFIX_DB,
+        &OPTION_RULE_DEFAULT => BACKREST_BIN,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_BACKUP => true,
+            &CMD_CHECK => true,
+            &CMD_EXPIRE => true,
+            &CMD_START => true,
+            &CMD_STOP => true,
+        },
+        &OPTION_RULE_DEPEND =>
+        {
+            &OPTION_RULE_DEPEND_OPTION => OPTION_DB_HOST
+        },
+    },
+
+    &OPTION_DB_CONFIG =>
+    {
+        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
+        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
+        &OPTION_RULE_PREFIX => OPTION_PREFIX_DB,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_CONFIG,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_BACKUP => true,
+            &CMD_CHECK => true,
+            &CMD_EXPIRE => true,
+            &CMD_START => true,
+            &CMD_STOP => true,
+        },
+        &OPTION_RULE_DEPEND =>
+        {
+            &OPTION_RULE_DEPEND_OPTION => OPTION_DB_HOST
+        },
+    },
+
     &OPTION_DB_HOST =>
     {
         &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
@@ -2670,35 +2719,45 @@ sub protocolGet
     }
 
     # Return the remote when required
-    my $strDbHost = undef;
-    my $strDbUser = undef;
+    my $strOptionCmd = OPTION_BACKUP_CMD;
+    my $strOptionConfig = OPTION_BACKUP_CONFIG;
+    my $strOptionHost = OPTION_BACKUP_HOST;
+    my $strOptionUser = OPTION_BACKUP_USER;
 
     if (optionRemoteTypeTest(DB))
     {
-        $strDbHost = $bUseMaster ? optionGet(OPTION_DB_HOST) : optionGet(optionIndex(OPTION_DB_HOST, 2));
-        $strDbUser = $bUseMaster ? optionGet(OPTION_DB_USER) : optionGet(optionIndex(OPTION_DB_USER, 2));
+        $strOptionCmd = optionIndex(OPTION_DB_CMD, $bUseMaster ? 1 : 2);
+        $strOptionConfig = optionIndex(OPTION_DB_CONFIG, $bUseMaster ? 1 : 2);
+        $strOptionHost = optionIndex(OPTION_DB_HOST, $bUseMaster ? 1 : 2);
+        $strOptionUser = optionIndex(OPTION_DB_USER, $bUseMaster ? 1 : 2);
     }
 
     my $oProtocolTemp = new pgBackRest::Protocol::RemoteMaster
     (
         commandWrite(
-            CMD_REMOTE, true, optionGet(OPTION_COMMAND_REMOTE), undef,
+            CMD_REMOTE, true, optionGet($strOptionCmd), undef,
             {
                 &OPTION_COMMAND => {value => commandGet()},
                 &OPTION_PROCESS => {value => $iProcessIdx},
                 &OPTION_CONFIG =>
-                    {value => optionSource(OPTION_CONFIG_REMOTE) eq SOURCE_DEFAULT ? undef : optionGet(OPTION_CONFIG_REMOTE)},
+                    {value => optionSource($strOptionConfig) eq SOURCE_DEFAULT ? undef : optionGet($strOptionConfig)},
                 &OPTION_LOG_PATH => {},
                 &OPTION_LOCK_PATH => {},
-                &OPTION_DB_PATH => $bUseMaster ? undef : {value => optionGet(optionIndex(OPTION_DB_PATH, 2))},
-                &OPTION_DB_SOCKET_PATH => $bUseMaster ? undef : {value => optionGet(optionIndex(OPTION_DB_SOCKET_PATH, 2))},
+                &OPTION_DB_PATH =>
+                    $bUseMaster ? undef :
+                        {value => optionSource(optionIndex(OPTION_DB_PATH, 2)) eq SOURCE_DEFAULT ?
+                            undef : optionGet(optionIndex(OPTION_DB_PATH, 2))},
+                &OPTION_DB_SOCKET_PATH =>
+                    $bUseMaster ? undef :
+                        {value => optionSource(optionIndex(OPTION_DB_SOCKET_PATH, 2)) eq SOURCE_DEFAULT ?
+                            undef : optionGet(optionIndex(OPTION_DB_SOCKET_PATH, 2))},
                 &OPTION_DB_HOST => {}
             }),
         optionGet(OPTION_BUFFER_SIZE),
         commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL : optionGet(OPTION_COMPRESS_LEVEL),
         commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK : optionGet(OPTION_COMPRESS_LEVEL_NETWORK),
-        optionRemoteTypeTest(DB) ? $strDbHost : optionGet(OPTION_BACKUP_HOST),
-        optionRemoteTypeTest(DB) ? $strDbUser : optionGet(OPTION_BACKUP_USER),
+        optionGet($strOptionHost),
+        optionGet($strOptionUser),
         optionGet(OPTION_PROTOCOL_TIMEOUT)
     );
 

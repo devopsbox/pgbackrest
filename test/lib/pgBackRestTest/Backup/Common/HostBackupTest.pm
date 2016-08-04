@@ -721,11 +721,6 @@ sub configCreate
         $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_COMPRESS} = 'n';
     }
 
-    if ($bRemote)
-    {
-        $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_COMMAND_REMOTE} = $self->backrestExe();
-    }
-
     if ($self->nameTest(HOST_BACKUP) || !defined($oHostBackup))
     {
         if (defined($$oParam{bHardlink}) && $$oParam{bHardlink})
@@ -745,28 +740,17 @@ sub configCreate
     {
         $oParamHash{$strStanza}{optionIndex(OPTION_DB_HOST, 1, true)} = $oHostDbMaster->nameGet();
         $oParamHash{$strStanza}{optionIndex(OPTION_DB_USER, 1, true)} = $oHostDbMaster->userGet();
+        $oParamHash{$strStanza}{optionIndex(OPTION_DB_CMD, 1, true)} = $oHostDbMaster->backrestExe();
+        $oParamHash{$strStanza}{optionIndex(OPTION_DB_CONFIG, 1, true)} = $oHostDbMaster->backrestConfig();
         $oParamHash{$strStanza}{optionIndex(OPTION_DB_PATH, 1, true)} = $oHostDbMaster->dbBasePath();
-
-        if (!$oHostDbMaster->synthetic())
-        {
-            $oParamHash{$strStanza}{optionIndex(OPTION_DB_SOCKET_PATH, 1, true)} = $oHostDbMaster->dbSocketPath();
-            $oParamHash{$strStanza}{optionIndex(OPTION_DB_PORT, 1, true)} = $oHostDbMaster->dbPort();
-        }
-
-        # !! Need to add this for standby as well - for now just give all params so standby works
-        $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_CONFIG_REMOTE} = $oHostDbMaster->backrestConfig();
 
         if (defined($oHostDbStandby))
         {
             $oParamHash{$strStanza}{optionIndex(OPTION_DB_HOST, 2)} = $oHostDbStandby->nameGet();
             $oParamHash{$strStanza}{optionIndex(OPTION_DB_USER, 2)} = $oHostDbStandby->userGet();
+            $oParamHash{$strStanza}{optionIndex(OPTION_DB_CMD, 2)} = $oHostDbStandby->backrestExe();
+            $oParamHash{$strStanza}{optionIndex(OPTION_DB_CONFIG, 2)} = $oHostDbStandby->backrestConfig();
             $oParamHash{$strStanza}{optionIndex(OPTION_DB_PATH, 2)} = $oHostDbStandby->dbBasePath();
-
-            if (!$oHostDbStandby->synthetic())
-            {
-                $oParamHash{$strStanza}{optionIndex(OPTION_DB_SOCKET_PATH, 2)} = $oHostDbStandby->dbSocketPath();
-                $oParamHash{$strStanza}{optionIndex(OPTION_DB_PORT, 2)} = $oHostDbStandby->dbPort();
-            }
         }
 
     }
@@ -792,11 +776,11 @@ sub configCreate
         {
             $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_BACKUP_HOST} = $oHostBackup->nameGet();
             $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_BACKUP_USER} = $oHostBackup->userGet();
+            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_BACKUP_CMD} = $oHostBackup->backrestExe();
+            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_BACKUP_CONFIG} = $oHostBackup->backrestConfig();
 
             $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_PATH} = $self->logPath();
             $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_LOCK_PATH} = $self->lockPath();
-
-            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_CONFIG_REMOTE} = $oHostBackup->backrestConfig();
         }
     }
 
