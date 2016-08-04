@@ -1860,6 +1860,8 @@ sub backupTestRun
             # the logs will to be deleted to avoid causing issues further down the line.
             if ($bTestExtra)
             {
+                $strType = BACKUP_TYPE_INCR;
+
                 $oHostDbMaster->clusterRestart();
 
                 $oHostDbMaster->stop();
