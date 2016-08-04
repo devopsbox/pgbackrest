@@ -1545,9 +1545,12 @@ sub backupTestRun
             # Increment the run, log, and decide whether this unit test should be run
             if (!testRun(++$iRun, "rmt ${bRemote}, arc_async ${bArchiveAsync}, cmp ${bCompress}")) {next}
 
+            # Determine if a standby will be created
+            my $bStandby = $bRemote && $oHostGroup->paramGet(HOST_PARAM_DB_VERSION) >= PG_VERSION_91;
+
             # Create hosts, file object, and config
             my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = backupTestSetup(
-                $bRemote, false, undef, {bStandby => $bRemote, bCompress => $bCompress, bArchiveAsync => $bArchiveAsync});
+                $bRemote, false, undef, {bStandby => $bStandby, bCompress => $bCompress, bArchiveAsync => $bArchiveAsync});
 
             # Determine if extra tests are performed.  Extra tests should not be primary tests for compression or async archiving.
             my $bTestExtra = !$bCompress && !$bArchiveAsync && $iThreadMax == 1;
@@ -1738,7 +1741,7 @@ sub backupTestRun
 
             # Setup replica
             #-----------------------------------------------------------------------------------------------------------------------
-            if ($bRemote)
+            if ($bStandby)
             {
                 $bDelta = false;
                 $bForce = false;
@@ -1756,7 +1759,10 @@ sub backupTestRun
                 my %oRemapHash;
                 $oRemapHash{&MANIFEST_TARGET_PGDATA} = $oHostDbStandby->dbBasePath();
 
-                $oHostDbStandby->linkRemap(DB_PATH_PGXLOG, $oHostDbStandby->dbPath() . '/' . DB_PATH_PGXLOG);
+                if ($oHostDbStandby->dbVersion() >= PG_VERSION_92)
+                {
+                    $oHostDbStandby->linkRemap(DB_PATH_PGXLOG, $oHostDbStandby->dbPath() . '/' . DB_PATH_PGXLOG);
+                }
 
                 $oHostDbStandby->restore(
                     OPTION_DEFAULT_RESTORE_SET, undef, \%oRemapHash, $bDelta, $bForce, $strType, $strTarget, $bTargetExclusive,
@@ -1851,7 +1857,7 @@ sub backupTestRun
                 # docker exec -u backrest test-0-backup /backrest/bin/pgbackrest --config=/home/vagrant/test/test-0/backup/pgbackrest.conf --stop-auto --no-resume --stanza=db --backup-standby --test backup --type=incr --log-level-console=info
 
                 # !!! REMOVE THIS
-                exit 0;
+                # exit 0;
             }
 
             # Execute stop and make sure the backup fails
