@@ -752,7 +752,6 @@ sub configCreate
             $oParamHash{$strStanza}{optionIndex(OPTION_DB_CONFIG, 2)} = $oHostDbStandby->backrestConfig();
             $oParamHash{$strStanza}{optionIndex(OPTION_DB_PATH, 2)} = $oHostDbStandby->dbBasePath();
         }
-
     }
     # Else if this is a database host
     else

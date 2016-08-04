@@ -1895,9 +1895,14 @@ sub backupTestRun
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = BACKUP_TYPE_INCR;
 
-            # Create a tablespace
+            # Create a tablespace directory
             filePathCreate($oHostDbMaster->tablespacePath(1), undef, undef, true);
-            filePathCreate($oHostDbStandby->tablespacePath(1), undef, undef, true);
+
+            # Also create it on the standby so replay won't fail
+            if (defined($oHostDbStandby))
+            {
+                filePathCreate($oHostDbStandby->tablespacePath(1), undef, undef, true);
+            }
 
             $oHostDbMaster->sqlExecute(
                 "create tablespace ts1 location '" . $oHostDbMaster->tablespacePath(1) . "'", {bAutoCommit => true});
@@ -2275,6 +2280,15 @@ sub backupTestRun
                 $oHostBackup->backup(
                     $strType, 'succeed on --no-' . OPTION_ONLINE . ' with --' . OPTION_FORCE,
                     {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+            }
+
+            # Stop clusters to catch any errors in the postgres log
+            #-----------------------------------------------------------------------------------------------------------------------
+            $oHostDbMaster->clusterStop({bImmediate => true});
+
+            if (defined($oHostDbStandby))
+            {
+                $oHostDbStandby->clusterStop({bImmediate => true});
             }
         }
         }
