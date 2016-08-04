@@ -29,7 +29,6 @@ use pgBackRestTest::CommonTest;
 ####################################################################################################################################
 sub backupTestSetup
 {
-    my $bRemote = shift;
     my $bSynthetic = shift;
     my $oLogTest = shift;
     my $oConfigParam = shift;
@@ -38,9 +37,10 @@ sub backupTestSetup
     my $oHostGroup = hostGroupGet();
 
     # Create the backup host
+    my $bHostBackup = defined($$oConfigParam{bHostBackup}) ? $$oConfigParam{bHostBackup} : false;
     my $oHostBackup = undef;
 
-    if ($bRemote)
+    if ($bHostBackup)
     {
         $oHostBackup = new pgBackRestTest::Backup::Common::HostBackupTest(
             {strDbMaster => HOST_DB_MASTER, bSynthetic => $bSynthetic, oLogTest => $bSynthetic ? $oLogTest : undef});
@@ -92,7 +92,7 @@ sub backupTestSetup
     # Create db master config
     $oHostDbMaster->configCreate({
         bCompress => $$oConfigParam{bCompress},
-        bHardlink => $bRemote ? undef : $$oConfigParam{bHardLink},
+        bHardlink => $bHostBackup ? undef : $$oConfigParam{bHardLink},
         bArchiveAsync => $$oConfigParam{bArchiveAsync}});
 
     # Create backup config if backup host exists
@@ -113,7 +113,7 @@ sub backupTestSetup
     {
         $oHostDbStandby->configCreate({
             bCompress => $$oConfigParam{bCompress},
-            bHardlink => $bRemote ? undef : $$oConfigParam{bHardLink},
+            bHardlink => $bHostBackup ? undef : $$oConfigParam{bHardLink},
             bArchiveAsync => $$oConfigParam{bArchiveAsync}});
     }
 

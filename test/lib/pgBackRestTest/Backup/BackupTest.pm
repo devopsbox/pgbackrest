@@ -175,7 +175,7 @@ sub backupTestRun
 
                 # Create hosts, file object, and config
                 my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = backupTestSetup(
-                    $bRemote, true, $oLogTest, {bCompress => $bCompress, bArchiveAsync => $bArchiveAsync});
+                    true, $oLogTest, {bHostBackup => $bRemote, bCompress => $bCompress, bArchiveAsync => $bArchiveAsync});
 
                 # Create the xlog path
                 my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
@@ -380,7 +380,7 @@ sub backupTestRun
 
                 # Create hosts, file object, and config
                 my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = backupTestSetup(
-                    $bRemote, true, $oLogTest, {bCompress => $bCompress, bArchiveAsync => true});
+                    true, $oLogTest, {bHostBackup => $bRemote, bCompress => $bCompress, bArchiveAsync => true});
 
                 # Create the xlog path
                 my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
@@ -463,7 +463,7 @@ sub backupTestRun
 
                 # Create hosts, file object, and config
                 my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = backupTestSetup(
-                    $bRemote, true, $oLogTest, {bCompress => $bCompress});
+                    true, $oLogTest, {bHostBackup => $bRemote, bCompress => $bCompress});
 
                 # Create the xlog path
                 my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
@@ -593,7 +593,7 @@ sub backupTestRun
                                     \$oLogTest))
         {
             # Create hosts, file object, and config
-            my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = backupTestSetup(false, true, $oLogTest);
+            my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = backupTestSetup(true, $oLogTest);
 
             # Create the test object
             my $oExpireTest = new pgBackRestTest::Backup::Common::ExpireCommonTest($oHostBackup, $oFile, $oLogTest);
@@ -678,7 +678,7 @@ sub backupTestRun
 
             # Create hosts, file object, and config
             my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = backupTestSetup(
-                $bRemote, true, $oLogTest, {bCompress => $bCompress, bHardLink => $bHardLink});
+                true, $oLogTest, {bHostBackup => $bRemote, bCompress => $bCompress, bHardLink => $bHardLink});
 
             # Determine if this is a neutral test, i.e. we only want to do it once for local and once for remote.  Neutral means
             # that options such as compression and hardlinks are disabled
@@ -1536,21 +1536,31 @@ sub backupTestRun
             &log(INFO, "Test Full Backup\n");
         }
 
-        for (my $bRemote = false; $bRemote <= true; $bRemote++)
+        foreach my $bHostBackup (false, true)
         {
-        for (my $bArchiveAsync = false; $bArchiveAsync <= true; $bArchiveAsync++)
+        foreach my $bHostStandby (false, true)
         {
-        for (my $bCompress = false; $bCompress <= true; $bCompress++)
+        foreach my $strBackupSource ($bHostStandby ? (HOST_DB_MASTER, HOST_DB_STANDBY) : (HOST_DB_MASTER))
+        {
+        foreach my $bArchiveAsync ($bHostStandby ? (false) : (false, true))
+        {
+        foreach my $bCompress ($bHostStandby ? (false) : (false, true))
         {
             # Increment the run, log, and decide whether this unit test should be run
-            if (!testRun(++$iRun, "rmt ${bRemote}, arc_async ${bArchiveAsync}, cmp ${bCompress}")) {next}
+            next if (!testRun(
+                ++$iRun,
+                "bkp ${bHostBackup}, sby ${bHostStandby}, src ${strBackupSource}, asy ${bArchiveAsync}, cmp ${bCompress}"));
 
-            # Determine if a standby will be created
-            my $bStandby = $bRemote && $oHostGroup->paramGet(HOST_PARAM_DB_VERSION) >= PG_VERSION_91;
+            if ($bHostStandby && $oHostGroup->paramGet(HOST_PARAM_DB_VERSION) < PG_VERSION_91)
+            {
+                &log(INFO, 'skipped - this version of PostgreSQL does not support standby');
+                next;
+            }
 
             # Create hosts, file object, and config
             my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = backupTestSetup(
-                $bRemote, false, undef, {bStandby => $bStandby, bCompress => $bCompress, bArchiveAsync => $bArchiveAsync});
+                false, undef,
+                {bHostBackup => $bHostBackup, bStandby => $bHostStandby, bCompress => $bCompress, bArchiveAsync => $bArchiveAsync});
 
             # Determine if extra tests are performed.  Extra tests should not be primary tests for compression or async archiving.
             my $bTestExtra = !$bCompress && !$bArchiveAsync && $iThreadMax == 1;
@@ -1609,7 +1619,7 @@ sub backupTestRun
                 $oHostDbMaster->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID});
 
                 # If running the remote tests then also need to run check locally
-                if ($bRemote)
+                if ($bHostBackup)
                 {
                     $oHostBackup->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID});
                 }
@@ -1630,7 +1640,7 @@ sub backupTestRun
                 $oHostDbMaster->check($strComment, {iTimeout => 5});
 
                 # If running the remote tests then also need to run check locally
-                if ($bRemote)
+                if ($bHostBackup)
                 {
                     $oHostBackup->check($strComment, {iTimeout => 5});
                 }
@@ -1646,7 +1656,7 @@ sub backupTestRun
                 $oHostDbMaster->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH});
 
                 # If running the remote tests then also need to run check locally
-                if ($bRemote)
+                if ($bHostBackup)
                 {
                     $oHostBackup->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH});
                 }
@@ -1661,7 +1671,7 @@ sub backupTestRun
                 $oHostDbMaster->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_TIMEOUT});
 
                 # If running the remote tests then also need to run check locally
-                if ($bRemote)
+                if ($bHostBackup)
                 {
                     $oHostBackup->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_TIMEOUT});
                 }
@@ -1671,7 +1681,7 @@ sub backupTestRun
 
                 # If local, then with a valid archive info, create the backup.info file by running a backup then munge the
                 # backup.info file.
-                if (!$bRemote)
+                if (!$bHostBackup)
                 {
                     # Check backup mismatch error
                     $strComment = 'fail on backup info mismatch';
@@ -1741,7 +1751,7 @@ sub backupTestRun
 
             # Setup replica
             #-----------------------------------------------------------------------------------------------------------------------
-            if ($bStandby)
+            if ($bHostStandby)
             {
                 $bDelta = false;
                 $bForce = false;
@@ -2298,6 +2308,8 @@ sub backupTestRun
             {
                 $oHostDbStandby->clusterStop({bImmediate => true});
             }
+        }
+        }
         }
         }
         }
