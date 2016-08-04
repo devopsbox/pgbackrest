@@ -1775,75 +1775,75 @@ sub backupTestRun
 
                 my $strBackup = $oHostBackup->backup(BACKUP_TYPE_INCR, 'backup from standby', {bStandby => true});
 
-                my $strExpectedManifest = "${strTestPath}/expected.manifest";
-                my $oExpectedManifest = new pgBackRest::Manifest($strExpectedManifest, false);
-                $oExpectedManifest->build($oFile, $oHostDbMaster->dbBasePath(), undef, true, undef);
-
-                my $strSectionPath = $oExpectedManifest->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH);
-
-                foreach my $strName ($oExpectedManifest->keys(MANIFEST_SECTION_TARGET_FILE))
-                {
-                    if ($strName =~ 'pg_data/pg_xlog/.*' || $strName eq 'pg_data/global/pg_control')
-                    {
-                        $oExpectedManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName);
-                    }
-                    else
-                    {
-                        if ($oExpectedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) != 0)
-                        {
-                            my $oStat = fileStat($oExpectedManifest->dbPathGet($strSectionPath, $strName));
-
-                            if ($oStat->blocks > 0 || S_ISLNK($oStat->mode))
-                            {
-                                $oExpectedManifest->set(
-                                    MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM,
-                                    $oFile->hash(PATH_DB_ABSOLUTE, $oExpectedManifest->dbPathGet($strSectionPath, $strName)));
-                            }
-                        }
-
-                        $oExpectedManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP);
-                    }
-                }
-
-                for my $strSection ($oExpectedManifest->keys())
-                {
-                    if ($strSection ne MANIFEST_SECTION_TARGET_FILE)
-                    {
-                        $oExpectedManifest->remove($strSection);
-                    }
-                }
-
-                iniSave($strExpectedManifest, $oExpectedManifest->{oContent});
-
-                my $strActualManifest = "${strTestPath}/actual.manifest";
-                my $oActualManifest = new pgBackRest::Manifest(
-                    $oFile->pathGet(PATH_BACKUP_CLUSTER, "${strBackup}/" . FILE_MANIFEST), true);
-
-                foreach my $strName ($oActualManifest->keys(MANIFEST_SECTION_TARGET_FILE))
-                {
-                    if ($strName =~ 'pg_data/pg_xlog/.*' || $strName eq 'pg_data/global/pg_control')
-                    {
-                        $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName);
-                    }
-                    else
-                    {
-                        $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE);
-                        $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE);
-                        $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP);
-                    }
-                }
-
-                for my $strSection ($oActualManifest->keys())
-                {
-                    if ($strSection ne MANIFEST_SECTION_TARGET_FILE)
-                    {
-                        $oActualManifest->remove($strSection);
-                    }
-                }
-
-                iniSave($strActualManifest, $oActualManifest->{oContent});
-
-                executeTest("diff ${strExpectedManifest} ${strActualManifest}");
+                # my $strExpectedManifest = "${strTestPath}/expected.manifest";
+                # my $oExpectedManifest = new pgBackRest::Manifest($strExpectedManifest, false);
+                # $oExpectedManifest->build($oFile, $oHostDbMaster->dbBasePath(), undef, true, undef);
+                #
+                # my $strSectionPath = $oExpectedManifest->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH);
+                #
+                # foreach my $strName ($oExpectedManifest->keys(MANIFEST_SECTION_TARGET_FILE))
+                # {
+                #     if ($strName =~ 'pg_data/pg_xlog/.*' || $strName eq 'pg_data/global/pg_control')
+                #     {
+                #         $oExpectedManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName);
+                #     }
+                #     else
+                #     {
+                #         if ($oExpectedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) != 0)
+                #         {
+                #             my $oStat = fileStat($oExpectedManifest->dbPathGet($strSectionPath, $strName));
+                #
+                #             if ($oStat->blocks > 0 || S_ISLNK($oStat->mode))
+                #             {
+                #                 $oExpectedManifest->set(
+                #                     MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM,
+                #                     $oFile->hash(PATH_DB_ABSOLUTE, $oExpectedManifest->dbPathGet($strSectionPath, $strName)));
+                #             }
+                #         }
+                #
+                #         $oExpectedManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP);
+                #     }
+                # }
+                #
+                # for my $strSection ($oExpectedManifest->keys())
+                # {
+                #     if ($strSection ne MANIFEST_SECTION_TARGET_FILE)
+                #     {
+                #         $oExpectedManifest->remove($strSection);
+                #     }
+                # }
+                #
+                # iniSave($strExpectedManifest, $oExpectedManifest->{oContent});
+                #
+                # my $strActualManifest = "${strTestPath}/actual.manifest";
+                # my $oActualManifest = new pgBackRest::Manifest(
+                #     $oFile->pathGet(PATH_BACKUP_CLUSTER, "${strBackup}/" . FILE_MANIFEST), true);
+                #
+                # foreach my $strName ($oActualManifest->keys(MANIFEST_SECTION_TARGET_FILE))
+                # {
+                #     if ($strName =~ 'pg_data/pg_xlog/.*' || $strName eq 'pg_data/global/pg_control')
+                #     {
+                #         $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName);
+                #     }
+                #     else
+                #     {
+                #         $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE);
+                #         $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE);
+                #         $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP);
+                #     }
+                # }
+                #
+                # for my $strSection ($oActualManifest->keys())
+                # {
+                #     if ($strSection ne MANIFEST_SECTION_TARGET_FILE)
+                #     {
+                #         $oActualManifest->remove($strSection);
+                #     }
+                # }
+                #
+                # iniSave($strActualManifest, $oActualManifest->{oContent});
+                #
+                # executeTest("diff ${strExpectedManifest} ${strActualManifest}");
 
                 # $oHostBackup->backupCompare($strBackup, $oExpectedManifest->{oContent});
 
