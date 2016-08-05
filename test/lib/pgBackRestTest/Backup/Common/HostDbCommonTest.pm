@@ -92,9 +92,9 @@ sub new
             strImage => $$oParam{strImage},
             strUser => $oHostGroup->paramGet(HOST_DB_USER),
             strVm => $oHostGroup->paramGet(HOST_PARAM_VM),
+            strBackupDestination => $$oParam{strBackupDestination},
             oLogTest => $$oParam{oLogTest},
             bSynthetic => $$oParam{bSynthetic},
-            oHostBackup => $$oParam{oHostBackup},
         });
     bless $self, $class;
 
@@ -107,9 +107,8 @@ sub new
 
     filePathCreate($self->dbBasePath(), undef, undef, true);
 
-    if (defined($$oParam{oHostBackup}))
+    if ($$oParam{strBackupDestination} ne $self->nameGet())
     {
-        $self->paramSet(HOST_PARAM_REPO_PATH, $$oParam{oHostBackup}->repoPath());
         $self->paramSet(HOST_PARAM_SPOOL_PATH, $self->testPath() . '/' . HOST_PATH_SPOOL);
         $self->paramSet(HOST_PARAM_LOG_PATH, $self->spoolPath() . '/' . HOST_PATH_LOG);
         $self->paramSet(HOST_PARAM_LOCK_PATH, $self->spoolPath() . '/' . HOST_PATH_LOCK);
@@ -173,7 +172,7 @@ sub archivePush
         ' --archive-max-mb=24 --no-fork --stanza=' . $self->stanza() .
         (defined($iExpectedError) && $iExpectedError == ERROR_HOST_CONNECT ? ' --backup-host=bogus' : '') .
         " archive-push ${strSourceFile}",
-        {iExpectedExitStatus => $iExpectedError, oLogTest => $self->{oLogTest}});
+        {iExpectedExitStatus => $iExpectedError, oLogTest => $self->{oLogTest}, bLogOutput => $self->synthetic()});
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -232,7 +231,6 @@ sub configRecovery
 sub configRemap
 {
     my $self = shift;
-    my $oHostBackup = shift;
     my $oRemapHashRef = shift;
     my $oManifestRef = shift;
 
@@ -245,8 +243,11 @@ sub configRemap
 
     # Load backup config file
     my %oRemoteConfig;
+    my $oHostBackup =
+        !$self->standby() && !$self->nameTest($self->backupDestination()) ?
+            hostGroupGet()->hostGet($self->backupDestination()) : undef;
 
-    if ($oHostBackup->nameTest(HOST_BACKUP))
+    if (defined($oHostBackup))
     {
         iniLoad($oHostBackup->backrestConfig(), \%oRemoteConfig, true);
     }
@@ -264,9 +265,10 @@ sub configRemap
             $oConfig{$strStanza}{'db-path'} = $strRemapPath;
             ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_TARGET}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_PATH} = $strRemapPath;
 
-            if ($oHostBackup->nameTest(HOST_BACKUP))
+            if (defined($oHostBackup))
             {
-                $oRemoteConfig{$strStanza}{'db1-path'} = $strRemapPath;
+                my $bForce = defined(hostGroupGet()->hostGet(HOST_DB_STANDBY, true));
+                $oRemoteConfig{$strStanza}{optionIndex(OPTION_DB_PATH, 1, $bForce)} = $strRemapPath;
             }
         }
         else
@@ -288,7 +290,7 @@ sub configRemap
     iniSave($self->backrestConfig(), \%oConfig, true);
 
     # Save backup config file (but not is this is the standby which is not the source of backups)
-    if ($oHostBackup->nameTest(HOST_BACKUP) && !$self->standby())
+    if (defined($oHostBackup))
     {
         iniSave($oHostBackup->backrestConfig(), \%oRemoteConfig, true);
     }
@@ -430,7 +432,7 @@ sub restore
     # Get the backup host
     if (defined($oRemapHashRef))
     {
-        $self->configRemap($oHostBackup, $oRemapHashRef, $oExpectedManifestRef);
+        $self->configRemap($oRemapHashRef, $oExpectedManifestRef);
     }
 
     if (defined($oRecoveryHashRef))
@@ -455,7 +457,8 @@ sub restore
         (defined($strTargetAction) && $strTargetAction ne OPTION_DEFAULT_RESTORE_TARGET_ACTION
             ? ' --' . OPTION_TARGET_ACTION . "=${strTargetAction}" : '') .
         ' --stanza=' . $self->stanza() . ' restore',
-        {strComment => $strComment, iExpectedExitStatus => $iExpectedExitStatus, oLogTest => $self->{oLogTest}},
+        {strComment => $strComment, iExpectedExitStatus => $iExpectedExitStatus, oLogTest => $self->{oLogTest},
+         bLogOutput => $self->synthetic()},
         $strUser);
 
     if (!defined($iExpectedExitStatus))

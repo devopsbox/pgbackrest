@@ -106,11 +106,6 @@ sub new
         $strImage = 'backrest/' . $oHostGroup->paramGet(HOST_PARAM_VM) . '-backup-test-pre';
         $strUser = $oHostGroup->paramGet(HOST_BACKUP_USER);
         $strVm = $oHostGroup->paramGet(HOST_PARAM_VM);
-
-        if (!defined($$oParam{strDbMaster}))
-        {
-            confess &log(ERROR, "strDbMaster must be specified for dedicated backup hosts");
-        }
     }
     else
     {
@@ -125,13 +120,11 @@ sub new
     bless $self, $class;
 
     # Set parameters
-    if (defined($$oParam{oHostBackup}))
+    $self->paramSet(
+        HOST_PARAM_REPO_PATH, $oHostGroup->paramGet(HOST_PARAM_TEST_PATH) . "/$$oParam{strBackupDestination}/" . HOST_PATH_REPO);
+
+    if ($$oParam{strBackupDestination} eq $self->nameGet())
     {
-        $self->paramSet(HOST_PARAM_REPO_PATH, $$oParam{oHostBackup}->repoPath());
-    }
-    else
-    {
-        $self->paramSet(HOST_PARAM_REPO_PATH, $self->testPath() . '/' . HOST_PATH_REPO);
         $self->paramSet(HOST_PARAM_LOG_PATH, $self->repoPath() . '/' . HOST_PATH_LOG);
         $self->paramSet(HOST_PARAM_LOCK_PATH, $self->repoPath() . '/' . HOST_PATH_LOCK);
         filePathCreate($self->repoPath(), '0770');
@@ -145,9 +138,11 @@ sub new
     # Set LogTest object
     $self->{oLogTest} = $$oParam{oLogTest};
 
-    # Set db master host (this is the host where the backups are run)
-    $self->{strDbMaster} = $$oParam{strDbMaster};
+    # Set synthetic
     $self->{bSynthetic} = defined($$oParam{bSynthetic}) && $$oParam{bSynthetic} ? true : false;
+
+    # Set the backup destination
+    $self->{strBackupDestination} = $$oParam{strBackupDestination};
 
     # Create the local file object
     $self->{oFile} = new pgBackRest::File(
@@ -222,7 +217,8 @@ sub backupBegin
         ($strType ne 'incr' ? " --type=${strType}" : '') .
         ' --stanza=' . $self->stanza() . ' backup' .
         (defined($strTest) ? " --test --test-delay=${fTestDelay} --test-point=" . lc($strTest) . '=y' : ''),
-        {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus}, oLogTest => $self->{oLogTest}});
+        {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus},
+         oLogTest => $self->{oLogTest}, bLogOutput => $self->synthetic()});
 
     $oExecuteBackup->begin();
 
@@ -281,28 +277,34 @@ sub backupEnd
         # Set backup type in the expected manifest
         ${$oExpectedManifest}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TYPE} = $strType;
 
-
         $self->backupCompare($strBackup, $oExpectedManifest);
     }
 
     # Add files to expect log
     if (defined($self->{oLogTest}) && (!defined($$oParam{bSupplemental}) || $$oParam{bSupplemental}))
     {
-        if ($self->nameTest(HOST_BACKUP))
-        {
-            my $oHostGroup = hostGroupGet();
-            my $oHostDbMaster = $oHostGroup->hostGet($self->{strDbMaster}, true);
+        my $oHostGroup = hostGroupGet();
 
-            if (defined($oHostDbMaster))
-            {
-                $self->{oLogTest}->supplementalAdd($oHostDbMaster->testPath() . '/' . BACKREST_CONF);
-            }
+        if (defined($oHostGroup->hostGet(HOST_DB_MASTER, true)))
+        {
+            $self->{oLogTest}->supplementalAdd($oHostGroup->hostGet(HOST_DB_MASTER)->testPath() . '/' . BACKREST_CONF);
         }
 
-        $self->{oLogTest}->supplementalAdd($self->testPath() . '/' . BACKREST_CONF);
+        if (defined($oHostGroup->hostGet(HOST_DB_STANDBY, true)))
+        {
+            $self->{oLogTest}->supplementalAdd($oHostGroup->hostGet(HOST_DB_STANDBY)->testPath() . '/' . BACKREST_CONF);
+        }
 
-        $self->{oLogTest}->supplementalAdd($self->{oFile}->pathGet(PATH_BACKUP_CLUSTER, "${strBackup}/" . FILE_MANIFEST));
-        $self->{oLogTest}->supplementalAdd($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info');
+        if (defined($oHostGroup->hostGet(HOST_BACKUP, true)))
+        {
+            $self->{oLogTest}->supplementalAdd($oHostGroup->hostGet(HOST_BACKUP)->testPath() . '/' . BACKREST_CONF);
+        }
+
+        if ($self->synthetic())
+        {
+            $self->{oLogTest}->supplementalAdd($self->{oFile}->pathGet(PATH_BACKUP_CLUSTER, "${strBackup}/" . FILE_MANIFEST));
+            $self->{oLogTest}->supplementalAdd($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info');
+        }
     }
 
     # Return from function and log return values if any
@@ -523,7 +525,8 @@ sub check
         (defined($$oParam{iTimeout}) ? " --archive-timeout=$$oParam{iTimeout}" : '') .
         (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
         ' --stanza=' . $self->stanza() . ' check',
-        {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus}, oLogTest => $self->{oLogTest}});
+        {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus}, oLogTest => $self->{oLogTest},
+         bLogOutput => $self->synthetic()});
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -565,7 +568,8 @@ sub expire
         (defined($$oParam{iRetentionFull}) ? " --retention-full=$$oParam{iRetentionFull}" : '') .
         (defined($$oParam{iRetentionDiff}) ? " --retention-diff=$$oParam{iRetentionDiff}" : '') .
         '  --stanza=' . $self->stanza() . ' expire',
-        {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus}, oLogTest => $self->{oLogTest}});
+        {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus}, oLogTest => $self->{oLogTest},
+         bLogOutput => $self->synthetic()});
 }
 
 ####################################################################################################################################
@@ -600,7 +604,7 @@ sub info
         ' --log-level-console=warn' .
         (defined($$oParam{strStanza}) ? " --stanza=$$oParam{strStanza}" : '') .
         (defined($$oParam{strOutput}) ? " --output=$$oParam{strOutput}" : '') . ' info',
-        {strComment => $strComment, oLogTest => $self->{oLogTest}});
+        {strComment => $strComment, oLogTest => $self->{oLogTest}, bLogOutput => $self->synthetic()});
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -634,7 +638,7 @@ sub start
         $self->backrestExe() .
         ' --config=' . $self->backrestConfig() .
         (defined($$oParam{strStanza}) ? " --stanza=$$oParam{strStanza}" : '') . ' start',
-        {strComment => $strComment, oLogTest => $self->{oLogTest}});
+        {strComment => $strComment, oLogTest => $self->{oLogTest}, bLogOutput => $self->synthetic()});
 }
 
 ####################################################################################################################################
@@ -666,7 +670,7 @@ sub stop
         ' --config=' . $self->backrestConfig() .
         (defined($$oParam{strStanza}) ? " --stanza=$$oParam{strStanza}" : '') .
         (defined($$oParam{bForce}) && $$oParam{bForce} ? ' --force' : '') . ' stop',
-        {strComment => $strComment, oLogTest => $self->{oLogTest}});
+        {strComment => $strComment, oLogTest => $self->{oLogTest}, bLogOutput => $self->synthetic()});
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -694,11 +698,9 @@ sub configCreate
     my %oParamHash;
     my $strStanza = $self->stanza();
     my $oHostGroup = hostGroupGet();
-    my $oHostBackup = $oHostGroup->hostGet(HOST_BACKUP, true);
-    my $oHostDbMaster = $oHostGroup->hostGet(HOST_DB_MASTER, true);
+    my $oHostBackup = $oHostGroup->hostGet($self->backupDestination());
+    my $oHostDbMaster = $oHostGroup->hostGet(HOST_DB_MASTER);
     my $oHostDbStandby = $oHostGroup->hostGet(HOST_DB_STANDBY, true);
-
-    my $bRemote = (defined($oHostBackup) ? 1 : 0) + (defined($oHostDbMaster) ? 1 : 0) + (defined($oHostDbStandby) ? 1 : 0) > 1;
 
     my $bArchiveAsync = defined($$oParam{bArchiveAsync}) ? $$oParam{bArchiveAsync} : false;
 
@@ -721,7 +723,7 @@ sub configCreate
         $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_COMPRESS} = 'n';
     }
 
-    if ($self->nameTest(HOST_BACKUP) || !defined($oHostBackup))
+    if ($self->isHostBackup())
     {
         if (defined($$oParam{bHardlink}) && $$oParam{bHardlink})
         {
@@ -736,32 +738,46 @@ sub configCreate
     # ------------------------------------------------------------------------------------------------------------------------------
 
     # If this is the backup host
-    if ($self->nameTest(HOST_BACKUP))
+    if ($self->isHostBackup())
     {
-        $oParamHash{$strStanza}{optionIndex(OPTION_DB_HOST, 1, true)} = $oHostDbMaster->nameGet();
-        $oParamHash{$strStanza}{optionIndex(OPTION_DB_USER, 1, true)} = $oHostDbMaster->userGet();
-        $oParamHash{$strStanza}{optionIndex(OPTION_DB_CMD, 1, true)} = $oHostDbMaster->backrestExe();
-        $oParamHash{$strStanza}{optionIndex(OPTION_DB_CONFIG, 1, true)} = $oHostDbMaster->backrestConfig();
-        $oParamHash{$strStanza}{optionIndex(OPTION_DB_PATH, 1, true)} = $oHostDbMaster->dbBasePath();
+        my $bForce = defined($oHostDbStandby);
+
+        if (!$self->isHostDbMaster())
+        {
+            $oParamHash{$strStanza}{optionIndex(OPTION_DB_HOST, 1, $bForce)} = $oHostDbMaster->nameGet();
+            $oParamHash{$strStanza}{optionIndex(OPTION_DB_USER, 1, $bForce)} = $oHostDbMaster->userGet();
+            $oParamHash{$strStanza}{optionIndex(OPTION_DB_CMD, 1, $bForce)} = $oHostDbMaster->backrestExe();
+            $oParamHash{$strStanza}{optionIndex(OPTION_DB_CONFIG, 1, $bForce)} = $oHostDbMaster->backrestConfig();
+        }
+
+        $oParamHash{$strStanza}{optionIndex(OPTION_DB_PATH, 1, $bForce)} = $oHostDbMaster->dbBasePath();
 
         if (defined($oHostDbStandby))
         {
-            $oParamHash{$strStanza}{optionIndex(OPTION_DB_HOST, 2)} = $oHostDbStandby->nameGet();
-            $oParamHash{$strStanza}{optionIndex(OPTION_DB_USER, 2)} = $oHostDbStandby->userGet();
-            $oParamHash{$strStanza}{optionIndex(OPTION_DB_CMD, 2)} = $oHostDbStandby->backrestExe();
-            $oParamHash{$strStanza}{optionIndex(OPTION_DB_CONFIG, 2)} = $oHostDbStandby->backrestConfig();
+            if (!$self->isHostDbStandby())
+            {
+                $oParamHash{$strStanza}{optionIndex(OPTION_DB_HOST, 2)} = $oHostDbStandby->nameGet();
+                $oParamHash{$strStanza}{optionIndex(OPTION_DB_USER, 2)} = $oHostDbStandby->userGet();
+                $oParamHash{$strStanza}{optionIndex(OPTION_DB_CMD, 2)} = $oHostDbStandby->backrestExe();
+                $oParamHash{$strStanza}{optionIndex(OPTION_DB_CONFIG, 2)} = $oHostDbStandby->backrestConfig();
+            }
+
             $oParamHash{$strStanza}{optionIndex(OPTION_DB_PATH, 2)} = $oHostDbStandby->dbBasePath();
         }
     }
-    # Else if this is a database host
-    else
+
+    # If this is a database host
+    if ($self->isHostDb())
     {
-        $oParamHash{$strStanza}{&OPTION_DB_PATH} = $self->dbBasePath();
+        my $iIndex = $self->isHostDbMaster() || !$self->isHostBackup() ? 1 : 2;
+        my $bForce = $self->isHostBackup() && defined($oHostDbStandby);
+
+        $oParamHash{$strStanza}{optionIndex(OPTION_DB_PATH, $iIndex, $bForce)} = $self->dbBasePath();
 
         if (!$self->synthetic())
         {
-            $oParamHash{$strStanza}{&OPTION_DB_SOCKET_PATH} = $self->dbSocketPath();
-            $oParamHash{$strStanza}{&OPTION_DB_PORT} = $self->dbPort();
+            $oParamHash{$strStanza}{optionIndex(OPTION_DB_SOCKET_PATH, $iIndex, $bForce)} = $self->dbSocketPath();
+            $oParamHash{$strStanza}{optionIndex(OPTION_DB_PORT, $iIndex, $bForce)} = $self->dbPort();
         }
 
         if ($bArchiveAsync)
@@ -771,7 +787,7 @@ sub configCreate
         }
 
         # If the the backup host is remote
-        if (defined($oHostBackup))
+        if (!$self->isHostBackup())
         {
             $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_BACKUP_HOST} = $oHostBackup->nameGet();
             $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_BACKUP_USER} = $oHostBackup->userGet();
@@ -963,7 +979,12 @@ sub infoRestore
 # Getters
 ####################################################################################################################################
 sub backrestConfig {return shift->paramGet(HOST_PARAM_BACKREST_CONFIG);}
+sub backupDestination {return shift->{strBackupDestination};}
 sub backrestExe {return shift->paramGet(HOST_PARAM_BACKREST_EXE);}
+sub isHostBackup {my $self = shift; return $self->backupDestination() eq $self->nameGet();}
+sub isHostDbMaster {return shift->nameGet() eq HOST_DB_MASTER;}
+sub isHostDbStandby {return shift->nameGet() eq HOST_DB_STANDBY;}
+sub isHostDb {my $self = shift; return $self->isHostDbMaster() || $self->isHostDbStandby();}
 sub lockPath {return shift->paramGet(HOST_PARAM_LOCK_PATH);}
 sub logPath {return shift->paramGet(HOST_PARAM_LOG_PATH);}
 sub repoPath {return shift->paramGet(HOST_PARAM_REPO_PATH);}

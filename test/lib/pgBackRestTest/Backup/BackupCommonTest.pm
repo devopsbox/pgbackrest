@@ -37,14 +37,22 @@ sub backupTestSetup
     my $oHostGroup = hostGroupGet();
 
     # Create the backup host
+    my $strBackupDestination;
     my $bHostBackup = defined($$oConfigParam{bHostBackup}) ? $$oConfigParam{bHostBackup} : false;
     my $oHostBackup = undef;
 
     if ($bHostBackup)
     {
+        $strBackupDestination = defined($$oConfigParam{strBackupDestination}) ? $$oConfigParam{strBackupDestination} : HOST_BACKUP;
+
         $oHostBackup = new pgBackRestTest::Backup::Common::HostBackupTest(
-            {strDbMaster => HOST_DB_MASTER, bSynthetic => $bSynthetic, oLogTest => $bSynthetic ? $oLogTest : undef});
+            {strBackupDestination => $strBackupDestination, bSynthetic => $bSynthetic, oLogTest => $oLogTest});
         $oHostGroup->hostAdd($oHostBackup);
+    }
+    else
+    {
+        $strBackupDestination =
+            defined($$oConfigParam{strBackupDestination}) ? $$oConfigParam{strBackupDestination} : HOST_DB_MASTER;
     }
 
     # Create the db-master host
@@ -53,11 +61,12 @@ sub backupTestSetup
     if ($bSynthetic)
     {
         $oHostDbMaster = new pgBackRestTest::Backup::Common::HostDbSyntheticTest(
-            {oHostBackup => $oHostBackup, oLogTest => $oLogTest});
+            {strBackupDestination => $strBackupDestination, oLogTest => $oLogTest});
     }
     else
     {
-        $oHostDbMaster = new pgBackRestTest::Backup::Common::HostDbTest({oHostBackup => $oHostBackup});
+        $oHostDbMaster = new pgBackRestTest::Backup::Common::HostDbTest(
+            {strBackupDestination => $strBackupDestination, oLogTest => $oLogTest});
     }
 
     $oHostGroup->hostAdd($oHostDbMaster);
@@ -68,7 +77,7 @@ sub backupTestSetup
     if (defined($$oConfigParam{bStandby}) && $$oConfigParam{bStandby})
     {
         $oHostDbStandby = new pgBackRestTest::Backup::Common::HostDbTest(
-            {bStandby => true, oHostBackup => $oHostBackup, oLogTest => $oLogTest});
+            {strBackupDestination => $strBackupDestination, bStandby => true, oLogTest => $oLogTest});
 
         $oHostGroup->hostAdd($oHostDbStandby);
     }
@@ -91,6 +100,7 @@ sub backupTestSetup
 
     # Create db master config
     $oHostDbMaster->configCreate({
+        strBackupSource => $$oConfigParam{strBackupSource},
         bCompress => $$oConfigParam{bCompress},
         bHardlink => $bHostBackup ? undef : $$oConfigParam{bHardLink},
         bArchiveAsync => $$oConfigParam{bArchiveAsync}});
@@ -112,6 +122,7 @@ sub backupTestSetup
     if (defined($oHostDbStandby))
     {
         $oHostDbStandby->configCreate({
+            strBackupSource => $$oConfigParam{strBackupSource},
             bCompress => $$oConfigParam{bCompress},
             bHardlink => $bHostBackup ? undef : $$oConfigParam{bHardLink},
             bArchiveAsync => $$oConfigParam{bArchiveAsync}});

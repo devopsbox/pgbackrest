@@ -1529,6 +1529,7 @@ sub backupTestRun
     #-------------------------------------------------------------------------------------------------------------------------------
     if ($strTest eq 'all' || $strTest eq 'full')
     {
+        $strThisTest = 'full';
         $iRun = 0;
 
         if (!$bVmOut)
@@ -1540,16 +1541,22 @@ sub backupTestRun
         {
         foreach my $bHostStandby (false, true)
         {
-        foreach my $strBackupSource ($bHostStandby ? (HOST_DB_MASTER, HOST_DB_STANDBY) : (HOST_DB_MASTER))
+        foreach my $strBackupDestination (
+            $bHostBackup ? (HOST_BACKUP) : $bHostStandby ? (HOST_DB_MASTER, HOST_DB_STANDBY) : (HOST_DB_MASTER))
         {
         foreach my $bArchiveAsync ($bHostStandby ? (false) : (false, true))
         {
         foreach my $bCompress ($bHostStandby ? (false) : (false, true))
         {
             # Increment the run, log, and decide whether this unit test should be run
+            my $bLog = $iThreadMax == 1 && $oHostGroup->paramGet(HOST_PARAM_DB_VERSION) eq PG_VERSION_95;
+
             next if (!testRun(
                 ++$iRun,
-                "bkp ${bHostBackup}, sby ${bHostStandby}, src ${strBackupSource}, asy ${bArchiveAsync}, cmp ${bCompress}"));
+                "bkp ${bHostBackup}, sby ${bHostStandby}, dst ${strBackupDestination}, asy ${bArchiveAsync}, cmp ${bCompress}",
+                $bLog ? $strModule : undef,
+                $bLog ? $strThisTest: undef,
+                \$oLogTest));
 
             if ($bHostStandby && $oHostGroup->paramGet(HOST_PARAM_DB_VERSION) < PG_VERSION_91)
             {
@@ -1559,11 +1566,12 @@ sub backupTestRun
 
             # Create hosts, file object, and config
             my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = backupTestSetup(
-                false, undef,
-                {bHostBackup => $bHostBackup, bStandby => $bHostStandby, bCompress => $bCompress, bArchiveAsync => $bArchiveAsync});
+                false, $oLogTest,
+                {bHostBackup => $bHostBackup, bStandby => $bHostStandby, strBackupDestination => $strBackupDestination,
+                 bCompress => $bCompress, bArchiveAsync => $bArchiveAsync});
 
             # Determine if extra tests are performed.  Extra tests should not be primary tests for compression or async archiving.
-            my $bTestExtra = !$bCompress && !$bArchiveAsync && $iThreadMax == 1;
+            my $bTestExtra = $iRun == 1;
 
             # For the 'fail on missing archive.info file' test, the archive.info file must not be found so set archive invalid.
             $oHostDbMaster->clusterCreate({bArchiveInvalid => $bTestExtra});
@@ -2308,6 +2316,8 @@ sub backupTestRun
             {
                 $oHostDbStandby->clusterStop({bImmediate => true});
             }
+
+            testCleanup(\$oLogTest);
         }
         }
         }

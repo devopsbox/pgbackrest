@@ -59,7 +59,7 @@ sub new
     my $self = $class->SUPER::new(
         {
             strImage => 'backrest/' . $oHostGroup->paramGet(HOST_PARAM_VM) . "-db-test-pre",
-            oHostBackup => $$oParam{oHostBackup},
+            strBackupDestination => $$oParam{strBackupDestination},
             oLogTest => $$oParam{oLogTest},
             bSynthetic => true,
             bStandby => $$oParam{bStandby},
