@@ -23,6 +23,8 @@ use pgBackRest::Config::Config;
 use pgBackRest::File;
 use pgBackRest::Manifest;
 use pgBackRest::Version;
+use pgBackRest::Protocol::Common;
+use pgBackRest::Protocol::Protocol;
 
 ####################################################################################################################################
 # Operation constants
@@ -137,7 +139,8 @@ sub new
         $self->{strDbPath} = optionGet(OPTION_DB_PATH);
     }
 
-    $self->{oProtocol} = protocolGet({bForceMaster => $bForceMaster});
+    # !!! Work needed here
+    $self->{oProtocol} = protocolGet(DB, 1);
 
     # Return from function and log return values if any
     return logDebugReturn

@@ -31,6 +31,8 @@ use pgBackRest::Db;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
+use pgBackRest::Protocol::Common;
+use pgBackRest::Protocol::Protocol;
 use pgBackRest::Version;
 
 ####################################################################################################################################
@@ -59,10 +61,13 @@ sub new
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(OP_BACKUP_NEW);
 
-    # Initialize protocol(s)
-    $self->{oProtocol} = protocolGet();
+    # !!! Set this temprorarly until there is logic behind it
+    $self->{iCopyRemoteIdx} = 1;
 
-    $self->{oProtocolMaster} = optionGet(OPTION_BACKUP_STANDBY) ? protocolGet({bForceMaster => true}) : $self->{oProtocol};
+    # Initialize protocol(s)
+    $self->{oProtocol} = protocolGet(DB);
+
+    $self->{oProtocolMaster} = optionGet(OPTION_BACKUP_STANDBY) ? protocolGet(DB) : $self->{oProtocol};
 
     # Determine the database path
     $self->{strDbPath} = optionGet(OPTION_BACKUP_STANDBY) ? optionGet(optionIndex(OPTION_DB_PATH, 2)) : optionGet(OPTION_DB_PATH);
@@ -488,6 +493,8 @@ sub processManifest
             {
                 my %oParam;
 
+                $oParam{remote_type} = DB;
+                $oParam{remote_index} = $self->{iCopyRemoteIdx};
                 $oParam{compress} = $bCompress;
                 $oParam{queue} = \@oyBackupQueue;
                 $oParam{result_queue} = $oResultQueue;

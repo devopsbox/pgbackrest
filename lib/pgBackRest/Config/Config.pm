@@ -19,8 +19,6 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
-use pgBackRest::Protocol::Common;
-use pgBackRest::Protocol::RemoteMaster;
 use pgBackRest::Version;
 
 ####################################################################################################################################
@@ -1679,12 +1677,11 @@ my %oOptionRule =
 );
 
 ####################################################################################################################################
-# Global variables
+# Module variables
 ####################################################################################################################################
 my %oOption;                # Option hash
 my $strCommand;             # Command (backup, archive-get, ...)
-my $oProtocol;              # Global remote object that is created on first request (NOT THREADSAFE!)
-my $oProtocolStandby;       # Global remote object used only for the standby database (NOT THREADSAFE!)
+my $hProtocol = {};         # Global remote hash that is created on first request (NOT THREADSAFE!)
 
 ####################################################################################################################################
 # configLoad
@@ -1831,10 +1828,10 @@ sub configLoad
             ERROR_OPTION_INVALID_VALUE);
     }
 
-    # Remote type should always be none when command is remote
-    if (commandTest(CMD_REMOTE) && !optionRemoteTypeTest(NONE))
+    # Make sure that backup and db are not both remote
+    if (optionTest(OPTION_DB_HOST) && optionTest(OPTION_BACKUP_HOST))
     {
-        confess &log(ASSERT, 'Remote type must be none for remote command');
+        confess &log(ERROR, 'db and backup cannot both be configured as remote', ERROR_CONFIG);
     }
 
     return true;
@@ -2402,7 +2399,7 @@ sub optionIndex
     # If the option doesn't have a prefix it can't be indexed
     my $strPrefix = $oOptionRule{$strOption}{&OPTION_RULE_PREFIX};
 
-    if (!defined($strPrefix))
+    if (!defined($strPrefix) && $iIndex > 1)
     {
         confess &log(ASSERT, "'${strOption}' option does not allow indexing");
     }
@@ -2594,213 +2591,6 @@ sub optionRuleGet
 }
 
 push @EXPORT, qw(optionRuleGet);
-
-####################################################################################################################################
-# optionRemoteType
-#
-# Returns the remote type.
-####################################################################################################################################
-sub optionRemoteType
-{
-    # Check if the backup host is remote
-    if (optionTest(OPTION_BACKUP_HOST))
-    {
-        return BACKUP;
-    }
-    # Else check if db is remote
-    elsif (optionTest(OPTION_DB_HOST))
-    {
-        # Don't allow both sides to be remote
-        if (optionTest(OPTION_BACKUP_HOST))
-        {
-            confess &log(ERROR, 'db and backup cannot both be configured as remote', ERROR_CONFIG);
-        }
-
-        return DB;
-    }
-
-    return NONE;
-}
-
-push @EXPORT, qw(optionRemoteType);
-
-####################################################################################################################################
-# optionRemoteTypeTest
-#
-# Test the remote type.
-####################################################################################################################################
-sub optionRemoteTypeTest
-{
-    my $strTest = shift;
-
-    return optionRemoteType() eq $strTest ? true : false;
-}
-
-push @EXPORT, qw(optionRemoteTypeTest);
-
-####################################################################################################################################
-# isRepoLocal
-#
-# Is the backup/archive repository local?  This does not take into account the spool path.
-####################################################################################################################################
-sub isRepoLocal
-{
-    return optionTest(OPTION_BACKUP_HOST) ? false : true;
-}
-
-push @EXPORT, qw(isRepoLocal);
-
-####################################################################################################################################
-# isDbLocal
-#
-# Is the database local?
-####################################################################################################################################
-sub isDbLocal
-{
-    return optionTest(OPTION_DB_HOST) ? false : true;
-}
-
-push @EXPORT, qw(isDbLocal);
-
-####################################################################################################################################
-# protocolGet
-#
-# Get the protocol object or create it if does not exist.  Shared protocol objects are used because they create an SSH connection
-# to the remote host and the number of these connections should be minimized.  A protocol object can be shared within a single
-# thread - for new threads clone() should be called on the shared protocol object.
-####################################################################################################################################
-sub protocolGet
-{
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $oParam,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '::protocolGet', \@_,
-            {name => 'oParam', required => false, trace => true},
-        );
-
-    my $bForceLocal = defined($$oParam{bForceLocal}) ? $$oParam{bForceLocal} : false;
-    my $bStore = defined($$oParam{bStore}) ? $$oParam{bStore} : true;
-    my $bForceMaster = defined($$oParam{bForceMaster}) ? $$oParam{bForceMaster} : false;
-    my $bUseMaster =
-        optionRemoteTypeTest(BACKUP) || $bForceMaster || (optionTest(OPTION_BACKUP_STANDBY) && !optionGet(OPTION_BACKUP_STANDBY));
-    my $iProcessIdx = $$oParam{iProcessIdx};
-
-    # If force local or remote = NONE then create a local remote and return it
-    if ((defined($bForceLocal) && $bForceLocal) || optionRemoteTypeTest(NONE))
-    {
-        return new pgBackRest::Protocol::Common
-        (
-            optionGet(OPTION_BUFFER_SIZE),
-            commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL : optionGet(OPTION_COMPRESS_LEVEL),
-            commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK : optionGet(OPTION_COMPRESS_LEVEL_NETWORK),
-            optionGet(OPTION_PROTOCOL_TIMEOUT)
-        );
-    }
-
-    # Return the remote if is already defined
-    if ($bUseMaster)
-    {
-        if (defined($oProtocol))
-        {
-            return $oProtocol;
-        }
-    }
-    elsif (defined($oProtocolStandby))
-    {
-        return $oProtocolStandby;
-    }
-
-    # Return the remote when required
-    my $strOptionCmd = OPTION_BACKUP_CMD;
-    my $strOptionConfig = OPTION_BACKUP_CONFIG;
-    my $strOptionHost = OPTION_BACKUP_HOST;
-    my $strOptionUser = OPTION_BACKUP_USER;
-
-    if (optionRemoteTypeTest(DB))
-    {
-        $strOptionCmd = optionIndex(OPTION_DB_CMD, $bUseMaster ? 1 : 2);
-        $strOptionConfig = optionIndex(OPTION_DB_CONFIG, $bUseMaster ? 1 : 2);
-        $strOptionHost = optionIndex(OPTION_DB_HOST, $bUseMaster ? 1 : 2);
-        $strOptionUser = optionIndex(OPTION_DB_USER, $bUseMaster ? 1 : 2);
-    }
-
-    my $oProtocolTemp = new pgBackRest::Protocol::RemoteMaster
-    (
-        optionRemoteTypeTest(DB) ? DB : BACKUP,
-        commandWrite(
-            CMD_REMOTE, true, optionGet($strOptionCmd), undef,
-            {
-                &OPTION_COMMAND => {value => commandGet()},
-                &OPTION_PROCESS => {value => $iProcessIdx},
-                &OPTION_CONFIG =>
-                    {value => optionSource($strOptionConfig) eq SOURCE_DEFAULT ? undef : optionGet($strOptionConfig)},
-                &OPTION_LOG_PATH => {},
-                &OPTION_LOCK_PATH => {},
-                &OPTION_DB_PATH =>
-                    $bUseMaster ? undef :
-                        {value => optionSource(optionIndex(OPTION_DB_PATH, 2)) eq SOURCE_DEFAULT ?
-                            undef : optionGet(optionIndex(OPTION_DB_PATH, 2))},
-                &OPTION_DB_SOCKET_PATH =>
-                    $bUseMaster ? undef :
-                        {value => optionSource(optionIndex(OPTION_DB_SOCKET_PATH, 2)) eq SOURCE_DEFAULT ?
-                            undef : optionGet(optionIndex(OPTION_DB_SOCKET_PATH, 2))},
-                &OPTION_DB_HOST => {}
-            }),
-        optionGet(OPTION_BUFFER_SIZE),
-        commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL : optionGet(OPTION_COMPRESS_LEVEL),
-        commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK : optionGet(OPTION_COMPRESS_LEVEL_NETWORK),
-        optionGet($strOptionHost),
-        optionGet($strOptionUser),
-        optionGet(OPTION_PROTOCOL_TIMEOUT)
-    );
-
-    if ($bStore)
-    {
-        if ($bUseMaster)
-        {
-            $oProtocol = $oProtocolTemp;
-        }
-        else
-        {
-            $oProtocolStandby = $oProtocolTemp;
-        }
-    }
-
-    return $oProtocolTemp;
-}
-
-push @EXPORT, qw(protocolGet);
-
-####################################################################################################################################
-# protocolDestroy
-#
-# Undefine the protocol if it is stored locally.
-####################################################################################################################################
-sub protocolDestroy
-{
-    my $iExitStatus = 0;
-
-    if (defined($oProtocol))
-    {
-        $iExitStatus = $oProtocol->close();
-        undef($oProtocol);
-    }
-
-    if (defined($oProtocolStandby))
-    {
-        $iExitStatus = $oProtocolStandby->close();
-        undef($oProtocolStandby);
-    }
-
-    return $iExitStatus;
-}
-
-push @EXPORT, qw(protocolDestroy);
 
 ####################################################################################################################################
 # commandGet

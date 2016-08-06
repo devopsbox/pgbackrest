@@ -21,6 +21,7 @@ use pgBackRest::Config::Config;
 use pgBackRest::File;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Common;
+use pgBackRest::Protocol::Protocol;
 
 ####################################################################################################################################
 # Operation constants
@@ -122,7 +123,7 @@ sub process
     (
         $strStanza,
         optionGet(OPTION_REPO_PATH),
-        protocolGet({bForceLocal => isRepoLocal()})
+        protocolGet(BACKUP)
     );
 
     # Get the stanza list with all info

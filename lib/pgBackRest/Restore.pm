@@ -24,6 +24,8 @@ use pgBackRest::File;
 use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
 use pgBackRest::RestoreFile;
+use pgBackRest::Protocol::Common;
+use pgBackRest::Protocol::Protocol;
 
 ####################################################################################################################################
 # Operation constants
@@ -54,7 +56,7 @@ sub new
     my ($strOperation) = logDebugParam(OP_RESTORE_NEW);
 
     # Initialize protocol
-    $self->{oProtocol} = protocolGet();
+    $self->{oProtocol} = protocolGet(BACKUP);
 
     # Initialize default file object
     $self->{oFile} = new pgBackRest::File
@@ -1321,6 +1323,7 @@ sub process
         # Initialize the param hash
         my %oParam;
 
+        $oParam{remote_type} = BACKUP;
         $oParam{copy_time_begin} = $lCopyTimeBegin;
         $oParam{size_total} = $lSizeTotal;
         $oParam{delta} = optionGet(OPTION_DELTA);

@@ -26,6 +26,7 @@ use pgBackRest::Db;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
 use pgBackRest::Protocol::Common;
+use pgBackRest::Protocol::Protocol;
 
 ####################################################################################################################################
 # Operation constants
@@ -385,7 +386,7 @@ sub get
     (
         optionGet(OPTION_STANZA),
         optionGet(OPTION_REPO_PATH),
-        protocolGet()
+        protocolGet(BACKUP)
     );
 
     # If the destination file path is not absolute then it is relative to the db data path
@@ -683,7 +684,7 @@ sub push
     (
         optionGet(OPTION_STANZA),
         $bAsync ? optionGet(OPTION_SPOOL_PATH) : optionGet(OPTION_REPO_PATH),
-        protocolGet({bForceLocal => $bAsync})
+        protocolGet($bAsync ? NONE : BACKUP)
     );
 
     lockStopTest();
@@ -879,7 +880,7 @@ sub xfer
     (
         optionGet(OPTION_STANZA),
         optionGet(OPTION_REPO_PATH),
-        protocolGet({bForceLocal => true})
+        protocolGet(NONE)
     );
 
     # Load the archive manifest - all the files that need to be pushed
@@ -923,7 +924,7 @@ sub xfer
                 (
                     optionGet(OPTION_STANZA),
                     optionGet(OPTION_REPO_PATH),
-                    protocolGet()
+                    protocolGet(BACKUP)
                 );
             }
 
@@ -1067,7 +1068,7 @@ sub check
     (
         optionGet(OPTION_STANZA),
         optionGet(OPTION_REPO_PATH),
-        protocolGet()
+        protocolGet(isRepoLocal() ? DB : BACKUP)
     );
 
     # Initialize the database object
