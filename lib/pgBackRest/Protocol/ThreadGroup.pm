@@ -92,7 +92,6 @@ sub threadGroupThread
             (
                 optionGet(OPTION_STANZA),
                 optionGet(OPTION_REPO_PATH),
-                optionRemoteType(),
                 $oProtocol,
                 undef, undef,
                 $iThreadIdx + 1

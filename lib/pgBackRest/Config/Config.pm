@@ -24,16 +24,6 @@ use pgBackRest::Protocol::RemoteMaster;
 use pgBackRest::Version;
 
 ####################################################################################################################################
-# DB/BACKUP Constants
-####################################################################################################################################
-use constant DB                                                     => 'db';
-    push @EXPORT, qw(DB);
-use constant BACKUP                                                 => 'backup';
-    push @EXPORT, qw(BACKUP);
-use constant NONE                                                   => 'none';
-    push @EXPORT, qw(NONE);
-
-####################################################################################################################################
 # Command constants - basic commands that are allowed in backrest
 ####################################################################################################################################
 my %oCommandHash;
@@ -1693,7 +1683,6 @@ my %oOptionRule =
 ####################################################################################################################################
 my %oOption;                # Option hash
 my $strCommand;             # Command (backup, archive-get, ...)
-my $strRemoteType;          # Remote type (DB, BACKUP, NONE)
 my $oProtocol;              # Global remote object that is created on first request (NOT THREADSAFE!)
 my $oProtocolStandby;       # Global remote object used only for the standby database (NOT THREADSAFE!)
 
@@ -1840,27 +1829,6 @@ sub configLoad
             "'" . optionGet(OPTION_PROTOCOL_TIMEOUT) . "' is not valid for '" . OPTION_PROTOCOL_TIMEOUT . "' option\n" .
             "HINT: 'protocol-timeout' option should be greater than 'db-timeout' option.",
             ERROR_OPTION_INVALID_VALUE);
-    }
-
-    # Check if the backup host is remote
-    if (optionTest(OPTION_BACKUP_HOST))
-    {
-        $strRemoteType = BACKUP;
-    }
-    # Else check if db is remote
-    elsif (optionTest(OPTION_DB_HOST))
-    {
-        # Don't allow both sides to be remote
-        if (optionTest(OPTION_BACKUP_HOST))
-        {
-            confess &log(ERROR, 'db and backup cannot both be configured as remote', ERROR_CONFIG);
-        }
-
-        $strRemoteType = DB;
-    }
-    else
-    {
-        $strRemoteType = NONE;
     }
 
     # Remote type should always be none when command is remote
@@ -2634,7 +2602,24 @@ push @EXPORT, qw(optionRuleGet);
 ####################################################################################################################################
 sub optionRemoteType
 {
-    return $strRemoteType;
+    # Check if the backup host is remote
+    if (optionTest(OPTION_BACKUP_HOST))
+    {
+        return BACKUP;
+    }
+    # Else check if db is remote
+    elsif (optionTest(OPTION_DB_HOST))
+    {
+        # Don't allow both sides to be remote
+        if (optionTest(OPTION_BACKUP_HOST))
+        {
+            confess &log(ERROR, 'db and backup cannot both be configured as remote', ERROR_CONFIG);
+        }
+
+        return DB;
+    }
+
+    return NONE;
 }
 
 push @EXPORT, qw(optionRemoteType);
@@ -2648,22 +2633,34 @@ sub optionRemoteTypeTest
 {
     my $strTest = shift;
 
-    return $strRemoteType eq $strTest ? true : false;
+    return optionRemoteType() eq $strTest ? true : false;
 }
 
 push @EXPORT, qw(optionRemoteTypeTest);
 
 ####################################################################################################################################
-# optionRemoteTest
+# isRepoLocal
 #
-# Test if the remote DB or BACKUP.
+# Is the backup/archive repository local?  This does not take into account the spool path.
 ####################################################################################################################################
-sub optionRemoteTest
+sub isRepoLocal
 {
-    return $strRemoteType ne NONE ? true : false;
+    return optionTest(OPTION_BACKUP_HOST) ? false : true;
 }
 
-push @EXPORT, qw(optionRemoteTest);
+push @EXPORT, qw(isRepoLocal);
+
+####################################################################################################################################
+# isDbLocal
+#
+# Is the database local?
+####################################################################################################################################
+sub isDbLocal
+{
+    return optionTest(OPTION_DB_HOST) ? false : true;
+}
+
+push @EXPORT, qw(isDbLocal);
 
 ####################################################################################################################################
 # protocolGet
@@ -2734,6 +2731,7 @@ sub protocolGet
 
     my $oProtocolTemp = new pgBackRest::Protocol::RemoteMaster
     (
+        optionRemoteTypeTest(DB) ? DB : BACKUP,
         commandWrite(
             CMD_REMOTE, true, optionGet($strOptionCmd), undef,
             {

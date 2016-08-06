@@ -88,7 +88,6 @@ sub backupTestSetup
         (
             $oHostDbMaster->stanza(),
             $oHostDbMaster->repoPath(),
-            undef,
             new pgBackRest::Protocol::Common
             (
                 OPTION_DEFAULT_BUFFER_SIZE,                 # Buffer size

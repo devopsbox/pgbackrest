@@ -20,6 +20,7 @@ use pgBackRest::BackupInfo;
 use pgBackRest::Config::Config;
 use pgBackRest::File;
 use pgBackRest::Manifest;
+use pgBackRest::Protocol::Common;
 
 ####################################################################################################################################
 # Operation constants
@@ -121,8 +122,7 @@ sub process
     (
         $strStanza,
         optionGet(OPTION_REPO_PATH),
-        optionRemoteTypeTest(BACKUP) ? BACKUP : NONE,
-        protocolGet({bForceLocal => !optionRemoteTypeTest(BACKUP)})
+        protocolGet({bForceLocal => isRepoLocal()})
     );
 
     # Get the stanza list with all info

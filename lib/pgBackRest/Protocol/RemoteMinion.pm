@@ -101,8 +101,7 @@ sub process
     (
         optionGet(OPTION_STANZA, false),
         optionGet(OPTION_REPO_PATH, false),
-        undef,
-        $self,
+        $self
     );
 
     # Create objects

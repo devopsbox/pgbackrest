@@ -40,6 +40,7 @@ sub new
     my
     (
         $strOperation,
+        $strRemoteType,                             # Type of remote (DB or BACKUP)
         $strName,                                   # Name of the protocol
         $strId,                                     # Id of this process for error messages
         $strCommand,                                # Command to execute on local/remote
@@ -51,6 +52,7 @@ sub new
         logDebugParam
         (
             OP_PROTOCOL_COMMON_MASTER_NEW, \@_,
+            {name => 'strRemoteType'},
             {name => 'strName'},
             {name => 'strId'},
             {name => 'strCommand'},
@@ -63,6 +65,9 @@ sub new
     # Create the class hash
     my $self = $class->SUPER::new($iBufferMax, $iCompressLevel, $iCompressLevelNetwork, $iProtocolTimeout, $strName);
     bless $self, $class;
+
+    # Set remote to specificied value
+    $self->{strRemoteType} = $strRemoteType;
 
     # Set command
     if (!defined($strCommand))

@@ -148,7 +148,6 @@ sub new
     $self->{oFile} = new pgBackRest::File(
         $self->stanza(),
         $self->repoPath(),
-        undef,
         new pgBackRest::Protocol::Common
         (
             OPTION_DEFAULT_BUFFER_SIZE,                 # Buffer size

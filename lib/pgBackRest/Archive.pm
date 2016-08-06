@@ -25,6 +25,7 @@ use pgBackRest::Config::Config;
 use pgBackRest::Db;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
+use pgBackRest::Protocol::Common;
 
 ####################################################################################################################################
 # Operation constants
@@ -384,7 +385,6 @@ sub get
     (
         optionGet(OPTION_STANZA),
         optionGet(OPTION_REPO_PATH),
-        optionRemoteType(),
         protocolGet()
     );
 
@@ -556,7 +556,7 @@ sub pushProcess
     );
 
     # Make sure the archive push command happens on the db side
-    if (optionRemoteTypeTest(DB))
+    if (!isDbLocal())
     {
         confess &log(ERROR, CMD_ARCHIVE_PUSH . ' operation must run on the db host');
     }
@@ -683,7 +683,6 @@ sub push
     (
         optionGet(OPTION_STANZA),
         $bAsync ? optionGet(OPTION_SPOOL_PATH) : optionGet(OPTION_REPO_PATH),
-        $bAsync ? NONE : optionRemoteType(),
         protocolGet({bForceLocal => $bAsync})
     );
 
@@ -880,7 +879,6 @@ sub xfer
     (
         optionGet(OPTION_STANZA),
         optionGet(OPTION_REPO_PATH),
-        NONE,
         protocolGet({bForceLocal => true})
     );
 
@@ -919,13 +917,12 @@ sub xfer
             &log(TEST, TEST_ARCHIVE_PUSH_ASYNC_START);
 
             # If the archive repo is remote create a new file object to do the copies
-            if (!optionRemoteTypeTest(NONE))
+            if (!isRepoLocal())
             {
                 $oFile = new pgBackRest::File
                 (
                     optionGet(OPTION_STANZA),
                     optionGet(OPTION_REPO_PATH),
-                    optionRemoteType(),
                     protocolGet()
                 );
             }
@@ -1070,7 +1067,6 @@ sub check
     (
         optionGet(OPTION_STANZA),
         optionGet(OPTION_REPO_PATH),
-        optionRemoteType(),
         protocolGet()
     );
 
@@ -1162,7 +1158,7 @@ sub check
     if ($iResult == 0)
     {
         # If backup repo is local, then check the backup info
-        if (!optionRemoteTypeTest(BACKUP))
+        if (isRepoLocal())
         {
             # Load or build backup.info
             eval

@@ -61,7 +61,6 @@ sub new
     (
         optionGet(OPTION_STANZA),
         optionGet(OPTION_REPO_PATH),
-        optionRemoteType(),
         $self->{oProtocol}
     );
 
