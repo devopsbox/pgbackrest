@@ -274,6 +274,10 @@ sub process
 
                 $self->outputWrite("${strDbVersion}\t${iControlVersion}\t${iCatalogVersion}\t${ullDbSysId}");
             }
+            elsif ($strCommand eq OP_DB_CONNECT)
+            {
+                $self->outputWrite($oDb->connect());
+            }
             elsif ($strCommand eq OP_DB_EXECUTE_SQL)
             {
                 $self->outputWrite($oDb->executeSql(paramGet(\%oParamHash, 'script'),

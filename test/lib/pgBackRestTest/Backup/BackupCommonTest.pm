@@ -114,7 +114,7 @@ sub backupTestSetup
     # If backup host is not defined set it to db-master
     else
     {
-        $oHostBackup = defined($oHostBackup) ? $oHostBackup : $oHostDbMaster;
+        $oHostBackup = $strBackupDestination eq HOST_DB_MASTER ? $oHostDbMaster : $oHostDbStandby;
     }
 
     # Create db-standby config

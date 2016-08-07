@@ -671,12 +671,35 @@ sub process
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ARCHIVE_CHECK, undef,
                               !optionGet(OPTION_ONLINE) || optionGet(OPTION_BACKUP_ARCHIVE_CHECK));
 
+    # Initialize database objects
+    my $oDbMaster = undef;
+    my $oDbStandby = undef;
 
-    # Initialize database object
-    my $oDb = new pgBackRest::Db(1);
+    for (my $iRemoteIdx = 1; $iRemoteIdx <= 2; $iRemoteIdx++)
+    {
+        &log(INFO, "TESTING $iRemoteIdx");
+        my $oDb = new pgBackRest::Db($iRemoteIdx);
+
+        !!! Now need to set db-path correctly. Probably get most of the stuff out of the constructor
+        # !!! Need to make sure that remote failures warning correctly - maybe just wait for that test
+
+        if ($oDb->connect(true))
+        {
+            my $bStandby = $oDb->executeSqlOne('select pg_is_in_recovery()');
+
+            if ($bStandby)
+            {
+                $oDbStandby = $oDb;
+            }
+            else
+            {
+                $oDbMaster = $oDb;
+            }
+        }
+    }
 
     # Database info
-    my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = $oDb->info();
+    my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = $oDbMaster->info();
 
     my $iDbHistoryId = $oBackupInfo->check($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
 
@@ -714,7 +737,7 @@ sub process
     {
         # Start the backup
         ($strArchiveStart) =
-            $oDb->backupStart(
+            $oDbMaster->backupStart(
                 BACKREST_NAME . ' backup started at ' . timestampFormat(undef, $lTimestampStart), optionGet(OPTION_START_FAST));
 
         # Record the archive start location
@@ -722,16 +745,14 @@ sub process
         &log(INFO, "backup lsn start: ${strArchiveStart}");
 
         # Get tablespace map
-        $oTablespaceMap = $oDb->tablespaceMapGet();
+        $oTablespaceMap = $oDbMaster->tablespaceMapGet();
 
         # Get database map
-        $oDatabaseMap = $oDb->databaseMapGet();
+        $oDatabaseMap = $oDbMaster->databaseMapGet();
 
         # Wait for replay on the standby to catch up
         if (optionGet(OPTION_BACKUP_STANDBY))
         {
-            my $oDbStandby = new pgBackRest::Db(2);
-
             my ($strStandbyDbVersion, $iStandbyControlVersion, $iStandbyCatalogVersion, $ullStandbyDbSysId) = $oDbStandby->info();
             $oBackupInfo->check($strStandbyDbVersion, $iStandbyControlVersion, $iStandbyCatalogVersion, $ullStandbyDbSysId);
 
@@ -872,7 +893,7 @@ sub process
 
     if (optionGet(OPTION_ONLINE))
     {
-        ($strArchiveStop, my $strTimestampDbStop, my $oFileHash) = $oDb->backupStop();
+        ($strArchiveStop, my $strTimestampDbStop, my $oFileHash) = $oDbMaster->backupStop();
 
         $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LSN_STOP, undef, $strArchiveStop);
         &log(INFO, 'backup lsn stop: ' . $strArchiveStop);
