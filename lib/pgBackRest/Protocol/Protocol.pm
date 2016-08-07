@@ -117,6 +117,7 @@ sub protocolGet
         $oProtocol = $$hProtocol{$strRemoteType}{$iRemoteIdx};
     }
 
+    # If protocol was not returned from cache then create it
     if (!defined($oProtocol))
     {
         # Return the remote when required
@@ -124,6 +125,7 @@ sub protocolGet
         my $strOptionConfig = OPTION_BACKUP_CONFIG;
         my $strOptionHost = OPTION_BACKUP_HOST;
         my $strOptionUser = OPTION_BACKUP_USER;
+        my $strOptionDbSocketPath = undef;
 
         if ($strRemoteType eq DB)
         {
@@ -131,6 +133,15 @@ sub protocolGet
             $strOptionConfig = optionIndex(OPTION_DB_CONFIG, $iRemoteIdx);
             $strOptionHost = optionIndex(OPTION_DB_HOST, $iRemoteIdx);
             $strOptionUser = optionIndex(OPTION_DB_USER, $iRemoteIdx);
+
+        }
+
+        # Db socket is not valid in all contexts (restore, for instance)
+        if (optionValid(optionIndex(OPTION_DB_SOCKET_PATH, $iRemoteIdx)))
+        {
+            $strOptionDbSocketPath =
+                optionSource(optionIndex(OPTION_DB_SOCKET_PATH, $iRemoteIdx)) eq SOURCE_DEFAULT ?
+                    undef : optionGet(optionIndex(OPTION_DB_SOCKET_PATH, $iRemoteIdx));
         }
 
         $oProtocol = new pgBackRest::Protocol::RemoteMaster
@@ -141,19 +152,13 @@ sub protocolGet
                 {
                     &OPTION_COMMAND => {value => commandGet()},
                     &OPTION_PROCESS => {value => $$oParam{iProcessIdx}},
-                    &OPTION_CONFIG =>
-                        {value => optionSource($strOptionConfig) eq SOURCE_DEFAULT ? undef : optionGet($strOptionConfig)},
+                    &OPTION_CONFIG => {
+                        value => optionSource($strOptionConfig) eq SOURCE_DEFAULT ? undef : optionGet($strOptionConfig)},
                     &OPTION_LOG_PATH => {},
                     &OPTION_LOCK_PATH => {},
-                    # !!! FIX THIS
-                    # &OPTION_DB_PATH =>
-                    #     $bUseMaster ? undef :
-                    #         {value => optionSource(optionIndex(OPTION_DB_PATH, 2)) eq SOURCE_DEFAULT ?
-                    #             undef : optionGet(optionIndex(OPTION_DB_PATH, 2))},
-                    # &OPTION_DB_SOCKET_PATH =>
-                    #     $bUseMaster ? undef :
-                    #         {value => optionSource(optionIndex(OPTION_DB_SOCKET_PATH, 2)) eq SOURCE_DEFAULT ?
-                    #             undef : optionGet(optionIndex(OPTION_DB_SOCKET_PATH, 2))},
+                    # &OPTION_DB_PATH => {},
+                    # &OPTION_DB_PATH => {value => optionGet(optionIndex(OPTION_DB_PATH, $iRemoteIdx))},
+                    &OPTION_DB_SOCKET_PATH => {value => $strOptionDbSocketPath},
                 }),
             optionGet(OPTION_BUFFER_SIZE),
             commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL : optionGet(OPTION_COMPRESS_LEVEL),
@@ -163,6 +168,7 @@ sub protocolGet
             optionGet(OPTION_PROTOCOL_TIMEOUT)
         );
 
+        # Cache the protocol
         if ($bCache)
         {
             $$hProtocol{$strRemoteType}{$iRemoteIdx} = $oProtocol;

@@ -673,7 +673,7 @@ sub process
 
 
     # Initialize database object
-    my $oDb = new pgBackRest::Db(true);
+    my $oDb = new pgBackRest::Db(1);
 
     # Database info
     my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = $oDb->info();
@@ -730,7 +730,7 @@ sub process
         # Wait for replay on the standby to catch up
         if (optionGet(OPTION_BACKUP_STANDBY))
         {
-            my $oDbStandby = new pgBackRest::Db();
+            my $oDbStandby = new pgBackRest::Db(2);
 
             my ($strStandbyDbVersion, $iStandbyControlVersion, $iStandbyCatalogVersion, $ullStandbyDbSysId) = $oDbStandby->info();
             $oBackupInfo->check($strStandbyDbVersion, $iStandbyControlVersion, $iStandbyCatalogVersion, $ullStandbyDbSysId);

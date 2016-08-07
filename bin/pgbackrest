@@ -108,6 +108,11 @@ eval
     ################################################################################################################################
     if (commandTest(CMD_ARCHIVE_PUSH) || commandTest(CMD_ARCHIVE_GET))
     {
+        if (!isDbLocal())
+        {
+            confess &log(ERROR, commandGet() . ' command must be run on the db host', ERROR_HOST_INVALID);
+        }
+
         exitSafe(new pgBackRest::Archive()->process());
     }
 

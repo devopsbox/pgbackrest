@@ -469,7 +469,7 @@ sub getCheck
     {
         # get DB info for comparison
         ($strDbVersion, my $iControlVersion, my $iCatalogVersion, $ullDbSysId) =
-            (new pgBackRest::Db())->info(optionGet(OPTION_DB_PATH));
+            (new pgBackRest::Db(1))->info(optionGet(OPTION_DB_PATH));
     }
 
     if ($oFile->isRemote(PATH_BACKUP_ARCHIVE))
@@ -1072,7 +1072,7 @@ sub check
     );
 
     # Initialize the database object
-    my $oDb = new pgBackRest::Db();
+    my $oDb = new pgBackRest::Db(1);
 
     # Validate the database configuration
     $oDb->configValidate(optionGet(OPTION_DB_PATH));

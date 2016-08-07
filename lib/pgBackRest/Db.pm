@@ -118,29 +118,23 @@ sub new
     my
     (
         $strOperation,
-        $bForceMaster,
+        $iRemoteIdx,
     ) =
         logDebugParam
         (
             OP_DB_NEW, \@_,
-            {name => 'bForceMaster', default => false},
+            {name => 'iRemoteIdx', required => false},
         );
 
-    # Assign options based on local or standby
-    if (optionTest(OPTION_BACKUP_STANDBY) && optionGet(OPTION_BACKUP_STANDBY) && !$bForceMaster)
+    if (defined($iRemoteIdx))
     {
-        if (optionTest(optionIndex(OPTION_DB_PATH, 2)))
-        {
-            $self->{strDbPath} = optionGet(optionIndex(OPTION_DB_PATH, 2));
-        }
+        $self->{strDbPath} = optionGet(optionIndex(OPTION_DB_PATH, $iRemoteIdx));
+        $self->{oProtocol} = protocolGet(DB, $iRemoteIdx);
     }
-    elsif (optionTest(OPTION_DB_PATH))
+    else
     {
-        $self->{strDbPath} = optionGet(OPTION_DB_PATH);
+        $self->{oProtocol} = protocolGet(NONE);
     }
-
-    # !!! Work needed here
-    $self->{oProtocol} = protocolGet(DB, 1);
 
     # Return from function and log return values if any
     return logDebugReturn
