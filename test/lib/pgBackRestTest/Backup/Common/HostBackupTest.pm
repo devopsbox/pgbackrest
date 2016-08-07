@@ -739,44 +739,49 @@ sub configCreate
     # If this is the backup host
     if ($self->isHostBackup())
     {
-        my $bForce = defined($oHostDbStandby);
+        my $bForce = false;
+        my $oHostDb1 = $oHostDbMaster;
+        my $oHostDb2 = $oHostDbStandby;
 
-        if (!$self->isHostDbMaster())
+        if ($self->nameTest(HOST_BACKUP))
         {
-            $oParamHash{$strStanza}{optionIndex(OPTION_DB_HOST, 1, $bForce)} = $oHostDbMaster->nameGet();
-            $oParamHash{$strStanza}{optionIndex(OPTION_DB_USER, 1, $bForce)} = $oHostDbMaster->userGet();
-            $oParamHash{$strStanza}{optionIndex(OPTION_DB_CMD, 1, $bForce)} = $oHostDbMaster->backrestExe();
-            $oParamHash{$strStanza}{optionIndex(OPTION_DB_CONFIG, 1, $bForce)} = $oHostDbMaster->backrestConfig();
+            $bForce = true;
+        }
+        elsif ($self->nameTest(HOST_DB_STANDBY))
+        {
+            $oHostDb1 = $oHostDbStandby;
+            $oHostDb2 = $oHostDbMaster;
         }
 
-        $oParamHash{$strStanza}{optionIndex(OPTION_DB_PATH, 1, $bForce)} = $oHostDbMaster->dbBasePath();
-
-        if (defined($oHostDbStandby))
+        if ($bForce)
         {
-            if (!$self->isHostDbStandby())
-            {
-                $oParamHash{$strStanza}{optionIndex(OPTION_DB_HOST, 2)} = $oHostDbStandby->nameGet();
-                $oParamHash{$strStanza}{optionIndex(OPTION_DB_USER, 2)} = $oHostDbStandby->userGet();
-                $oParamHash{$strStanza}{optionIndex(OPTION_DB_CMD, 2)} = $oHostDbStandby->backrestExe();
-                $oParamHash{$strStanza}{optionIndex(OPTION_DB_CONFIG, 2)} = $oHostDbStandby->backrestConfig();
-            }
+            $oParamHash{$strStanza}{optionIndex(OPTION_DB_HOST, 1, $bForce)} = $oHostDb1->nameGet();
+            $oParamHash{$strStanza}{optionIndex(OPTION_DB_USER, 1, $bForce)} = $oHostDb1->userGet();
+            $oParamHash{$strStanza}{optionIndex(OPTION_DB_CMD, 1, $bForce)} = $oHostDb1->backrestExe();
+            $oParamHash{$strStanza}{optionIndex(OPTION_DB_CONFIG, 1, $bForce)} = $oHostDb1->backrestConfig();
+        }
 
-            $oParamHash{$strStanza}{optionIndex(OPTION_DB_PATH, 2)} = $oHostDbStandby->dbBasePath();
+        $oParamHash{$strStanza}{optionIndex(OPTION_DB_PATH, 1, $bForce)} = $oHostDb1->dbBasePath();
+
+        if (defined($oHostDb2))
+        {
+            $oParamHash{$strStanza}{optionIndex(OPTION_DB_HOST, 2)} = $oHostDb2->nameGet();
+            $oParamHash{$strStanza}{optionIndex(OPTION_DB_USER, 2)} = $oHostDb2->userGet();
+            $oParamHash{$strStanza}{optionIndex(OPTION_DB_CMD, 2)} = $oHostDb2->backrestExe();
+            $oParamHash{$strStanza}{optionIndex(OPTION_DB_CONFIG, 2)} = $oHostDb2->backrestConfig();
+            $oParamHash{$strStanza}{optionIndex(OPTION_DB_PATH, 2)} = $oHostDb2->dbBasePath();
         }
     }
 
     # If this is a database host
     if ($self->isHostDb())
     {
-        my $iIndex = $self->isHostDbMaster() || !$self->isHostBackup() ? 1 : 2;
-        my $bForce = $self->isHostBackup() && defined($oHostDbStandby);
-
-        $oParamHash{$strStanza}{optionIndex(OPTION_DB_PATH, $iIndex, $bForce)} = $self->dbBasePath();
+        $oParamHash{$strStanza}{&OPTION_DB_PATH} = $self->dbBasePath();
 
         if (!$self->synthetic())
         {
-            $oParamHash{$strStanza}{optionIndex(OPTION_DB_SOCKET_PATH, $iIndex, $bForce)} = $self->dbSocketPath();
-            $oParamHash{$strStanza}{optionIndex(OPTION_DB_PORT, $iIndex, $bForce)} = $self->dbPort();
+            $oParamHash{$strStanza}{&OPTION_DB_SOCKET_PATH} = $self->dbSocketPath();
+            $oParamHash{$strStanza}{&OPTION_DB_PORT} = $self->dbPort();
         }
 
         if ($bArchiveAsync)

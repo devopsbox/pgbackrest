@@ -156,8 +156,6 @@ sub protocolGet
                         value => optionSource($strOptionConfig) eq SOURCE_DEFAULT ? undef : optionGet($strOptionConfig)},
                     &OPTION_LOG_PATH => {},
                     &OPTION_LOCK_PATH => {},
-                    # &OPTION_DB_PATH => {},
-                    # &OPTION_DB_PATH => {value => optionGet(optionIndex(OPTION_DB_PATH, $iRemoteIdx))},
                     &OPTION_DB_SOCKET_PATH => {value => $strOptionDbSocketPath},
                 }),
             optionGet(OPTION_BUFFER_SIZE),
