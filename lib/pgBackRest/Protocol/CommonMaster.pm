@@ -106,6 +106,9 @@ sub close
 {
     my $self = shift;
 
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->close');
+
     # Exit status defaults to success
     my $iExitStatus = 0;
 
@@ -147,7 +150,12 @@ sub close
         undef($self->{io});
     }
 
-    return $iExitStatus;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'iExitStatus', value => $iExitStatus}
+    );
 }
 
 ####################################################################################################################################

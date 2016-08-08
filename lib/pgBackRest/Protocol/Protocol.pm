@@ -190,21 +190,51 @@ push @EXPORT, qw(protocolGet);
 ####################################################################################################################################
 sub protocolDestroy
 {
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strRemoteType,
+        $iRemoteIdx,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::protocolDestroy', \@_,
+            {name => 'strRemoteType', required => false},
+            {name => 'iRemoteIdx', default => 1},
+        );
+
     my $iExitStatus = 0;
 
-    foreach my $strRemoteType (sort(keys(%{$hProtocol})))
+    if (defined($strRemoteType))
     {
-        foreach my $iRemoteIdx (sort(keys(%{$$hProtocol{$strRemoteType}})))
+        if (defined($$hProtocol{$strRemoteType}{$iRemoteIdx}))
         {
-            if (defined($$hProtocol{$strRemoteType}{$iRemoteIdx}))
+            $iExitStatus = ($$hProtocol{$strRemoteType}{$iRemoteIdx})->close();
+            delete($$hProtocol{$strRemoteType}{$iRemoteIdx});
+        }
+    }
+    else
+    {
+        foreach my $strRemoteType (sort(keys(%{$hProtocol})))
+        {
+            foreach my $iRemoteIdx (sort(keys(%{$$hProtocol{$strRemoteType}})))
             {
-                $iExitStatus = ($$hProtocol{$strRemoteType}{$iRemoteIdx})->close();
-                delete($$hProtocol{$strRemoteType}{$iRemoteIdx});
+                if (defined($$hProtocol{$strRemoteType}{$iRemoteIdx}))
+                {
+                    $iExitStatus = ($$hProtocol{$strRemoteType}{$iRemoteIdx})->close();
+                    delete($$hProtocol{$strRemoteType}{$iRemoteIdx});
+                }
             }
         }
     }
 
-    return $iExitStatus;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'iExitStatus', value => $iExitStatus}
+    );
 }
 
 push @EXPORT, qw(protocolDestroy);

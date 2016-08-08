@@ -649,6 +649,7 @@ sub process
             {
                 # Create the db object
                 my $oDb = new pgBackRest::Db($iRemoteIdx);
+                my $bAssigned = false;
 
                 # If able to connect then test if the database is a master or a standby.  It's OK if some databases cannot be reached
                 # as long as the databases required for the backup type are present.
@@ -664,6 +665,7 @@ sub process
                         {
                             $oDbStandby = $oDb;
                             $self->{iCopyRemoteIdx} = $iRemoteIdx;
+                            $bAssigned = true;
                         }
                     }
                     # Else this db is a master
@@ -677,7 +679,14 @@ sub process
 
                         $oDbMaster = $oDb;
                         $self->{iMasterRemoteIdx} = $iRemoteIdx;
+                        $bAssigned = true;
                     }
+                }
+
+                # If the db was not used then destroy the protocol object underneath it
+                if (!$bAssigned)
+                {
+                    protocolDestroy(DB, $iRemoteIdx);
                 }
             }
         }
