@@ -197,13 +197,15 @@ sub outputRead
     (
         $strOperation,
         $bOutputRequired,
-        $bSuppressLog
+        $bSuppressLog,
+        $bWarnOnError,
     ) =
         logDebugParam
         (
             OP_PROTOCOL_COMMON_MASTER_OUTPUT_READ, \@_,
             {name => 'bOutputRequired', default => false, trace => true},
-            {name => 'bSuppressLog', required => false, trace => true}
+            {name => 'bSuppressLog', required => false, trace => true},
+            {name => 'bWarnOnError', default => false, trace => true},
         );
 
     my $strLine;
@@ -236,18 +238,25 @@ sub outputRead
     # Raise any errors
     if ($bError)
     {
-        confess &log(ERROR, (defined($self->{strErrorPrefix}) ? "$self->{strErrorPrefix}: " : '') .
-                            (defined($strOutput) ? "${strOutput}" : ''), $iErrorCode, $bSuppressLog);
+        my $strError = $self->{strErrorPrefix} . (defined($strOutput) ? ": ${strOutput}" : '');
+
+        # Raise the error if a warning is not requested
+        if (!$bWarnOnError)
+        {
+            confess &log(ERROR, $strError, $iErrorCode, $bSuppressLog);
+        }
+
+        &log(WARN, $strError, $iErrorCode);
     }
 
     # Reset the keep alive time
     $self->{fKeepAliveTime} = gettimeofday();
 
     # If output is required and there is no output, raise exception
-    if (defined($bOutputRequired) && $bOutputRequired && !defined($strOutput))
+    if ($bOutputRequired && !defined($strOutput))
     {
         $self->{io}->waitPid();
-        confess &log(ERROR, (defined($self->{strErrorPrefix}) ? "$self->{strErrorPrefix}: " : '') . 'output is not defined');
+        confess &log(ERROR, "$self->{strErrorPrefix}: output is not defined", ERROR_PROTOCOL_OUTPUT_REQUIRED);
     }
 
     # Return from function and log return values if any
@@ -341,6 +350,9 @@ sub cmdWrite
     # Write out the command
     $self->{io}->lineWrite($strCommand);
 
+    # Reset the keep alive time
+    $self->{fKeepAliveTime} = gettimeofday();
+
     # Return from function and log return values if any
     logDebugReturn($strOperation);
 }
@@ -356,10 +368,11 @@ sub cmdExecute
     my $strCommand = shift;
     my $oParamRef = shift;
     my $bOutputRequired = shift;
+    my $bWarnOnError = shift;
 
     $self->cmdWrite($strCommand, $oParamRef);
 
-    return $self->outputRead($bOutputRequired);
+    return $self->outputRead($bOutputRequired, undef, true);
 }
 
 ####################################################################################################################################

@@ -237,7 +237,7 @@ sub connect
         $oParamHash{'warn-on-error'} = $bWarnOnError;
 
         # Execute the command
-        $bResult = $self->{oProtocol}->cmdExecute(OP_DB_CONNECT, \%oParamHash, true);
+        $bResult = $self->{oProtocol}->cmdExecute(OP_DB_CONNECT, \%oParamHash, false, $bWarnOnError);
     }
     # Else run locally
     else
