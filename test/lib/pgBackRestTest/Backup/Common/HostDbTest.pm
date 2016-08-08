@@ -359,7 +359,7 @@ sub clusterCreate
         ($self->dbVersion() >= PG_VERSION_92 ? " --xlogdir=${strXlogPath}" : '') .
         ' --pgdata=' . $self->dbBasePath() . ' --auth=trust');
 
-    if (!$self->standby() && $self->dbVersion() >= PG_VERSION_91)
+    if (!$self->standby() && $self->dbVersion() >= PG_VERSION_HOT_STANDBY)
     {
         $self->executeSimple(
             "echo 'host replication replicator db-standby trust' >> " . $self->dbBasePath() . '/pg_hba.conf');
@@ -369,7 +369,7 @@ sub clusterCreate
         {bHotStandby => $$hParam{bHotStandby}, bArchive => $$hParam{bArchive}, bArchiveAlways => $$hParam{bArchiveAlways},
          bArchiveInvalid => $$hParam{bArchiveInvalid}});
 
-    if (!$self->standby() && $self->dbVersion() >= PG_VERSION_91)
+    if (!$self->standby() && $self->dbVersion() >= PG_VERSION_HOT_STANDBY)
     {
         $self->sqlExecute("create user replicator replication", {bCommit =>true});
     }
@@ -439,7 +439,7 @@ sub clusterStart
     }
 
     $strCommand .=
-        ($self->dbVersion() >= PG_VERSION_91 ? ' -c max_wal_senders=3' : '') .
+        ($self->dbVersion() >= PG_VERSION_HOT_STANDBY ? ' -c max_wal_senders=3' : '') .
         ' -c listen_addresses=\'*\'' .
         ' -c log_directory=\'' . $self->dbLogPath() . "'" .
         ' -c log_filename=\'' . basename($self->dbLogFile()) . "'" .

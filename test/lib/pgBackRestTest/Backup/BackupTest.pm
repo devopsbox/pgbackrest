@@ -1609,9 +1609,9 @@ sub backupTestRun
                 $bLog ? $strThisTest: undef,
                 \$oLogTest));
 
-            if ($bHostStandby && $oHostGroup->paramGet(HOST_PARAM_DB_VERSION) < PG_VERSION_91)
+            if ($bHostStandby && $oHostGroup->paramGet(HOST_PARAM_DB_VERSION) < PG_VERSION_HOT_STANDBY)
             {
-                &log(INFO, 'skipped - this version of PostgreSQL does not support standby');
+                &log(INFO, 'skipped - this version of PostgreSQL does not support hot standby');
                 next;
             }
 
@@ -1848,7 +1848,10 @@ sub backupTestRun
                 $oHostDbMaster->sqlSelectOneTest(
                     "select client_addr || '-' || state from pg_stat_replication", $oHostDbStandby->ipGet() . '/32-streaming');
 
-                my $strBackup = $oHostBackup->backup(BACKUP_TYPE_INCR, 'backup from standby', {bStandby => true});
+                my $strBackup = $oHostBackup->backup(
+                    BACKUP_TYPE_INCR, 'backup from standby',
+                    {bStandby => true,
+                     iExpectedExitStatus => $oHostDbStandby->dbVersion() >= PG_VERSION_BACKUP_STANDBY ? undef : ERROR_CONFIG});
 
                 # my $strExpectedManifest = "${strTestPath}/expected.manifest";
                 # my $oExpectedManifest = new pgBackRest::Manifest($strExpectedManifest, false);

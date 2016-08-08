@@ -639,8 +639,11 @@ sub process
     # Initialize database objects
     my $oDbMaster = undef;
     my $oDbStandby = undef;
+    $self->{iMasterRemoteIdx} = 1;
 
-    if (optionGet(OPTION_ONLINE))
+    # Only iterate databases if online and more than one is defined.  It might be better to check the version of each database but
+    # this is simple and works.
+    if (optionGet(OPTION_ONLINE) && optionTest(optionIndex(OPTION_DB_PATH, 2)))
     {
         for (my $iRemoteIdx = 1; $iRemoteIdx <= 2; $iRemoteIdx++)
         {
@@ -651,8 +654,8 @@ sub process
                 my $oDb = new pgBackRest::Db($iRemoteIdx);
                 my $bAssigned = false;
 
-                # If able to connect then test if the database is a master or a standby.  It's OK if some databases cannot be reached
-                # as long as the databases required for the backup type are present.
+                # If able to connect then test if the database is a master or a standby.  It's OK if some databases cannot be
+                # reached as long as the databases required for the backup type are present.
                 if ($oDb->connect(true))
                 {
                     my $bStandby = $oDb->executeSqlOne('select pg_is_in_recovery()');
@@ -696,19 +699,18 @@ sub process
         {
             confess &log(ERROR, 'unable to find standby database - cannot proceed');
         }
-    }
-    else
-    {
-        $self->{iMasterRemoteIdx} = 1;
 
-        # Create the db object
-        $oDbMaster = new pgBackRest::Db($self->{iMasterRemoteIdx});
+        # A master database is always required
+        if (!defined($oDbMaster))
+        {
+            confess &log(ERROR, 'unable to find master database - cannot proceed');
+        }
     }
 
-    # A master database is always required
+    # If master db is not already defined then set to default
     if (!defined($oDbMaster))
     {
-        confess &log(ERROR, 'unable to find master database - cannot proceed');
+        $oDbMaster = new pgBackRest::Db($self->{iMasterRemoteIdx});
     }
 
     # If remote copy was not explicitly set then set it equal to master
@@ -739,6 +741,14 @@ sub process
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CONTROL, undef, $iControlVersion);
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef, $iCatalogVersion);
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID, undef, $ullDbSysId);
+
+    # Backup from standby can only be used on PostgreSQL >= 9.1
+    if (optionGet(OPTION_ONLINE) && optionGet(OPTION_BACKUP_STANDBY) && $strDbVersion < PG_VERSION_BACKUP_STANDBY)
+    {
+        confess &log(
+            ERROR,
+            'option \'' . OPTION_BACKUP_STANDBY . '\' not valid for PostgreSQL < ' . PG_VERSION_BACKUP_STANDBY, ERROR_CONFIG);
+    }
 
     # Start backup (unless --no-online is set)
     my $strArchiveStart;
