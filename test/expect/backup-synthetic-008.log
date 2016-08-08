@@ -165,11 +165,11 @@ repo-path=[TEST_PATH]/backup/repo
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db1-cmd=[BACKREST-BIN]
-db1-config=[TEST_PATH]/db-master/pgbackrest.conf
-db1-host=db-master
-db1-path=[TEST_PATH]/db-master/db/base
-db1-user=vagrant
+db-cmd=[BACKREST-BIN]
+db-config=[TEST_PATH]/db-master/pgbackrest.conf
+db-host=db-master
+db-path=[TEST_PATH]/db-master/db/base
+db-user=[USER-1]
 
 [global]
 lock-path=[TEST_PATH]/backup/repo/lock
@@ -434,11 +434,11 @@ repo-path=[TEST_PATH]/backup/repo
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db1-cmd=[BACKREST-BIN]
-db1-config=[TEST_PATH]/db-master/pgbackrest.conf
-db1-host=db-master
-db1-path=[TEST_PATH]/db-master/db/base
-db1-user=vagrant
+db-cmd=[BACKREST-BIN]
+db-config=[TEST_PATH]/db-master/pgbackrest.conf
+db-host=db-master
+db-path=[TEST_PATH]/db-master/db/base
+db-user=[USER-1]
 
 [global]
 lock-path=[TEST_PATH]/backup/repo/lock
@@ -1011,11 +1011,11 @@ repo-path=[TEST_PATH]/backup/repo
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db1-cmd=[BACKREST-BIN]
-db1-config=[TEST_PATH]/db-master/pgbackrest.conf
-db1-host=db-master
-db1-path=[TEST_PATH]/db-master/db/base
-db1-user=vagrant
+db-cmd=[BACKREST-BIN]
+db-config=[TEST_PATH]/db-master/pgbackrest.conf
+db-host=db-master
+db-path=[TEST_PATH]/db-master/db/base
+db-user=[USER-1]
 
 [global]
 lock-path=[TEST_PATH]/backup/repo/lock
@@ -1320,11 +1320,11 @@ repo-path=[TEST_PATH]/backup/repo
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db1-cmd=[BACKREST-BIN]
-db1-config=[TEST_PATH]/db-master/pgbackrest.conf
-db1-host=db-master
-db1-path=[TEST_PATH]/db-master/db/base
-db1-user=vagrant
+db-cmd=[BACKREST-BIN]
+db-config=[TEST_PATH]/db-master/pgbackrest.conf
+db-host=db-master
+db-path=[TEST_PATH]/db-master/db/base
+db-user=[USER-1]
 
 [global]
 lock-path=[TEST_PATH]/backup/repo/lock
@@ -1480,11 +1480,11 @@ repo-path=[TEST_PATH]/backup/repo
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db1-cmd=[BACKREST-BIN]
-db1-config=[TEST_PATH]/db-master/pgbackrest.conf
-db1-host=db-master
-db1-path=[TEST_PATH]/db-master/db/base
-db1-user=vagrant
+db-cmd=[BACKREST-BIN]
+db-config=[TEST_PATH]/db-master/pgbackrest.conf
+db-host=db-master
+db-path=[TEST_PATH]/db-master/db/base
+db-user=[USER-1]
 
 [global]
 lock-path=[TEST_PATH]/backup/repo/lock
@@ -1640,11 +1640,11 @@ repo-path=[TEST_PATH]/backup/repo
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db1-cmd=[BACKREST-BIN]
-db1-config=[TEST_PATH]/db-master/pgbackrest.conf
-db1-host=db-master
-db1-path=[TEST_PATH]/db-master/db/base
-db1-user=vagrant
+db-cmd=[BACKREST-BIN]
+db-config=[TEST_PATH]/db-master/pgbackrest.conf
+db-host=db-master
+db-path=[TEST_PATH]/db-master/db/base
+db-user=[USER-1]
 
 [global]
 lock-path=[TEST_PATH]/backup/repo/lock
@@ -1894,11 +1894,11 @@ repo-path=[TEST_PATH]/backup/repo
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db1-cmd=[BACKREST-BIN]
-db1-config=[TEST_PATH]/db-master/pgbackrest.conf
-db1-host=db-master
-db1-path=[TEST_PATH]/db-master/db/base-2
-db1-user=vagrant
+db-cmd=[BACKREST-BIN]
+db-config=[TEST_PATH]/db-master/pgbackrest.conf
+db-host=db-master
+db-path=[TEST_PATH]/db-master/db/base-2
+db-user=[USER-1]
 
 [global]
 lock-path=[TEST_PATH]/backup/repo/lock
@@ -2051,11 +2051,11 @@ repo-path=[TEST_PATH]/backup/repo
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db1-cmd=[BACKREST-BIN]
-db1-config=[TEST_PATH]/db-master/pgbackrest.conf
-db1-host=db-master
-db1-path=[TEST_PATH]/db-master/db/base-2
-db1-user=vagrant
+db-cmd=[BACKREST-BIN]
+db-config=[TEST_PATH]/db-master/pgbackrest.conf
+db-host=db-master
+db-path=[TEST_PATH]/db-master/db/base-2
+db-user=[USER-1]
 
 [global]
 lock-path=[TEST_PATH]/backup/repo/lock
@@ -2213,11 +2213,11 @@ repo-path=[TEST_PATH]/backup/repo
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db1-cmd=[BACKREST-BIN]
-db1-config=[TEST_PATH]/db-master/pgbackrest.conf
-db1-host=db-master
-db1-path=[TEST_PATH]/db-master/db/base-2
-db1-user=vagrant
+db-cmd=[BACKREST-BIN]
+db-config=[TEST_PATH]/db-master/pgbackrest.conf
+db-host=db-master
+db-path=[TEST_PATH]/db-master/db/base-2
+db-user=[USER-1]
 
 [global]
 lock-path=[TEST_PATH]/backup/repo/lock
@@ -2371,11 +2371,11 @@ repo-path=[TEST_PATH]/backup/repo
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db1-cmd=[BACKREST-BIN]
-db1-config=[TEST_PATH]/db-master/pgbackrest.conf
-db1-host=db-master
-db1-path=[TEST_PATH]/db-master/db/base-2
-db1-user=vagrant
+db-cmd=[BACKREST-BIN]
+db-config=[TEST_PATH]/db-master/pgbackrest.conf
+db-host=db-master
+db-path=[TEST_PATH]/db-master/db/base-2
+db-user=[USER-1]
 
 [global]
 lock-path=[TEST_PATH]/backup/repo/lock
@@ -2534,11 +2534,11 @@ repo-path=[TEST_PATH]/backup/repo
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db1-cmd=[BACKREST-BIN]
-db1-config=[TEST_PATH]/db-master/pgbackrest.conf
-db1-host=db-master
-db1-path=[TEST_PATH]/db-master/db/base-2
-db1-user=vagrant
+db-cmd=[BACKREST-BIN]
+db-config=[TEST_PATH]/db-master/pgbackrest.conf
+db-host=db-master
+db-path=[TEST_PATH]/db-master/db/base-2
+db-user=[USER-1]
 
 [global]
 lock-path=[TEST_PATH]/backup/repo/lock
@@ -2704,11 +2704,11 @@ repo-path=[TEST_PATH]/backup/repo
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db1-cmd=[BACKREST-BIN]
-db1-config=[TEST_PATH]/db-master/pgbackrest.conf
-db1-host=db-master
-db1-path=[TEST_PATH]/db-master/db/base-2
-db1-user=vagrant
+db-cmd=[BACKREST-BIN]
+db-config=[TEST_PATH]/db-master/pgbackrest.conf
+db-host=db-master
+db-path=[TEST_PATH]/db-master/db/base-2
+db-user=[USER-1]
 
 [global]
 lock-path=[TEST_PATH]/backup/repo/lock
@@ -3193,11 +3193,11 @@ repo-path=[TEST_PATH]/backup/repo
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db1-cmd=[BACKREST-BIN]
-db1-config=[TEST_PATH]/db-master/pgbackrest.conf
-db1-host=db-master
-db1-path=[TEST_PATH]/db-master/db/base-2
-db1-user=vagrant
+db-cmd=[BACKREST-BIN]
+db-config=[TEST_PATH]/db-master/pgbackrest.conf
+db-host=db-master
+db-path=[TEST_PATH]/db-master/db/base-2
+db-user=[USER-1]
 
 [global]
 lock-path=[TEST_PATH]/backup/repo/lock
