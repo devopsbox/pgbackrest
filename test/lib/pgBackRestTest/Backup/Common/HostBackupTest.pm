@@ -745,7 +745,7 @@ sub configCreate
 
         if ($self->nameTest(HOST_BACKUP))
         {
-            $bForce = true;
+            $bForce = defined($oHostDbStandby);
         }
         elsif ($self->nameTest(HOST_DB_STANDBY))
         {
@@ -753,7 +753,7 @@ sub configCreate
             $oHostDb2 = $oHostDbMaster;
         }
 
-        if ($bForce)
+        if ($self->nameTest(HOST_BACKUP))
         {
             $oParamHash{$strStanza}{optionIndex(OPTION_DB_HOST, 1, $bForce)} = $oHostDb1->nameGet();
             $oParamHash{$strStanza}{optionIndex(OPTION_DB_USER, 1, $bForce)} = $oHostDb1->userGet();

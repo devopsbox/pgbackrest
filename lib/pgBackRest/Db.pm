@@ -238,6 +238,11 @@ sub connect
 
         # Execute the command
         $bResult = $self->{oProtocol}->cmdExecute(OP_DB_CONNECT, \%oParamHash, false, $bWarnOnError);
+
+        if (!defined($bResult))
+        {
+            $bResult = false;
+        }
     }
     # Else run locally
     else

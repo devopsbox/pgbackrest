@@ -111,6 +111,7 @@ sub close
 
     # Exit status defaults to success
     my $iExitStatus = 0;
+    my $bClosed = false;
 
     # Only send the exit command if the process is running
     if (defined($self->{io}) && defined($self->{io}->pIdGet()))
@@ -148,13 +149,14 @@ sub close
         }
 
         undef($self->{io});
+        $bClosed = true;
     }
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'iExitStatus', value => $iExitStatus}
+        {name => 'iExitStatus', value => $iExitStatus, trace => !$bClosed}
     );
 }
 
@@ -255,6 +257,7 @@ sub outputRead
         }
 
         &log(WARN, $strError, $iErrorCode);
+        undef($strOutput);
     }
 
     # Reset the keep alive time
@@ -380,7 +383,7 @@ sub cmdExecute
 
     $self->cmdWrite($strCommand, $oParamRef);
 
-    return $self->outputRead($bOutputRequired, undef, true);
+    return $self->outputRead($bOutputRequired, undef, $bWarnOnError);
 }
 
 ####################################################################################################################################

@@ -7,12 +7,14 @@ run 008 - rmt 1, cmp 1, exists 1
   INFO: get WAL segment 000000010000000100000001
  DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strSourceArchive = 000000010000000100000001
  DEBUG:     pgBackRest::Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = backup
+ DEBUG:     pgBackRest::Protocol::Protocol::protocolGet: create (cached) remote protocol
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --command=archive-get --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strRemoteType = backup, strUser = [USER-1]
  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --command=archive-get --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote, strRemoteType = backup
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     Archive->getCheck(): oFile = [object], strDbVersion = [undef], ullDbSysId = [undef]
- DEBUG:     Db->new(): bForceMaster = <false>
+ DEBUG:     Db->new(): iRemoteIdx = 1
  DEBUG:     pgBackRest::Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
+ DEBUG:     pgBackRest::Protocol::Protocol::protocolGet: create local protocol
  DEBUG:     Db->info(): strDbPath = [TEST_PATH]/db-master/db/base
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     Db->info=>: iCatalogVersion = 201306121, iControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6156904820763115222
@@ -21,6 +23,10 @@ run 008 - rmt 1, cmp 1, exists 1
                HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
  DEBUG:     Exit::exitSafe(): iExitCode = 130, strSignal = [undef]
   INFO: archive-get stop
+ DEBUG:     pgBackRest::Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+ DEBUG:     pgBackRest::Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
+ DEBUG:     pgBackRest::Protocol::CommonMaster->close=>: iExitStatus = 0
+ DEBUG:     pgBackRest::Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 + supplemental file: [TEST_PATH]/backup/repo/archive/db/archive.info
@@ -44,12 +50,14 @@ db-version="9.3"
   INFO: get WAL segment 000000010000000100000001
  DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strSourceArchive = 000000010000000100000001
  DEBUG:     pgBackRest::Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = backup
+ DEBUG:     pgBackRest::Protocol::Protocol::protocolGet: create (cached) remote protocol
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --command=archive-get --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strRemoteType = backup, strUser = [USER-1]
  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --command=archive-get --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote, strRemoteType = backup
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     Archive->getCheck(): oFile = [object], strDbVersion = [undef], ullDbSysId = [undef]
- DEBUG:     Db->new(): bForceMaster = <false>
+ DEBUG:     Db->new(): iRemoteIdx = 1
  DEBUG:     pgBackRest::Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
+ DEBUG:     pgBackRest::Protocol::Protocol::protocolGet: create local protocol
  DEBUG:     Db->info(): strDbPath = [TEST_PATH]/db-master/db/base
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     Db->info=>: iCatalogVersion = 201306121, iControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6156904820763115222
@@ -61,6 +69,10 @@ db-version="9.3"
  DEBUG:     Archive->get=>: iResult = 0
  DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: archive-get stop
+ DEBUG:     pgBackRest::Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+ DEBUG:     pgBackRest::Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
+ DEBUG:     pgBackRest::Protocol::CommonMaster->close=>: iExitStatus = 0
+ DEBUG:     pgBackRest::Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get 000000010000000100000002 [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
@@ -69,12 +81,14 @@ db-version="9.3"
   INFO: get WAL segment 000000010000000100000002
  DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002, strSourceArchive = 000000010000000100000002
  DEBUG:     pgBackRest::Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = backup
+ DEBUG:     pgBackRest::Protocol::Protocol::protocolGet: create (cached) remote protocol
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --command=archive-get --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strRemoteType = backup, strUser = [USER-1]
  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --command=archive-get --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote, strRemoteType = backup
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     Archive->getCheck(): oFile = [object], strDbVersion = [undef], ullDbSysId = [undef]
- DEBUG:     Db->new(): bForceMaster = <false>
+ DEBUG:     Db->new(): iRemoteIdx = 1
  DEBUG:     pgBackRest::Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
+ DEBUG:     pgBackRest::Protocol::Protocol::protocolGet: create local protocol
  DEBUG:     Db->info(): strDbPath = [TEST_PATH]/db-master/db/base
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     Db->info=>: iCatalogVersion = 201306121, iControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6156904820763115222
@@ -86,6 +100,10 @@ db-version="9.3"
  DEBUG:     Archive->get=>: iResult = 0
  DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: archive-get stop
+ DEBUG:     pgBackRest::Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+ DEBUG:     pgBackRest::Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
+ DEBUG:     pgBackRest::Protocol::CommonMaster->close=>: iExitStatus = 0
+ DEBUG:     pgBackRest::Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get 000000010000000100000003 [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003
@@ -94,12 +112,14 @@ db-version="9.3"
   INFO: get WAL segment 000000010000000100000003
  DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003, strSourceArchive = 000000010000000100000003
  DEBUG:     pgBackRest::Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = backup
+ DEBUG:     pgBackRest::Protocol::Protocol::protocolGet: create (cached) remote protocol
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --command=archive-get --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strRemoteType = backup, strUser = [USER-1]
  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --command=archive-get --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote, strRemoteType = backup
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     Archive->getCheck(): oFile = [object], strDbVersion = [undef], ullDbSysId = [undef]
- DEBUG:     Db->new(): bForceMaster = <false>
+ DEBUG:     Db->new(): iRemoteIdx = 1
  DEBUG:     pgBackRest::Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
+ DEBUG:     pgBackRest::Protocol::Protocol::protocolGet: create local protocol
  DEBUG:     Db->info(): strDbPath = [TEST_PATH]/db-master/db/base
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     Db->info=>: iCatalogVersion = 201306121, iControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6156904820763115222
@@ -111,4 +131,8 @@ db-version="9.3"
  DEBUG:     Archive->get=>: iResult = 0
  DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: archive-get stop
+ DEBUG:     pgBackRest::Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+ DEBUG:     pgBackRest::Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
+ DEBUG:     pgBackRest::Protocol::CommonMaster->close=>: iExitStatus = 0
+ DEBUG:     pgBackRest::Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false

@@ -407,7 +407,7 @@ sub processManifest
             (
                 optionGet(OPTION_STANZA),
                 optionGet(OPTION_REPO_PATH),
-                protocolGet(DB, $self->{iCopyRemoteIdx})
+                $oProtocolCopy
             );
         }
 
@@ -792,6 +792,15 @@ sub process
             my $strReplayedLSN = $oDbStandby->replayWait($strArchiveStart);
 
             &log(INFO, "replay on the standby reached ${strReplayedLSN}");
+
+            # The standby db object won't be used anymore so undef it to catch an subsequent references
+            undef($oDbStandby);
+
+            # If multi-threaded then the standby protocol won't be used again so destroy it now to avoid a timeout
+            if (optionGet(OPTION_THREAD_MAX) > 1)
+            {
+                protocolDestroy(DB, $self->{iCopyRemoteIdx});
+            }
         }
     }
 
