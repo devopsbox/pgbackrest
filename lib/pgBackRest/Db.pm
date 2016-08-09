@@ -318,13 +318,15 @@ sub executeSql
     (
         $strOperation,
         $strSql,
-        $bIgnoreError
+        $bIgnoreError,
+        $bResult
     ) =
         logDebugParam
         (
             OP_DB_EXECUTE_SQL, \@_,
             {name => 'strSql'},
-            {name => 'bIgnoreError', default => false}
+            {name => 'bIgnoreError', default => false},
+            {name => 'bResult', default => true},
         );
 
     # Get the user-defined command for psql
@@ -338,9 +340,10 @@ sub executeSql
 
         $oParamHash{'script'} = $strSql;
         $oParamHash{'ignore-error'} = $bIgnoreError;
+        $oParamHash{'result'} = $bResult;
 
         # Execute the command
-        $strResult = $self->{oProtocol}->cmdExecute(OP_DB_EXECUTE_SQL, \%oParamHash, true);
+        $strResult = $self->{oProtocol}->cmdExecute(OP_DB_EXECUTE_SQL, \%oParamHash, $bResult);
     }
     # Else run locally
     else
@@ -363,6 +366,12 @@ sub executeSql
             # Is the statement done?
             if ($hStatement->pg_ready())
             {
+                # return now if there is no result expected
+                if (!$bResult)
+                {
+                    return undef;
+                }
+
                 if (!$hStatement->pg_result())
                 {
                     # Return if the error should be ignored
@@ -988,6 +997,9 @@ sub replayWait
         confess &log(
             ERROR, "timeout before standby replayed ${strTargetLSN} - only reached ${strReplayedLSN}", ERROR_ARCHIVE_TIMEOUT);
     }
+
+    # Perform a checkpoint
+    $self->executeSql('checkpoint', undef, false);
 
     # Return from function and log return values if any
     return logDebugReturn

@@ -1645,6 +1645,7 @@ sub backupTestRun
             # Restore test string
             my $strDefaultMessage = 'default';
             my $strFullMessage = 'full';
+            my $strStandbyMessage = 'standby';
             my $strIncrMessage = 'incr';
             my $strTimeMessage = 'time';
             my $strXidMessage = 'xid';
@@ -1841,95 +1842,26 @@ sub backupTestRun
 
                 $oHostDbStandby->clusterStart({bHotStandby => true});
 
-                # Check that the cluster was restored properly
-                $oHostDbStandby->sqlSelectOneTest('select message from test', $strFullMessage);
-
                 # Make sure streaming replication is on
                 $oHostDbMaster->sqlSelectOneTest(
                     "select client_addr || '-' || state from pg_stat_replication", $oHostDbStandby->ipGet() . '/32-streaming');
 
-                my $strBackup = $oHostBackup->backup(
-                    BACKUP_TYPE_INCR, 'backup from standby',
+                # Check that the cluster was restored properly
+                $oHostDbStandby->sqlSelectOneTest('select message from test', $strFullMessage);
+
+                # Update message for standby
+                $oHostDbMaster->sqlExecute("update test set message = '$strStandbyMessage'");
+
+                my $strStandbyBackup = $oHostBackup->backup(
+                    BACKUP_TYPE_FULL, 'backup from standby',
                     {bStandby => true,
-                     iExpectedExitStatus => $oHostDbStandby->dbVersion() >= PG_VERSION_BACKUP_STANDBY ? undef : ERROR_CONFIG});
+                     iExpectedExitStatus => $oHostDbStandby->dbVersion() >= PG_VERSION_BACKUP_STANDBY ? undef : ERROR_CONFIG,
+                     strOptionalParam => '--' . OPTION_RETENTION_FULL . '=1'});
 
-                # my $strExpectedManifest = "${strTestPath}/expected.manifest";
-                # my $oExpectedManifest = new pgBackRest::Manifest($strExpectedManifest, false);
-                # $oExpectedManifest->build($oFile, $oHostDbMaster->dbBasePath(), undef, true, undef);
-                #
-                # my $strSectionPath = $oExpectedManifest->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH);
-                #
-                # foreach my $strName ($oExpectedManifest->keys(MANIFEST_SECTION_TARGET_FILE))
-                # {
-                #     if ($strName =~ 'pg_data/pg_xlog/.*' || $strName eq 'pg_data/global/pg_control')
-                #     {
-                #         $oExpectedManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName);
-                #     }
-                #     else
-                #     {
-                #         if ($oExpectedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) != 0)
-                #         {
-                #             my $oStat = fileStat($oExpectedManifest->dbPathGet($strSectionPath, $strName));
-                #
-                #             if ($oStat->blocks > 0 || S_ISLNK($oStat->mode))
-                #             {
-                #                 $oExpectedManifest->set(
-                #                     MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM,
-                #                     $oFile->hash(PATH_DB_ABSOLUTE, $oExpectedManifest->dbPathGet($strSectionPath, $strName)));
-                #             }
-                #         }
-                #
-                #         $oExpectedManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP);
-                #     }
-                # }
-                #
-                # for my $strSection ($oExpectedManifest->keys())
-                # {
-                #     if ($strSection ne MANIFEST_SECTION_TARGET_FILE)
-                #     {
-                #         $oExpectedManifest->remove($strSection);
-                #     }
-                # }
-                #
-                # iniSave($strExpectedManifest, $oExpectedManifest->{oContent});
-                #
-                # my $strActualManifest = "${strTestPath}/actual.manifest";
-                # my $oActualManifest = new pgBackRest::Manifest(
-                #     $oFile->pathGet(PATH_BACKUP_CLUSTER, "${strBackup}/" . FILE_MANIFEST), true);
-                #
-                # foreach my $strName ($oActualManifest->keys(MANIFEST_SECTION_TARGET_FILE))
-                # {
-                #     if ($strName =~ 'pg_data/pg_xlog/.*' || $strName eq 'pg_data/global/pg_control')
-                #     {
-                #         $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName);
-                #     }
-                #     else
-                #     {
-                #         $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE);
-                #         $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE);
-                #         $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_TIMESTAMP);
-                #     }
-                # }
-                #
-                # for my $strSection ($oActualManifest->keys())
-                # {
-                #     if ($strSection ne MANIFEST_SECTION_TARGET_FILE)
-                #     {
-                #         $oActualManifest->remove($strSection);
-                #     }
-                # }
-                #
-                # iniSave($strActualManifest, $oActualManifest->{oContent});
-                #
-                # executeTest("diff ${strExpectedManifest} ${strActualManifest}");
-
-                # $oHostBackup->backupCompare($strBackup, $oExpectedManifest->{oContent});
-
-                # /backrest/test/test.pl --vm=u14 --module=backup --vm-out --db-version=9.4 --no-lint --thread-max=1 --test=full --run=6 --no-cleanup
-                # docker exec -u backrest test-0-backup /backrest/bin/pgbackrest --config=/home/vagrant/test/test-0/backup/pgbackrest.conf --stop-auto --no-resume --stanza=db --backup-standby --test backup --type=incr --log-level-console=info
-
-                # !!! REMOVE THIS
-                # exit 0;
+                if ($oHostDbStandby->dbVersion() >= PG_VERSION_BACKUP_STANDBY)
+                {
+                    $strFullBackup = $strStandbyBackup;
+                }
             }
 
             # Execute stop and make sure the backup fails
@@ -2135,7 +2067,7 @@ sub backupTestRun
 
             # Restore (restore type = immediate, inclusive)
             #-----------------------------------------------------------------------------------------------------------------------
-            if ($bTestExtra && $oHostDbMaster->dbVersion() >= PG_VERSION_94)
+            if (($bTestExtra || $bHostStandby) && $oHostDbMaster->dbVersion() >= PG_VERSION_94)
             {
                 $bDelta = false;
                 $bForce = true;
@@ -2157,7 +2089,8 @@ sub backupTestRun
                     $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus, undef);
 
                 $oHostDbMaster->clusterStart();
-                $oHostDbMaster->sqlSelectOneTest('select message from test', $strFullMessage);
+                $oHostDbMaster->sqlSelectOneTest(
+                    'select message from test', ($bHostStandby ? $strStandbyMessage : $strFullMessage));
             }
 
             # Restore (restore type = xid, inclusive)

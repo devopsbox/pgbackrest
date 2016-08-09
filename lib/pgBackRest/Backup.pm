@@ -324,7 +324,8 @@ sub processManifest
             }
 
             # Certain files are not copied until the end
-            if ($strFile eq MANIFEST_FILE_PGCONTROL)
+            if ($strFile eq MANIFEST_FILE_PGCONTROL || $strFile eq MANIFEST_FILE_BACKUPLABEL ||
+                $strFile eq MANIFEST_FILE_TABLESPACEMAP)
             {
                 $strFileKey = $strFile;
                 $hFileCopyMap{$strQueueKey}{$strFileKey}{skip} = true;
@@ -510,6 +511,20 @@ sub processManifest
             }
             while (!$bDone);
         }
+    }
+
+    # Always copy backup label from master for PostgreSQL <= 9.5
+    if (defined($hFileCopyMap{&MANIFEST_TARGET_PGDATA}{&MANIFEST_FILE_BACKUPLABEL}))
+    {
+        my $hFileCopy = $hFileCopyMap{&MANIFEST_TARGET_PGDATA}{&MANIFEST_FILE_BACKUPLABEL};
+
+        my ($bCopied, $lSizeCurrent, $lCopySize, $lRepoSize, $strCopyChecksum) =
+            backupFile($oFileMaster, $$hFileCopy{db_file}, $$hFileCopy{repo_file}, $bCompress, $$hFileCopy{checksum},
+                       $$hFileCopy{modification_time}, $$hFileCopy{size}, undef, undef, false);
+
+        backupManifestUpdate($oBackupManifest, $$hFileCopy{repo_file}, $bCopied, $lCopySize, $lRepoSize, $strCopyChecksum);
+
+        $lSizeTotal += $$hFileCopy{size};
     }
 
     # Copy pg_control last - this is required for backups taken during recovery
