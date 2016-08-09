@@ -26,15 +26,6 @@ use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::Protocol;
 
 ####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant OP_EXPIRE                                              => 'Expire';
-
-use constant OP_EXPIRE_DESTROY                                      => OP_EXPIRE . '->DESTROY';
-use constant OP_EXPIRE_NEW                                          => OP_EXPIRE . '->new';
-use constant OP_EXPIRE_PROCESS                                      => OP_EXPIRE . '->process';
-
-####################################################################################################################################
 # new
 ####################################################################################################################################
 sub new
@@ -46,7 +37,7 @@ sub new
     bless $self, $class;
 
     # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(OP_EXPIRE_NEW);
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->new');
 
     # Initialize file object
     $self->{oFile} = new pgBackRest::File
@@ -75,22 +66,12 @@ sub DESTROY
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation
-    ) =
-        logDebugParam
-    (
-        OP_EXPIRE_DESTROY
-    );
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->DESTROY');
 
     undef($self->{oFile});
 
     # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation
-    );
+    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################
@@ -140,14 +121,7 @@ sub process
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation
-    ) =
-        logDebugParam
-        (
-            OP_EXPIRE_PROCESS
-        );
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->process');
 
     my @stryPath;
 
@@ -432,10 +406,7 @@ sub process
     }
 
     # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation
-    );
+    return logDebugReturn($strOperation);
 }
 
 1;

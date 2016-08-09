@@ -29,10 +29,10 @@ full backup - create pg_stat link, pg_clog dir (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --manifest-save-threshold=3 --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: backup start: --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --db-path=[TEST_PATH]/db-master/db/base --db-user=vagrant --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backup/repo/log --manifest-save-threshold=3 --no-online --repo-path=[TEST_PATH]/backup/repo --stanza=db --start-fast --type=full
- DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
- DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet: create local protocol
+ DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
+ DEBUG:     Common::Lock::lockAcquire=>: bResult = true
+ DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
+ DEBUG:     Protocol::Protocol::protocolGet: create local protocol
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db
@@ -41,12 +41,12 @@ full backup - create pg_stat link, pg_clog dir (backup host)
  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
  DEBUG:     Db->new(): iRemoteIdx = 1
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet: create (cached) remote protocol
+ DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
+ DEBUG:     Protocol::Protocol::protocolGet: create (cached) remote protocol
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=db remote, strHost = db-master, strRemoteType = db, strUser = [USER-1]
  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no vagrant@db-master '[BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=db remote', strId = db-master, strName = remote, strRemoteType = db
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet: found cached protocol
+ DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
+ DEBUG:     Protocol::Protocol::protocolGet: found cached protocol
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
@@ -64,7 +64,7 @@ full backup - create pg_stat link, pg_clog dir (backup host)
  DEBUG:     File->wait(): bWait = false, strPathType = db:absolute
  DEBUG:     Backup->process: create temp backup path [TEST_PATH]/backup/repo/temp/db.tmp
  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = false, strMode = <0750>, strPath = [undef], strPathType = backup:tmp
- DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = false, oBackupManifest = [object], oFileMaster = [object], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strDbVersion = full, strType = 9.3
+ DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = false, oBackupManifest = [object], oFileMaster = [object], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strDbVersion = 9.3, strType = full
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base/1, strPathType = backup:tmp
@@ -74,10 +74,10 @@ full backup - create pg_stat link, pg_clog dir (backup host)
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_clog, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_stat, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_tblspc, strPathType = backup:tmp
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet: found cached protocol
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet: found cached protocol
+ DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
+ DEBUG:     Protocol::Protocol::protocolGet: found cached protocol
+ DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
+ DEBUG:     Protocol::Protocol::protocolGet: found cached protocol
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = pg_data/postgresql.conf.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/postgresql.conf, strSourcePathType = db:absolute, strUser = [undef]
   INFO: backup file [TEST_PATH]/db-master/db/base/postgresql.conf (21B, 41%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
@@ -120,8 +120,8 @@ full backup - create pg_stat link, pg_clog dir (backup host)
  DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-1], strSourcePathType = backup:cluster
   INFO: backup stop
   INFO: expire start: --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backup/repo/log --repo-path=[TEST_PATH]/backup/repo --stanza=db
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet: create local protocol
+ DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
+ DEBUG:     Protocol::Protocol::protocolGet: create local protocol
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db
  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
@@ -137,14 +137,14 @@ full backup - create pg_stat link, pg_clog dir (backup host)
  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-1]
  DEBUG:     BackupInfo->current=>: bTest = true
   INFO: archive retention type not set - archive logs will not be expired
- DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = <true>
- DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: expire stop
- DEBUG:     pgBackRest::Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
- DEBUG:     pgBackRest::Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = db
- DEBUG:     pgBackRest::Protocol::CommonMaster->close=>: iExitStatus = 0
- DEBUG:     pgBackRest::Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
- DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+ DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = db
+ DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
+ DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
+ DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------
@@ -280,10 +280,10 @@ full backup - resume (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --force --type=full --stanza=db backup --test --test-delay=0.2 --test-point=backup-resume=y
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: backup start: --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --db-path=[TEST_PATH]/db-master/db/base --db-user=vagrant --force --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backup/repo/log --no-online --repo-path=[TEST_PATH]/backup/repo --stanza=db --start-fast --test --test-delay=0.2 --test-point=backup-resume=y --type=full
- DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
- DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet: create local protocol
+ DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
+ DEBUG:     Common::Lock::lockAcquire=>: bResult = true
+ DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
+ DEBUG:     Protocol::Protocol::protocolGet: create local protocol
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db
@@ -294,12 +294,12 @@ full backup - resume (backup host)
   WARN: backup [BACKUP-FULL-1] missing in repository removed from backup.info
  DEBUG:     BackupInfo->delete(): strBackupLabel = [BACKUP-FULL-1]
  DEBUG:     Db->new(): iRemoteIdx = 1
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet: create (cached) remote protocol
+ DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
+ DEBUG:     Protocol::Protocol::protocolGet: create (cached) remote protocol
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=db remote, strHost = db-master, strRemoteType = db, strUser = [USER-1]
  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no vagrant@db-master '[BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=db remote', strId = db-master, strName = remote, strRemoteType = db
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet: found cached protocol
+ DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
+ DEBUG:     Protocol::Protocol::protocolGet: found cached protocol
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
@@ -332,7 +332,7 @@ DETAIL: clean backup temp path: [TEST_PATH]/backup/repo/temp/db.tmp
  DEBUG:     Backup->fileNotInManifest=>: stryFile = (file.tmp.gz, pg_data/PG_VERSION.gz)
  DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backup/repo/temp/db.tmp/pg_data/PG_VERSION.gz
  DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backup/repo/temp/db.tmp/file.tmp.gz
- DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = false, oBackupManifest = [object], oFileMaster = [object], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strDbVersion = full, strType = 9.3
+ DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = false, oBackupManifest = [object], oFileMaster = [object], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strDbVersion = 9.3, strType = full
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base/1, strPathType = backup:tmp
@@ -342,10 +342,10 @@ DETAIL: clean backup temp path: [TEST_PATH]/backup/repo/temp/db.tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_clog, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_stat, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_tblspc, strPathType = backup:tmp
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet: found cached protocol
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet: found cached protocol
+ DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
+ DEBUG:     Protocol::Protocol::protocolGet: found cached protocol
+ DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
+ DEBUG:     Protocol::Protocol::protocolGet: found cached protocol
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     File->hashSize(): bCompressed = true, strFile = pg_data/postgresql.conf.gz, strHashType = <sha1>, strPathType = backup:tmp
  DEBUG:     File->hashSize=>: iSize = 21, strHash = 6721d92c9fcdf4248acff1f9a1377127d9064807
@@ -388,8 +388,8 @@ DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/global/pg_control (8
  DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-2], strSourcePathType = backup:cluster
   INFO: backup stop
   INFO: expire start: --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backup/repo/log --repo-path=[TEST_PATH]/backup/repo --stanza=db
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet: create local protocol
+ DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
+ DEBUG:     Protocol::Protocol::protocolGet: create local protocol
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db
  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
@@ -405,14 +405,14 @@ DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/global/pg_control (8
  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
  DEBUG:     BackupInfo->current=>: bTest = true
   INFO: archive retention type not set - archive logs will not be expired
- DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = <true>
- DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: expire stop
- DEBUG:     pgBackRest::Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
- DEBUG:     pgBackRest::Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = db
- DEBUG:     pgBackRest::Protocol::CommonMaster->close=>: iExitStatus = 0
- DEBUG:     pgBackRest::Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
- DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+ DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = db
+ DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
+ DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
+ DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------
@@ -548,10 +548,10 @@ restore delta, backup '[BACKUP-FULL-2]' - add and delete files (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-FULL-2]  --link-all  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: restore start: --backup-cmd=[BACKREST-BIN] --backup-config=[TEST_PATH]/backup/pgbackrest.conf --backup-host=backup --backup-user=backrest --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --delta --link-all --lock-path=[TEST_PATH]/db-master/spool/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/spool/log --repo-path=[TEST_PATH]/backup/repo --set=[BACKUP-FULL-2] --stanza=db
- DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = restore
- DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = backup
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet: create (cached) remote protocol
+ DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = restore
+ DEBUG:     Common::Lock::lockAcquire=>: bResult = true
+ DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = backup
+ DEBUG:     Protocol::Protocol::protocolGet: create (cached) remote protocol
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --command=restore --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=backup remote, strHost = backup, strRemoteType = backup, strUser = [USER-2]
  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --command=restore --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=backup remote', strId = backup, strName = remote, strRemoteType = backup
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
@@ -710,13 +710,13 @@ DETAIL: restore file [TEST_PATH]/db-master/db/base/PG_VERSION - exists and match
   INFO: restore file [TEST_PATH]/db-master/db/base/global/pg_control (8KB) checksum 56fe5780b8dca9705e0c22032a83828860a21235
  DEBUG:     File->remove(): bIgnoreMissing = false, bTemp = [undef], strPath = [TEST_PATH]/db-master/db/base/backup.manifest, strPathType = db:absolute
  DEBUG:     File->remove=>: bRemoved = true
- DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: restore stop
- DEBUG:     pgBackRest::Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
- DEBUG:     pgBackRest::Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
- DEBUG:     pgBackRest::Protocol::CommonMaster->close=>: iExitStatus = 0
- DEBUG:     pgBackRest::Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
- DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+ DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
+ DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
+ DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
+ DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
 ----------------------------------------------------------------
@@ -862,10 +862,10 @@ incr backup - add tablespace 1 (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --test --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: backup start: --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --db-path=[TEST_PATH]/db-master/db/base --db-user=vagrant --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backup/repo/log --no-online --repo-path=[TEST_PATH]/backup/repo --stanza=db --start-fast --test
- DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
- DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet: create local protocol
+ DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
+ DEBUG:     Common::Lock::lockAcquire=>: bResult = true
+ DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
+ DEBUG:     Protocol::Protocol::protocolGet: create local protocol
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db
@@ -883,12 +883,12 @@ incr backup - add tablespace 1 (backup host)
  DEBUG:     BackupInfo->last=>: strBackup = [BACKUP-FULL-2]
   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
  DEBUG:     Db->new(): iRemoteIdx = 1
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet: create (cached) remote protocol
+ DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
+ DEBUG:     Protocol::Protocol::protocolGet: create (cached) remote protocol
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=db remote, strHost = db-master, strRemoteType = db, strUser = [USER-1]
  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no vagrant@db-master '[BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=db remote', strId = db-master, strName = remote, strRemoteType = db
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet: found cached protocol
+ DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
+ DEBUG:     Protocol::Protocol::protocolGet: found cached protocol
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
@@ -905,7 +905,7 @@ incr backup - add tablespace 1 (backup host)
  DEBUG:     File->wait(): bWait = false, strPathType = db:absolute
  DEBUG:     Backup->process: create temp backup path [TEST_PATH]/backup/repo/temp/db.tmp
  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = false, strMode = <0750>, strPath = [undef], strPathType = backup:tmp
- DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = false, oBackupManifest = [object], oFileMaster = [object], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strDbVersion = incr, strType = 9.3
+ DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = false, oBackupManifest = [object], oFileMaster = [object], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strDbVersion = 9.3, strType = incr
  DEBUG:     Backup->processManifest: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
  DEBUG:     Backup->processManifest: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
  DEBUG:     Backup->processManifest: reference pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
@@ -916,10 +916,10 @@ incr backup - add tablespace 1 (backup host)
  DEBUG:     Backup->processManifest: reference pg_data/global/pg_control to [BACKUP-FULL-2]
  DEBUG:     Backup->processManifest: reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
  DEBUG:     Backup->processManifest: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet: found cached protocol
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet: found cached protocol
+ DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
+ DEBUG:     Protocol::Protocol::protocolGet: found cached protocol
+ DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
+ DEBUG:     Protocol::Protocol::protocolGet: found cached protocol
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-2], strDestinationFile = pg_data/badchecksum.txt.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/badchecksum.txt, strSourcePathType = db:absolute, strUser = [undef]
   INFO: backup file [TEST_PATH]/db-master/db/base/badchecksum.txt (11B, 61%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
@@ -937,8 +937,8 @@ incr backup - add tablespace 1 (backup host)
  DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-INCR-1], strSourcePathType = backup:cluster
   INFO: backup stop
   INFO: expire start: --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backup/repo/log --repo-path=[TEST_PATH]/backup/repo --stanza=db
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet: create local protocol
+ DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
+ DEBUG:     Protocol::Protocol::protocolGet: create local protocol
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db
  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
@@ -958,14 +958,14 @@ incr backup - add tablespace 1 (backup host)
  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
  DEBUG:     BackupInfo->current=>: bTest = true
   INFO: archive retention type not set - archive logs will not be expired
- DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = <true>
- DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: expire stop
- DEBUG:     pgBackRest::Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
- DEBUG:     pgBackRest::Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = db
- DEBUG:     pgBackRest::Protocol::CommonMaster->close=>: iExitStatus = 0
- DEBUG:     pgBackRest::Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
- DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+ DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = db
+ DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
+ DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
+ DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------
@@ -1107,10 +1107,10 @@ incr backup - resume and add tablespace 2 (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --stanza=db backup --test --test-delay=0.2 --test-point=backup-resume=y
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: backup start: --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --db-path=[TEST_PATH]/db-master/db/base --db-user=vagrant --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backup/repo/log --no-online --repo-path=[TEST_PATH]/backup/repo --stanza=db --start-fast --test --test-delay=0.2 --test-point=backup-resume=y
- DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
- DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet: create local protocol
+ DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
+ DEBUG:     Common::Lock::lockAcquire=>: bResult = true
+ DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
+ DEBUG:     Protocol::Protocol::protocolGet: create local protocol
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db
@@ -1130,12 +1130,12 @@ incr backup - resume and add tablespace 2 (backup host)
  DEBUG:     BackupInfo->last=>: strBackup = [BACKUP-FULL-2]
   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
  DEBUG:     Db->new(): iRemoteIdx = 1
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet: create (cached) remote protocol
+ DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
+ DEBUG:     Protocol::Protocol::protocolGet: create (cached) remote protocol
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=db remote, strHost = db-master, strRemoteType = db, strUser = [USER-1]
  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no vagrant@db-master '[BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=db remote', strId = db-master, strName = remote, strRemoteType = db
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet: found cached protocol
+ DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
+ DEBUG:     Protocol::Protocol::protocolGet: found cached protocol
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
@@ -1163,7 +1163,7 @@ DETAIL: clean backup temp path: [TEST_PATH]/backup/repo/temp/db.tmp
  DEBUG:     File->manifestRecurse(): iDepth = 3, oManifestHashRef = [hash], strPathFileOp = pg_tblspc/1/[TS_PATH-1], strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
  DEBUG:     File->manifestRecurse(): iDepth = 4, oManifestHashRef = [hash], strPathFileOp = pg_tblspc/1/[TS_PATH-1]/16384, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
  DEBUG:     Backup->fileNotInManifest=>: stryFile = ()
- DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = false, oBackupManifest = [object], oFileMaster = [object], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strDbVersion = incr, strType = 9.3
+ DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = false, oBackupManifest = [object], oFileMaster = [object], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strDbVersion = 9.3, strType = incr
  DEBUG:     Backup->processManifest: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
  DEBUG:     Backup->processManifest: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
  DEBUG:     Backup->processManifest: reference pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
@@ -1174,10 +1174,10 @@ DETAIL: clean backup temp path: [TEST_PATH]/backup/repo/temp/db.tmp
  DEBUG:     Backup->processManifest: reference pg_data/global/pg_control to [BACKUP-FULL-2]
  DEBUG:     Backup->processManifest: reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
  DEBUG:     Backup->processManifest: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet: found cached protocol
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet: found cached protocol
+ DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
+ DEBUG:     Protocol::Protocol::protocolGet: found cached protocol
+ DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
+ DEBUG:     Protocol::Protocol::protocolGet: found cached protocol
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     File->hashSize(): bCompressed = true, strFile = pg_data/badchecksum.txt.gz, strHashType = <sha1>, strPathType = backup:tmp
  DEBUG:     File->hashSize=>: iSize = 11, strHash = f927212cd08d11a42a666b2f04235398e9ceeb51
@@ -1201,8 +1201,8 @@ DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH
  DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-INCR-2], strSourcePathType = backup:cluster
   INFO: backup stop
   INFO: expire start: --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backup/repo/log --repo-path=[TEST_PATH]/backup/repo --stanza=db
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
- DEBUG:     pgBackRest::Protocol::Protocol::protocolGet: create local protocol
+ DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
+ DEBUG:     Protocol::Protocol::protocolGet: create local protocol
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db
  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
@@ -1222,14 +1222,14 @@ DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH
  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
  DEBUG:     BackupInfo->current=>: bTest = true
   INFO: archive retention type not set - archive logs will not be expired
- DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = <true>
- DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: expire stop
- DEBUG:     pgBackRest::Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
- DEBUG:     pgBackRest::Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = db
- DEBUG:     pgBackRest::Protocol::CommonMaster->close=>: iExitStatus = 0
- DEBUG:     pgBackRest::Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
- DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+ DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = db
+ DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
+ DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
+ DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------

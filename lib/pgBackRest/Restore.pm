@@ -28,20 +28,6 @@ use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::Protocol;
 
 ####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant OP_RESTORE                                             => 'Restore';
-
-use constant OP_RESTORE_BUILD                                       => OP_RESTORE . '->build';
-use constant OP_RESTORE_CLEAN                                       => OP_RESTORE . '->clean';
-use constant OP_RESTORE_DESTROY                                     => OP_RESTORE . '->destroy';
-use constant OP_RESTORE_MANIFEST_LOAD                               => OP_RESTORE . '->manifestLoad';
-use constant OP_RESTORE_MANIFEST_OWNERSHIP_CHECK                    => OP_RESTORE . '->manifestOwnershipCheck';
-use constant OP_RESTORE_NEW                                         => OP_RESTORE . '->new';
-use constant OP_RESTORE_PROCESS                                     => OP_RESTORE . '->process';
-use constant OP_RESTORE_RECOVERY                                    => OP_RESTORE . '->recovery';
-
-####################################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
 sub new
@@ -53,7 +39,7 @@ sub new
     bless $self, $class;
 
     # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(OP_RESTORE_NEW);
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->new');
 
     # Initialize protocol
     $self->{oProtocol} = protocolGet(BACKUP);
@@ -86,22 +72,12 @@ sub DESTROY
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation
-    ) =
-        logDebugParam
-    (
-        OP_RESTORE_DESTROY
-    );
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->DESTROY');
 
     undef($self->{oFile});
 
     # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation
-    );
+    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################
@@ -122,7 +98,7 @@ sub manifestOwnershipCheck
     ) =
         logDebugParam
         (
-            OP_RESTORE_MANIFEST_OWNERSHIP_CHECK, \@_,
+            __PACKAGE__ . '->manifestOwnershipCheck', \@_,
             {name => 'oManifest'}
         );
 
@@ -248,7 +224,7 @@ sub manifestLoad
     my $self = shift;           # Class hash
 
     # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam (OP_RESTORE_MANIFEST_LOAD);
+    my ($strOperation) = logDebugParam (__PACKAGE__ . '->manifestLoad');
 
     # Error if the backup set does not exist
     if (!$self->{oFile}->exists(PATH_BACKUP_CLUSTER, $self->{strBackupSet}))
@@ -500,7 +476,7 @@ sub clean
     ) =
         logDebugParam
         (
-            OP_RESTORE_CLEAN, \@_,
+            __PACKAGE__ . '->clean', \@_,
             {name => 'oManifest'}
         );
 
@@ -799,7 +775,7 @@ sub build
     ) =
         logDebugParam
         (
-            OP_RESTORE_BUILD, \@_,
+            __PACKAGE__ . '->build', \@_,
             {name => 'oManifest'}
         );
 
@@ -924,7 +900,7 @@ sub recovery
     my $strDbVersion = shift;   # Version to restore
 
     # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam (OP_RESTORE_RECOVERY);
+    my ($strOperation) = logDebugParam (__PACKAGE__ . '->recovery');
 
     # Create recovery.conf path/file
     my $strRecoveryConf = $self->{strDbClusterPath} . '/' . DB_FILE_RECOVERYCONF;
@@ -1055,7 +1031,7 @@ sub process
     my $self = shift;       # Class hash
 
     # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam (OP_RESTORE_PROCESS);
+    my ($strOperation) = logDebugParam (__PACKAGE__ . '->process');
 
     if (!fileExists($self->{strDbClusterPath}))
     {
