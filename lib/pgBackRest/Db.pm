@@ -29,9 +29,9 @@ use pgBackRest::Version;
 ####################################################################################################################################
 use constant OP_DB                                                  => 'Db';
 
-use constant OP_DB_EXECUTE_SQL                                      => OP_DB . "->executeSql";
+use constant OP_DB_EXECUTE_SQL                                      => OP_DB . '->executeSql';
     push @EXPORT, qw(OP_DB_EXECUTE_SQL);
-use constant OP_DB_INFO                                             => OP_DB . "->info";
+use constant OP_DB_INFO                                             => OP_DB . '->info';
     push @EXPORT, qw(OP_DB_INFO);
 
 ####################################################################################################################################
