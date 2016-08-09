@@ -369,7 +369,7 @@ sub executeSql
                 # return now if there is no result expected
                 if (!$bResult)
                 {
-                    return undef;
+                    return;
                 }
 
                 if (!$hStatement->pg_result())
