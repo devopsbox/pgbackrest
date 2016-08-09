@@ -115,6 +115,10 @@
                     <release-item>
                         <p>Removed all <code>OP_*</code> function constants that were not used in the protocol for debugging and replaced with <code>__PACKAGE__</code>.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Improvements in <code>Db</code> module: separated out <code>connect()</code> function, allow <code>executeSql()</code> calls that do not return data, and improve error handling.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
         </release>
