@@ -64,7 +64,7 @@ full backup - create pg_stat link, pg_clog dir (backup host)
  DEBUG:     File->wait(): bWait = false, strPathType = db:absolute
  DEBUG:     Backup->process: create temp backup path [TEST_PATH]/backup/repo/temp/db.tmp
  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = false, strMode = <0750>, strPath = [undef], strPathType = backup:tmp
- DEBUG:     Backup->processManifest(): bCompress = false, bHardLink = true, oBackupManifest = [object], oFileMaster = [object], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strType = full
+ DEBUG:     Backup->processManifest(): bCompress = false, bHardLink = true, oBackupManifest = [object], oFileMaster = [object], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strDbVersion = full, strType = 9.3
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base/1, strPathType = backup:tmp
@@ -335,7 +335,7 @@ DETAIL: clean backup temp path: [TEST_PATH]/backup/repo/temp/db.tmp
  DEBUG:     Backup->fileNotInManifest=>: stryFile = (file.tmp, pg_data/PG_VERSION)
  DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backup/repo/temp/db.tmp/pg_data/PG_VERSION
  DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backup/repo/temp/db.tmp/file.tmp
- DEBUG:     Backup->processManifest(): bCompress = false, bHardLink = true, oBackupManifest = [object], oFileMaster = [object], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strType = full
+ DEBUG:     Backup->processManifest(): bCompress = false, bHardLink = true, oBackupManifest = [object], oFileMaster = [object], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strDbVersion = full, strType = 9.3
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base/1, strPathType = backup:tmp
@@ -911,7 +911,7 @@ incr backup - add tablespace 1 (backup host)
  DEBUG:     File->wait(): bWait = false, strPathType = db:absolute
  DEBUG:     Backup->process: create temp backup path [TEST_PATH]/backup/repo/temp/db.tmp
  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = false, strMode = <0750>, strPath = [undef], strPathType = backup:tmp
- DEBUG:     Backup->processManifest(): bCompress = false, bHardLink = true, oBackupManifest = [object], oFileMaster = [object], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strType = incr
+ DEBUG:     Backup->processManifest(): bCompress = false, bHardLink = true, oBackupManifest = [object], oFileMaster = [object], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strDbVersion = incr, strType = 9.3
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base/1, strPathType = backup:tmp
@@ -1213,7 +1213,7 @@ DETAIL: clean backup temp path: [TEST_PATH]/backup/repo/temp/db.tmp
  DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backup/repo/temp/db.tmp/pg_data/base/1/PG_VERSION
  DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backup/repo/temp/db.tmp/pg_data/base/1/12000
  DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backup/repo/temp/db.tmp/pg_data/PG_VERSION
- DEBUG:     Backup->processManifest(): bCompress = false, bHardLink = true, oBackupManifest = [object], oFileMaster = [object], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strType = incr
+ DEBUG:     Backup->processManifest(): bCompress = false, bHardLink = true, oBackupManifest = [object], oFileMaster = [object], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strDbVersion = incr, strType = 9.3
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base/1, strPathType = backup:tmp

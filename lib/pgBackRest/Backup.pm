@@ -244,6 +244,7 @@ sub processManifest
         $strDbMasterPath,
         $strDbCopyPath,
         $strType,
+        $strDbVersion,
         $bCompress,
         $bHardLink,
         $oBackupManifest                            # Manifest for the current backup
@@ -254,6 +255,7 @@ sub processManifest
         {name => 'oFileMaster'},
         {name => 'strDbMasterPath'},
         {name => 'strDbCopyPath'},
+        {name => 'strDbVersion'},
         {name => 'strType'},
         {name => 'bCompress'},
         {name => 'bHardLink'},
@@ -514,9 +516,23 @@ sub processManifest
     }
 
     # Always copy backup label from master for PostgreSQL <= 9.5
-    if (defined($hFileCopyMap{&MANIFEST_TARGET_PGDATA}{&MANIFEST_FILE_BACKUPLABEL}))
+    if ($strDbVersion <= PG_VERSION_95 && optionGet(OPTION_ONLINE))
     {
         my $hFileCopy = $hFileCopyMap{&MANIFEST_TARGET_PGDATA}{&MANIFEST_FILE_BACKUPLABEL};
+
+        my ($bCopied, $lSizeCurrent, $lCopySize, $lRepoSize, $strCopyChecksum) =
+            backupFile($oFileMaster, $$hFileCopy{db_file}, $$hFileCopy{repo_file}, $bCompress, $$hFileCopy{checksum},
+                       $$hFileCopy{modification_time}, $$hFileCopy{size}, undef, undef, false);
+
+        backupManifestUpdate($oBackupManifest, $$hFileCopy{repo_file}, $bCopied, $lCopySize, $lRepoSize, $strCopyChecksum);
+
+        $lSizeTotal += $$hFileCopy{size};
+    }
+
+    # Copy tablespace map when it exists
+    if (defined($hFileCopyMap{&MANIFEST_TARGET_PGDATA}{&MANIFEST_FILE_TABLESPACEMAP}))
+    {
+        my $hFileCopy = $hFileCopyMap{&MANIFEST_TARGET_PGDATA}{&MANIFEST_FILE_TABLESPACEMAP};
 
         my ($bCopied, $lSizeCurrent, $lCopySize, $lRepoSize, $strCopyChecksum) =
             backupFile($oFileMaster, $$hFileCopy{db_file}, $$hFileCopy{repo_file}, $bCompress, $$hFileCopy{checksum},
@@ -951,7 +967,8 @@ sub process
 
     # Perform the backup
     my $lBackupSizeTotal =
-        $self->processManifest($oFileMaster, $strDbMasterPath, $strDbCopyPath, $strType, $bCompress, $bHardLink, $oBackupManifest);
+        $self->processManifest(
+            $oFileMaster, $strDbMasterPath, $strDbCopyPath, $strType, $strDbVersion, $bCompress, $bHardLink, $oBackupManifest);
     &log(INFO, "${strType} backup size = " . fileSizeFormat($lBackupSizeTotal));
 
     # Stop backup (unless --no-online is set)
