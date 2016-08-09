@@ -296,7 +296,7 @@ sub executeSql
     ) =
         logDebugParam
         (
-            OP_DB_EXECUTE_SQL, \@_,
+            __PACKAGE__ . '::executeSql', \@_,
             {name => 'strSql'},
             {name => 'bIgnoreError', default => false},
             {name => 'bResult', default => true},
@@ -325,10 +325,11 @@ sub executeSql
 
         # Prepare the query
         my $hStatement = $self->{hDb}->prepare($strSql, {pg_async => PG_ASYNC})
-            or confess &log(ERROR, $DBI::errstr, ERROR_DB_QUERY);
+            or confess &log(ERROR, $DBI::errstr . ":\n${strSql}", ERROR_DB_QUERY);
 
         # Execute the query
-        $hStatement->execute();
+        $hStatement->execute()
+            or confess &log(ERROR, $DBI::errstr. ":\n${strSql}", ERROR_DB_QUERY);
 
         # Wait for the query to return
         my $oWait = waitInit(optionGet(OPTION_DB_TIMEOUT));
