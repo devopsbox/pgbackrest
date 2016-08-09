@@ -24,6 +24,7 @@ use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::File;
+use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::Protocol;
 
 ####################################################################################################################################
@@ -62,13 +63,11 @@ eval
         # Set log levels
         logLevelSet(OFF, REMOTE);
 
-        # Check that the remote repo path exists
-        # !!! Bring this back by using a type field - also make sure isRepoLocal and isDbLocal cannot run on remote
-        # if (isRepoLocal() && !-e optionGet(OPTION_REPO_PATH) &&
-        #     !(optionTest(OPTION_BACKUP_STANDBY) && optionGet(OPTION_BACKUP_STANDBY)))
-        # {
-        #     confess &log(ERROR, 'repo-path \'' . optionGet(OPTION_REPO_PATH) . '\' does not exist', ERROR_PATH_MISSING);
-        # }
+        # Check that the repo path exists if this is a backup remote
+        if (optionTest(OPTION_TYPE, BACKUP) && !-e optionGet(OPTION_REPO_PATH))
+        {
+            confess &log(ERROR, 'repo-path \'' . optionGet(OPTION_REPO_PATH) . '\' does not exist', ERROR_PATH_MISSING);
+        }
 
         # Load module dynamically
         require pgBackRest::Protocol::RemoteMinion;

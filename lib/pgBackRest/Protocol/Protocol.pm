@@ -161,6 +161,7 @@ sub protocolGet
                         &OPTION_PROCESS => {value => $$oParam{iProcessIdx}},
                         &OPTION_CONFIG => {
                             value => optionSource($strOptionConfig) eq SOURCE_DEFAULT ? undef : optionGet($strOptionConfig)},
+                        &OPTION_TYPE => {value => $strRemoteType},
                         &OPTION_LOG_PATH => {},
                         &OPTION_LOCK_PATH => {},
                         &OPTION_DB_SOCKET_PATH => {value => $strOptionDbSocketPath},

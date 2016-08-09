@@ -16,7 +16,6 @@ use lib dirname($0) . '/../lib';
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
-use pgBackRest::Config::Config;
 use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::IO;
 

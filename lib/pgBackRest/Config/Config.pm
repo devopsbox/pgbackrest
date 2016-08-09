@@ -19,6 +19,7 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
+use pgBackRest::Protocol::Common;
 use pgBackRest::Version;
 
 ####################################################################################################################################
@@ -772,6 +773,15 @@ my %oOptionRule =
                     &BACKUP_TYPE_DIFF => true,
                     &BACKUP_TYPE_INCR => true,
                 }
+            },
+
+            &CMD_REMOTE =>
+            {
+                &OPTION_RULE_ALLOW_LIST =>
+                {
+                    &DB                      => true,
+                    &BACKUP                  => true,
+                },
             },
 
             &CMD_RESTORE =>
