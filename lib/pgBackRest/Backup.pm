@@ -244,7 +244,7 @@ sub processManifest
     );
 
     # Variables used for parallel copy
-    my %oFileCopyMap;
+    my %hFileCopyMap;
     my $lFileTotal = 0;
     my $lSizeTotal = 0;
 
@@ -310,30 +310,30 @@ sub processManifest
             if ($strFile eq MANIFEST_FILE_PGCONTROL)
             {
                 $strFileKey = $strFile;
-                $oFileCopyMap{$strQueueKey}{$strFileKey}{skip} = true;
+                $hFileCopyMap{$strQueueKey}{$strFileKey}{skip} = true;
             }
             # Else continue normally
             else
             {
                 $strFileKey = sprintf("%016d-${strFile}", $lFileSize);
-                $oFileCopyMap{$strQueueKey}{$strFileKey}{skip} = false;
+                $hFileCopyMap{$strQueueKey}{$strFileKey}{skip} = false;
 
                 # Add file size to total size
                 $lSizeTotal += $lFileSize;
             }
 
-            $oFileCopyMap{$strQueueKey}{$strFileKey}{db_file} = $oBackupManifest->dbPathGet($strDbPath, $strFile);
-            $oFileCopyMap{$strQueueKey}{$strFileKey}{repo_file} = $strFile;
-            $oFileCopyMap{$strQueueKey}{$strFileKey}{size} = $lFileSize;
-            $oFileCopyMap{$strQueueKey}{$strFileKey}{modification_time} =
+            $hFileCopyMap{$strQueueKey}{$strFileKey}{db_file} = $oBackupManifest->dbPathGet($strDbPath, $strFile);
+            $hFileCopyMap{$strQueueKey}{$strFileKey}{repo_file} = $strFile;
+            $hFileCopyMap{$strQueueKey}{$strFileKey}{size} = $lFileSize;
+            $hFileCopyMap{$strQueueKey}{$strFileKey}{modification_time} =
                 $oBackupManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP, false);
-            $oFileCopyMap{$strQueueKey}{$strFileKey}{checksum} =
+            $hFileCopyMap{$strQueueKey}{$strFileKey}{checksum} =
                 $oBackupManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM, false);
         }
     }
 
     # pg_control should always be in the backup (unless this is an offline backup)
-    if (!defined($oFileCopyMap{&MANIFEST_TARGET_PGDATA}{&MANIFEST_FILE_PGCONTROL}) && optionGet(OPTION_ONLINE))
+    if (!defined($hFileCopyMap{&MANIFEST_TARGET_PGDATA}{&MANIFEST_FILE_PGCONTROL}) && optionGet(OPTION_ONLINE))
     {
         confess &log(ERROR, DB_FILE_PGCONTROL . " must be present in all online backups\n" .
                      'HINT: is something wrong with the clock or filesystem timestamps?', ERROR_FILE_MISSING);
@@ -378,32 +378,32 @@ sub processManifest
         my $oProtocol = protocolGet(DB, $self->{iMasterRemoteIdx});
 
         # Iterate all backup files
-        foreach my $strTargetKey (sort(keys(%oFileCopyMap)))
+        foreach my $strTargetKey (sort(keys(%hFileCopyMap)))
         {
             if (optionGet(OPTION_THREAD_MAX) > 1)
             {
                 $oyBackupQueue[@oyBackupQueue] = Thread::Queue->new();
             }
 
-            foreach my $strFileKey (sort {$b cmp $a} (keys(%{$oFileCopyMap{$strTargetKey}})))
+            foreach my $strFileKey (sort {$b cmp $a} (keys(%{$hFileCopyMap{$strTargetKey}})))
             {
-                my $oFileCopy = $oFileCopyMap{$strTargetKey}{$strFileKey};
+                my $hFileCopy = $hFileCopyMap{$strTargetKey}{$strFileKey};
 
                 # Skip files marked to be copied later
-                next if $$oFileCopy{skip};
+                next if $$hFileCopy{skip};
 
                 if (optionGet(OPTION_THREAD_MAX) > 1)
                 {
-                    $oyBackupQueue[@oyBackupQueue - 1]->enqueue($oFileCopy);
+                    $oyBackupQueue[@oyBackupQueue - 1]->enqueue($hFileCopy);
                 }
                 else
                 {
                     # Backup the file
                     ($bCopied, $lSizeCurrent, $lCopySize, $lRepoSize, $strCopyChecksum) =
-                        backupFile($oFileDb, $$oFileCopy{db_file}, $$oFileCopy{repo_file}, $bCompress, $$oFileCopy{checksum},
-                                   $$oFileCopy{modification_time}, $$oFileCopy{size}, $lSizeTotal, $lSizeCurrent);
+                        backupFile($oFileDb, $$hFileCopy{db_file}, $$hFileCopy{repo_file}, $bCompress, $$hFileCopy{checksum},
+                                   $$hFileCopy{modification_time}, $$hFileCopy{size}, $lSizeTotal, $lSizeCurrent);
 
-                    $lManifestSaveCurrent = backupManifestUpdate($oBackupManifest, $$oFileCopy{repo_file}, $bCopied, $lCopySize,
+                    $lManifestSaveCurrent = backupManifestUpdate($oBackupManifest, $$hFileCopy{repo_file}, $bCopied, $lCopySize,
                                                                  $lRepoSize, $strCopyChecksum, $lManifestSaveSize,
                                                                  $lManifestSaveCurrent);
 
@@ -478,17 +478,17 @@ sub processManifest
     }
 
     # Copy pg_control last - this is required for backups taken during recovery
-    my $oFileCopy = $oFileCopyMap{&MANIFEST_TARGET_PGDATA}{&MANIFEST_FILE_PGCONTROL};
+    my $hFileCopy = $hFileCopyMap{&MANIFEST_TARGET_PGDATA}{&MANIFEST_FILE_PGCONTROL};
 
-    if (defined($oFileCopy))
+    if (defined($hFileCopy))
     {
         my ($bCopied, $lSizeCurrent, $lCopySize, $lRepoSize, $strCopyChecksum) =
-            backupFile($oFileDb, $$oFileCopy{db_file}, $$oFileCopy{repo_file}, $bCompress, $$oFileCopy{checksum},
-                       $$oFileCopy{modification_time}, $$oFileCopy{size}, undef, undef, false);
+            backupFile($oFileDb, $$hFileCopy{db_file}, $$hFileCopy{repo_file}, $bCompress, $$hFileCopy{checksum},
+                       $$hFileCopy{modification_time}, $$hFileCopy{size}, undef, undef, false);
 
-        backupManifestUpdate($oBackupManifest, $$oFileCopy{repo_file}, $bCopied, $lCopySize, $lRepoSize, $strCopyChecksum);
+        backupManifestUpdate($oBackupManifest, $$hFileCopy{repo_file}, $bCopied, $lCopySize, $lRepoSize, $strCopyChecksum);
 
-        $lSizeTotal += $$oFileCopy{size};
+        $lSizeTotal += $$hFileCopy{size};
     }
 
     # Return from function and log return values if any
