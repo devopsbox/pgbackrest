@@ -153,6 +153,12 @@ use constant MANIFEST_SUBKEY_USER                                   => 'user';
 ####################################################################################################################################
 use constant DB_PATH_GLOBAL                                         => 'global';
     push @EXPORT, qw(DB_PATH_GLOBAL);
+use constant DB_PATH_PGDYNSHMEM                                     => 'pg_dynshmem';
+    push @EXPORT, qw(DB_PATH_PGDYNSHMEM);
+use constant DB_PATH_PGREPLSLOT                                     => 'pg_replslot';
+    push @EXPORT, qw(DB_PATH_PGREPLSLOT);
+use constant DB_PATH_PGSTATTMP                                      => 'pg_stat_tmp';
+    push @EXPORT, qw(DB_PATH_PGSTATTMP);
 use constant DB_PATH_PGTBLSPC                                       => 'pg_tblspc';
     push @EXPORT, qw(DB_PATH_PGTBLSPC);
 use constant DB_PATH_PGXLOG                                         => 'pg_xlog';
@@ -166,6 +172,8 @@ use constant DB_FILE_PGCONTROL                                      => DB_PATH_G
     push @EXPORT, qw(DB_FILE_PGCONTROL);
 use constant DB_FILE_PGVERSION                                      => 'PG_VERSION';
     push @EXPORT, qw(DB_FILE_PGVERSION);
+use constant DB_FILE_POSTGRESQLAUTOCONFTMP                          => 'postgresql.auto.conf.tmp';
+    push @EXPORT, qw(DB_FILE_POSTGRESQLAUTOCONFTMP);
 use constant DB_FILE_POSTMASTEROPTS                                 => 'postmaster.opts';
     push @EXPORT, qw(DB_FILE_POSTMASTEROPTS);
 use constant DB_FILE_POSTMASTERPID                                  => 'postmaster.pid';
@@ -177,16 +185,37 @@ use constant DB_FILE_RECOVERYDONE                                   => 'recovery
 use constant DB_FILE_TABLESPACEMAP                                  => 'tablespace_map';
     push @EXPORT, qw(DB_FILE_TABLESPACEMAP);
 
+use constant DB_FILE_PREFIX_TMP                                     => 'pgsql_tmp';
+    push @EXPORT, qw(DB_FILE_PREFIX_TMP);
+
 ####################################################################################################################################
 # Manifest locations for important files/paths
 ####################################################################################################################################
+use constant MANIFEST_PATH_PGDYNSHMEM                                => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGDYNSHMEM;
+    push @EXPORT, qw(MANIFEST_PATH_PGDYNSHMEM);
+use constant MANIFEST_PATH_PGREPLSLOT                                => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGREPLSLOT;
+    push @EXPORT, qw(MANIFEST_PATH_PGREPLSLOT);
+use constant MANIFEST_PATH_PGSTATTMP                                => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGSTATTMP;
+    push @EXPORT, qw(MANIFEST_PATH_PGSTATTMP);
 use constant MANIFEST_PATH_PGXLOG                                   => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGXLOG;
     push @EXPORT, qw(MANIFEST_PATH_PGXLOG);
 
 use constant MANIFEST_FILE_BACKUPLABEL                              => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_BACKUPLABEL;
     push @EXPORT, qw(MANIFEST_FILE_BACKUPLABEL);
+use constant MANIFEST_FILE_BACKUPLABELOLD                           => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_BACKUPLABELOLD;
+    push @EXPORT, qw(MANIFEST_FILE_BACKUPLABELOLD);
 use constant MANIFEST_FILE_PGCONTROL                                => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_PGCONTROL;
     push @EXPORT, qw(MANIFEST_FILE_PGCONTROL);
+use constant MANIFEST_FILE_POSTGRESQLAUTOCONFTMP                    => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_POSTGRESQLAUTOCONFTMP;
+    push @EXPORT, qw(MANIFEST_FILE_PGCONTROL);
+use constant MANIFEST_FILE_POSTMASTEROPTS                           => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_POSTMASTEROPTS;
+    push @EXPORT, qw(MANIFEST_FILE_POSTMASTEROPTS);
+use constant MANIFEST_FILE_POSTMASTERPID                            => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_POSTMASTERPID;
+    push @EXPORT, qw(MANIFEST_FILE_POSTMASTERPID);
+use constant MANIFEST_FILE_RECOVERYCONF                             => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_RECOVERYCONF;
+    push @EXPORT, qw(MANIFEST_FILE_RECOVERYCONF);
+use constant MANIFEST_FILE_RECOVERYDONE                             => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_RECOVERYDONE;
+    push @EXPORT, qw(MANIFEST_FILE_RECOVERYDONE);
 use constant MANIFEST_FILE_TABLESPACEMAP                            => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_TABLESPACEMAP;
     push @EXPORT, qw(MANIFEST_FILE_TABLESPACEMAP);
 
@@ -593,25 +622,31 @@ sub build
             $strManifestType = MANIFEST_VALUE_PATH;
         }
 
-        # !!! Notes for what to skip
-        # 1. pgsql_tmp dir under base and each tablespace (logic in fd.c/RemovePgTempFiles(()).  The pgsql_tmp dir is cleaned on
-        #    each tablespace during startup.  Normally it does not drop the dir but since the create temp function will recreate
-        #    the directory if it does not exist we can go ahead and do so.  The reason is that standbys might never create temp
-        #    so no reason to copy it, just let postgres recreate it if needed.  More generally just skip any file that begins with
-        #    pgsql_temp as is done in /backend/replication/basebackup.c.  AUDIT ALL SUPPORTED VERSIONS
-        # 2. skip postgresql.auto.conf.tmp for versions (I think >= 9.4?) where this feature is supported
-        # 3. pg_stat_tmp - this may be relocated to another dir but even then some files can be written in here.
-        # 4. pg_replslot - exclude all files but include the directory
-        # 5. pg_dynshmem - WORK ON THIS!!!
+        # Skip pg_xlog/* when doing an online backup.  WAL will be restored from the archive or stored in pg_xlog at the end of the
+        # backup if the archive-copy option is set.
+        next if ($strFile =~ ('^' . MANIFEST_PATH_PGXLOG . '.*\/') && $bOnline);
 
-        # Skip certain files during backup
-        if ($strFile =~ ('^' . MANIFEST_PATH_PGXLOG . '.*\/') && $bOnline ||  # pg_xlog/ - this will be reconstructed
-            $strLevel eq MANIFEST_TARGET_PGDATA &&
-            ($strName eq DB_FILE_BACKUPLABELOLD ||                  # backup_label.old - old backup labels are not useful
-             $strName eq DB_FILE_POSTMASTEROPTS ||                  # postmaster.opts - not useful for backup
-             $strName eq DB_FILE_POSTMASTERPID ||                   # postmaster.pid - to avoid confusing postgres after restore
-             $strName eq DB_FILE_RECOVERYCONF ||                    # recovery.conf - doesn't make sense to backup this file
-             $strName eq DB_FILE_RECOVERYDONE))                     # recovery.done - doesn't make sense to backup this file
+
+        # Skip all directories and files that start with pgsql_tmp.  These files are removed when the server is restarted.
+        next if $strName =~ ('(^|\/)' . DB_FILE_PREFIX_TMP);
+
+        # Skip temporary statistics in pg_stat_tmp even when stats_temp_directory is set because PGSS_TEXT_FILE is always created
+        # there.
+        next if $strFile =~ ('^' . MANIFEST_PATH_PGSTATTMP . '.*\/');
+
+        # Skip pg_replslot/* since these files cannot be reused
+        next if $strFile =~ ('^' . MANIFEST_PATH_PGREPLSLOT . '.*\/');
+
+        # Skip pg_dynshmem/* since these files cannot be reused
+        next if $strFile =~ ('^' . MANIFEST_PATH_PGDYNSHMEM . '.*\/');
+
+        # Skip ignored files
+        if ($strFile eq MANIFEST_FILE_POSTGRESQLAUTOCONFTMP ||      # postgresql.auto.conf.tmp - temp file for safe writes
+            $strFile eq MANIFEST_FILE_BACKUPLABELOLD ||             # backup_label.old - old backup labels are not useful
+            $strFile eq MANIFEST_FILE_POSTMASTEROPTS ||             # postmaster.opts - not useful for backup
+            $strFile eq MANIFEST_FILE_POSTMASTERPID ||              # postmaster.pid - to avoid confusing postgres after restore
+            $strFile eq MANIFEST_FILE_RECOVERYCONF ||               # recovery.conf - doesn't make sense to backup this file
+            $strFile eq MANIFEST_FILE_RECOVERYDONE)                 # recovery.done - doesn't make sense to backup this file
         {
             next;
         }
