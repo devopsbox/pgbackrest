@@ -2483,11 +2483,6 @@ sub optionSource
     my $strOption = shift;
 
     optionValid($strOption, true);
-    # if (!defined($oOption{$strOption}{source}))
-    # {
-    #     use Data::Dumper;
-    #     &log(ASSERT, "'source' is not defined for option'${strOption}'" . ': ' . Dumper($oOption{$strOption}));
-    # }
 
     return $oOption{$strOption}{source};
 }
