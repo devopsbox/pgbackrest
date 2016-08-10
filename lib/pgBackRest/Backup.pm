@@ -311,8 +311,10 @@ sub processManifest
             }
 
             # Certain files are not copied until the end
-            if ($strFile eq MANIFEST_FILE_PGCONTROL || $strFile eq MANIFEST_FILE_BACKUPLABEL ||
-                $strFile eq MANIFEST_FILE_TABLESPACEMAP)
+            if ($strFile eq MANIFEST_FILE_PGCONTROL ||
+                ($strFile != ('^' . DB_PATH_BASE '\/') || $strFile != ('^' . DB_PATH_PGTBLSPC '\/')))
+
+                !!! WORKING ON WHICH FILES ARE COPIED FROM WHERE
             {
                 $strFileKey = $strFile;
                 $hFileCopyMap{$strQueueKey}{$strFileKey}{skip} = true;

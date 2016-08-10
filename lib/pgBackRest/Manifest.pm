@@ -151,6 +151,8 @@ use constant MANIFEST_SUBKEY_USER                                   => 'user';
 ####################################################################################################################################
 # Database locations for important files/paths
 ####################################################################################################################################
+use constant DB_PATH_BASE                                           => 'base';
+    push @EXPORT, qw(DB_PATH_BASE);
 use constant DB_PATH_GLOBAL                                         => 'global';
     push @EXPORT, qw(DB_PATH_GLOBAL);
 use constant DB_PATH_PGDYNSHMEM                                     => 'pg_dynshmem';
