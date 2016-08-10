@@ -73,7 +73,7 @@ full backup - create pg_stat link, pg_clog dir (db-master host)
  DEBUG:     File->wait(): bWait = false, strPathType = db:absolute
  DEBUG:     Backup->process: create temp backup path [TEST_PATH]/db-master/repo/temp/db.tmp
  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = false, strMode = <0750>, strPath = [undef], strPathType = backup:tmp
- DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = false, oBackupManifest = [object], oFileDb = [object], strDbPath = [TEST_PATH]/db-master/db/base, strType = full
+ DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = false, oBackupManifest = [object], oFileMaster = [object], strDbMasterPath = [TEST_PATH]/db-master/db/base, strType = full
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base/1, strPathType = backup:tmp
@@ -325,7 +325,7 @@ DETAIL: clean backup temp path: [TEST_PATH]/db-master/repo/temp/db.tmp
  DEBUG:     Backup->fileNotInManifest=>: stryFile = (file.tmp.gz, pg_data/PG_VERSION.gz)
  DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/temp/db.tmp/pg_data/PG_VERSION.gz
  DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/temp/db.tmp/file.tmp.gz
- DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = false, oBackupManifest = [object], oFileDb = [object], strDbPath = [TEST_PATH]/db-master/db/base, strType = full
+ DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = false, oBackupManifest = [object], oFileMaster = [object], strDbMasterPath = [TEST_PATH]/db-master/db/base, strType = full
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base/1, strPathType = backup:tmp
@@ -880,7 +880,7 @@ incr backup - add tablespace 1 (db-master host)
  DEBUG:     File->wait(): bWait = false, strPathType = db:absolute
  DEBUG:     Backup->process: create temp backup path [TEST_PATH]/db-master/repo/temp/db.tmp
  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = false, strMode = <0750>, strPath = [undef], strPathType = backup:tmp
- DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = false, oBackupManifest = [object], oFileDb = [object], strDbPath = [TEST_PATH]/db-master/db/base, strType = incr
+ DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = false, oBackupManifest = [object], oFileMaster = [object], strDbMasterPath = [TEST_PATH]/db-master/db/base, strType = incr
  DEBUG:     Backup->processManifest: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
  DEBUG:     Backup->processManifest: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
  DEBUG:     Backup->processManifest: reference pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
@@ -1127,7 +1127,7 @@ DETAIL: clean backup temp path: [TEST_PATH]/db-master/repo/temp/db.tmp
  DEBUG:     File->manifestRecurse(): iDepth = 3, oManifestHashRef = [hash], strPathFileOp = pg_tblspc/1/[TS_PATH-1], strPathOp = [TEST_PATH]/db-master/repo/temp/db.tmp, strPathType = backup:tmp
  DEBUG:     File->manifestRecurse(): iDepth = 4, oManifestHashRef = [hash], strPathFileOp = pg_tblspc/1/[TS_PATH-1]/16384, strPathOp = [TEST_PATH]/db-master/repo/temp/db.tmp, strPathType = backup:tmp
  DEBUG:     Backup->fileNotInManifest=>: stryFile = ()
- DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = false, oBackupManifest = [object], oFileDb = [object], strDbPath = [TEST_PATH]/db-master/db/base, strType = incr
+ DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = false, oBackupManifest = [object], oFileMaster = [object], strDbMasterPath = [TEST_PATH]/db-master/db/base, strType = incr
  DEBUG:     Backup->processManifest: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
  DEBUG:     Backup->processManifest: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
  DEBUG:     Backup->processManifest: reference pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
