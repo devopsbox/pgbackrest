@@ -593,6 +593,17 @@ sub build
             $strManifestType = MANIFEST_VALUE_PATH;
         }
 
+        # !!! Notes for what to skip
+        # 1. pgsql_tmp dir under base and each tablespace (logic in fd.c/RemovePgTempFiles(()).  The pgsql_tmp dir is cleaned on
+        #    each tablespace during startup.  Normally it does not drop the dir but since the create temp function will recreate
+        #    the directory if it does not exist we can go ahead and do so.  The reason is that standbys might never create temp
+        #    so no reason to copy it, just let postgres recreate it if needed.  More generally just skip any file that begins with
+        #    pgsql_temp as is done in /backend/replication/basebackup.c.  AUDIT ALL SUPPORTED VERSIONS
+        # 2. skip postgresql.auto.conf.tmp for versions (I think >= 9.4?) where this feature is supported
+        # 3. pg_stat_tmp - this may be relocated to another dir but even then some files can be written in here.
+        # 4. pg_replslot - exclude all files but include the directory
+        # 5. pg_dynshmem - WORK ON THIS!!!
+
         # Skip certain files during backup
         if ($strFile =~ ('^' . MANIFEST_PATH_PGXLOG . '.*\/') && $bOnline ||  # pg_xlog/ - this will be reconstructed
             $strLevel eq MANIFEST_TARGET_PGDATA &&
