@@ -174,8 +174,8 @@ sub backupTestRun
                                             \$oLogTest)) {next}
 
                 # Create hosts, file object, and config
-                my ($oHostDbMaster, $oHostBackup, $oFile) = backupTestSetup(
-                    $bRemote, true, $oLogTest, {bCompress => $bCompress, bArchiveAsync => $bArchiveAsync});
+                my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = backupTestSetup(
+                    true, $oLogTest, {bHostBackup => $bRemote, bCompress => $bCompress, bArchiveAsync => $bArchiveAsync});
 
                 # Create the xlog path
                 my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
@@ -379,8 +379,8 @@ sub backupTestRun
                                             \$oLogTest)) {next}
 
                 # Create hosts, file object, and config
-                my ($oHostDbMaster, $oHostBackup, $oFile) = backupTestSetup(
-                    $bRemote, true, $oLogTest, {bCompress => $bCompress, bArchiveAsync => true});
+                my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = backupTestSetup(
+                    true, $oLogTest, {bHostBackup => $bRemote, bCompress => $bCompress, bArchiveAsync => true});
 
                 # Create the xlog path
                 my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
@@ -462,8 +462,8 @@ sub backupTestRun
                                             \$oLogTest)) {next}
 
                 # Create hosts, file object, and config
-                my ($oHostDbMaster, $oHostBackup, $oFile) = backupTestSetup(
-                    $bRemote, true, $oLogTest, {bCompress => $bCompress});
+                my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = backupTestSetup(
+                    true, $oLogTest, {bHostBackup => $bRemote, bCompress => $bCompress});
 
                 # Create the xlog path
                 my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
@@ -593,7 +593,7 @@ sub backupTestRun
                                     \$oLogTest))
         {
             # Create hosts, file object, and config
-            my ($oHostDbMaster, $oHostBackup, $oFile) = backupTestSetup(false, true, $oLogTest);
+            my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = backupTestSetup(true, $oLogTest);
 
             # Create the test object
             my $oExpireTest = new pgBackRestTest::Backup::Common::ExpireCommonTest($oHostBackup, $oFile, $oLogTest);
@@ -677,8 +677,8 @@ sub backupTestRun
                                         \$oLogTest)) {next}
 
             # Create hosts, file object, and config
-            my ($oHostDbMaster, $oHostBackup, $oFile) = backupTestSetup(
-                $bRemote, true, $oLogTest, {bCompress => $bCompress, bHardLink => $bHardLink});
+            my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = backupTestSetup(
+                true, $oLogTest, {bHostBackup => $bRemote, bCompress => $bCompress, bHardLink => $bHardLink});
 
             # Determine if this is a neutral test, i.e. we only want to do it once for local and once for remote.  Neutral means
             # that options such as compression and hardlinks are disabled
@@ -1580,6 +1580,7 @@ sub backupTestRun
     #-------------------------------------------------------------------------------------------------------------------------------
     if ($strTest eq 'all' || $strTest eq 'full')
     {
+        $strThisTest = 'full';
         $iRun = 0;
 
         if (!$bVmOut)
@@ -1587,22 +1588,41 @@ sub backupTestRun
             &log(INFO, "Test Full Backup\n");
         }
 
-        for (my $bRemote = false; $bRemote <= true; $bRemote++)
+        foreach my $bHostBackup (false, true)
         {
-        for (my $bArchiveAsync = false; $bArchiveAsync <= true; $bArchiveAsync++)
+        foreach my $bHostStandby (false, true)
         {
-        for (my $bCompress = false; $bCompress <= true; $bCompress++)
+        foreach my $strBackupDestination (
+            $bHostBackup ? (HOST_BACKUP) : $bHostStandby ? (HOST_DB_MASTER, HOST_DB_STANDBY) : (HOST_DB_MASTER))
+        {
+        foreach my $bArchiveAsync ($bHostStandby ? (false) : (false, true))
+        {
+        foreach my $bCompress ($bHostStandby ? (false) : (false, true))
         {
             # Increment the run, log, and decide whether this unit test should be run
-            if (!testRun(++$iRun, "rmt ${bRemote}, arc_async ${bArchiveAsync}, cmp ${bCompress}")) {next}
+            my $bLog = $iThreadMax == 1 && $oHostGroup->paramGet(HOST_PARAM_DB_VERSION) eq PG_VERSION_95;
+
+            next if (!testRun(
+                ++$iRun,
+                "bkp ${bHostBackup}, sby ${bHostStandby}, dst ${strBackupDestination}, asy ${bArchiveAsync}, cmp ${bCompress}",
+                $bLog ? $strModule : undef,
+                $bLog ? $strThisTest: undef,
+                \$oLogTest));
+
+            if ($bHostStandby && $oHostGroup->paramGet(HOST_PARAM_DB_VERSION) < PG_VERSION_HOT_STANDBY)
+            {
+                &log(INFO, 'skipped - this version of PostgreSQL does not support hot standby');
+                next;
+            }
 
             # Create hosts, file object, and config
-            my ($oHostDbMaster, $oHostBackup, $oFile) = backupTestSetup(
-                $bRemote, false, undef,
-                {bCompress => $bCompress, bArchiveAsync => $bArchiveAsync});
+            my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = backupTestSetup(
+                false, $oLogTest,
+                {bHostBackup => $bHostBackup, bStandby => $bHostStandby, strBackupDestination => $strBackupDestination,
+                 bCompress => $bCompress, bArchiveAsync => $bArchiveAsync});
 
             # Determine if extra tests are performed.  Extra tests should not be primary tests for compression or async archiving.
-            my $bTestExtra = !$bCompress && !$bArchiveAsync && $iThreadMax == 1;
+            my $bTestExtra = $iRun == 1;
 
             # For the 'fail on missing archive.info file' test, the archive.info file must not be found so set archive invalid.
             $oHostDbMaster->clusterCreate({bArchiveInvalid => $bTestExtra});
@@ -1658,7 +1678,7 @@ sub backupTestRun
                 $oHostDbMaster->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID});
 
                 # If running the remote tests then also need to run check locally
-                if ($bRemote)
+                if ($bHostBackup)
                 {
                     $oHostBackup->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID});
                 }
@@ -1679,7 +1699,7 @@ sub backupTestRun
                 $oHostDbMaster->check($strComment, {iTimeout => 5});
 
                 # If running the remote tests then also need to run check locally
-                if ($bRemote)
+                if ($bHostBackup)
                 {
                     $oHostBackup->check($strComment, {iTimeout => 5});
                 }
@@ -1695,7 +1715,7 @@ sub backupTestRun
                 $oHostDbMaster->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH});
 
                 # If running the remote tests then also need to run check locally
-                if ($bRemote)
+                if ($bHostBackup)
                 {
                     $oHostBackup->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH});
                 }
@@ -1710,7 +1730,7 @@ sub backupTestRun
                 $oHostDbMaster->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_TIMEOUT});
 
                 # If running the remote tests then also need to run check locally
-                if ($bRemote)
+                if ($bHostBackup)
                 {
                     $oHostBackup->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_TIMEOUT});
                 }
@@ -1720,7 +1740,7 @@ sub backupTestRun
 
                 # If local, then with a valid archive info, create the backup.info file by running a backup then munge the
                 # backup.info file.
-                if (!$bRemote)
+                if (!$bHostBackup)
                 {
                     # Check backup mismatch error
                     $strComment = 'fail on backup info mismatch';
@@ -1783,7 +1803,51 @@ sub backupTestRun
 
             $oHostDbMaster->sqlExecute("update test set message = '$strFullMessage'");
 
+            # Required to set hint bits to be sent to the standby to make the heap match on both sides
+            $oHostDbMaster->sqlSelectOneTest('select message from test', $strFullMessage);
+
             my $strFullBackup = $oHostBackup->backupEnd($strType, $oExecuteBackup);
+
+            # Setup replica
+            #-----------------------------------------------------------------------------------------------------------------------
+            if ($bHostStandby)
+            {
+                $bDelta = false;
+                $bForce = false;
+                $strType = RECOVERY_TYPE_DEFAULT;
+                $strTarget = undef;
+                $bTargetExclusive = undef;
+                $strTargetAction = undef;
+                $strTargetTimeline = undef;
+                $oRecoveryHashRef = undef;
+                $strComment = undef;
+                $iExpectedExitStatus = undef;
+
+                $strComment = 'restore backup on replica';
+
+                my %oRemapHash;
+                $oRemapHash{&MANIFEST_TARGET_PGDATA} = $oHostDbStandby->dbBasePath();
+
+                if ($oHostDbStandby->dbVersion() >= PG_VERSION_92)
+                {
+                    $oHostDbStandby->linkRemap(DB_PATH_PGXLOG, $oHostDbStandby->dbPath() . '/' . DB_PATH_PGXLOG);
+                }
+
+                $oHostDbStandby->restore(
+                    OPTION_DEFAULT_RESTORE_SET, undef, \%oRemapHash, $bDelta, $bForce, $strType, $strTarget, $bTargetExclusive,
+                    $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus,
+                    ' --recovery-option=standby_mode=on' .
+                    ' --recovery-option="primary_conninfo=host=' . HOST_DB_MASTER . ' port=' . HOST_DB_PORT . ' user=replicator"');
+
+                $oHostDbStandby->clusterStart({bHotStandby => true});
+
+                # Make sure streaming replication is on
+                $oHostDbMaster->sqlSelectOneTest(
+                    "select client_addr || '-' || state from pg_stat_replication", $oHostDbStandby->ipGet() . '/32-streaming');
+
+                # Check that the cluster was restored properly
+                $oHostDbStandby->sqlSelectOneTest('select message from test', $strFullMessage);
+            }
 
             # Execute stop and make sure the backup fails
             #-----------------------------------------------------------------------------------------------------------------------
@@ -1791,6 +1855,8 @@ sub backupTestRun
             # the logs will to be deleted to avoid causing issues further down the line.
             if ($bTestExtra)
             {
+                $strType = BACKUP_TYPE_INCR;
+
                 $oHostDbMaster->clusterRestart();
 
                 $oHostDbMaster->stop();
@@ -1826,11 +1892,20 @@ sub backupTestRun
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = BACKUP_TYPE_INCR;
 
+            # Create a tablespace directory
             filePathCreate($oHostDbMaster->tablespacePath(1), undef, undef, true);
+
+            # Also create it on the standby so replay won't fail
+            if (defined($oHostDbStandby))
+            {
+                filePathCreate($oHostDbStandby->tablespacePath(1), undef, undef, true);
+            }
+
             $oHostDbMaster->sqlExecute(
                 "create tablespace ts1 location '" . $oHostDbMaster->tablespacePath(1) . "'", {bAutoCommit => true});
             $oHostDbMaster->sqlExecute("alter table test set tablespace ts1", {bCheckPoint => true});
 
+            # Create a table in the tablespace
             $oHostDbMaster->sqlExecute("create table test_remove (id int)");
             $oHostDbMaster->sqlXlogRotate();
             $oHostDbMaster->sqlExecute("update test set message = '$strDefaultMessage'");
@@ -1977,7 +2052,7 @@ sub backupTestRun
 
             # Restore (restore type = immediate, inclusive)
             #-----------------------------------------------------------------------------------------------------------------------
-            if ($bTestExtra && $oHostDbMaster->dbVersion() >= PG_VERSION_94)
+            if (($bTestExtra || $bHostStandby) && $oHostDbMaster->dbVersion() >= PG_VERSION_94)
             {
                 $bDelta = false;
                 $bForce = true;
@@ -1999,7 +2074,8 @@ sub backupTestRun
                     $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus, undef);
 
                 $oHostDbMaster->clusterStart();
-                $oHostDbMaster->sqlSelectOneTest('select message from test', $strFullMessage);
+                $oHostDbMaster->sqlSelectOneTest(
+                    'select message from test', $strFullMessage);
             }
 
             # Restore (restore type = xid, inclusive)
@@ -2203,6 +2279,19 @@ sub backupTestRun
                     $strType, 'succeed on --no-' . OPTION_ONLINE . ' with --' . OPTION_FORCE,
                     {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
             }
+
+            # Stop clusters to catch any errors in the postgres log
+            #-----------------------------------------------------------------------------------------------------------------------
+            $oHostDbMaster->clusterStop({bImmediate => true});
+
+            if (defined($oHostDbStandby))
+            {
+                $oHostDbStandby->clusterStop({bImmediate => true});
+            }
+
+            testCleanup(\$oLogTest);
+        }
+        }
         }
         }
         }

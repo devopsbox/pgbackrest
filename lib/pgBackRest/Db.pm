@@ -66,6 +66,11 @@ use constant PG_VERSION_95                                          => '9.5';
 use constant PG_VERSION_96                                          => '9.6';
     push @EXPORT, qw(PG_VERSION_96);
 
+use constant PG_VERSION_HOT_STANDBY                                 => PG_VERSION_91;
+    push @EXPORT, qw(PG_VERSION_HOT_STANDBY);
+use constant PG_VERSION_BACKUP_STANDBY                              => PG_VERSION_92;
+    push @EXPORT, qw(PG_VERSION_BACKUP_STANDBY);
+
 ####################################################################################################################################
 # Map the control and catalog versions to PostgreSQL version.
 #
@@ -108,22 +113,24 @@ sub new
     bless $self, $class;
 
     # Assign function parameters, defaults, and log debug info
-    my
     (
-        $strOperation,
-        $strRemoteType,
+        my $strOperation,
+        $self->{iRemoteIdx},
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
-            {name => 'strRemoteType', default => DB},
+            {name => 'iRemoteIdx', required => false},
         );
 
-    $self->{oProtocol} = protocolGet($strRemoteType);
-
-    if ($strRemoteType ne NONE)
+    if (defined($self->{iRemoteIdx}))
     {
-        $self->{strDbPath} = optionGet(OPTION_DB_PATH);
+        $self->{strDbPath} = optionGet(optionIndex(OPTION_DB_PATH, $self->{iRemoteIdx}));
+        $self->{oProtocol} = protocolGet(DB, $self->{iRemoteIdx});
+    }
+    else
+    {
+        $self->{oProtocol} = protocolGet(NONE);
     }
 
     # Return from function and log return values if any
@@ -223,7 +230,7 @@ sub connect
             # Connect to the db
             my $strDbName = 'postgres';
             my $strDbUser = getpwuid($<);
-            my $strDbSocketPath = optionGet(OPTION_DB_SOCKET_PATH, false);
+            my $strDbSocketPath = optionGet(optionIndex(OPTION_DB_SOCKET_PATH, $self->{iRemoteIdx}), false);
 
             # Make sure the socket path is absolute
             if (defined($strDbSocketPath) && $strDbSocketPath !~ /^\//)
@@ -232,8 +239,9 @@ sub connect
                                     " path must be absolute", ERROR_OPTION_INVALID_VALUE);
             }
 
-            my $strDbUri = "dbi:Pg:dbname=${strDbName};port=" . optionGet(OPTION_DB_PORT) .
-                           (optionTest(OPTION_DB_SOCKET_PATH) ? ';host=' . optionGet(OPTION_DB_SOCKET_PATH) : '');
+            # Construct the URI
+            my $strDbUri = "dbi:Pg:dbname=${strDbName};port=" . optionGet(optionIndex(OPTION_DB_PORT, $self->{iRemoteIdx})) .
+                           (defined($strDbSocketPath) ? ";host=${strDbSocketPath}" : '');
 
             logDebugMisc
             (

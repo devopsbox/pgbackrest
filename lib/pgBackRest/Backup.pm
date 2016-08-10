@@ -21,6 +21,7 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Archive;
+use pgBackRest::ArchiveCommon;
 use pgBackRest::BackupCommon;
 use pgBackRest::BackupFile;
 use pgBackRest::BackupInfo;
@@ -374,7 +375,7 @@ sub processManifest
         &log(TEST, TEST_BACKUP_START);
 
         # Get the master protocol for keep-alive
-        my $oProtocol = protocolGet(DB);
+        my $oProtocol = protocolGet(DB, $self->{iMasterRemoteIdx});
 
         # Iterate all backup files
         foreach my $strTargetKey (sort(keys(%oFileCopyMap)))
@@ -425,6 +426,7 @@ sub processManifest
                 my %oParam;
 
                 $oParam{remote_type} = DB;
+                $oParam{remote_index} = $self->{iMasterRemoteIdx};
                 $oParam{compress} = $bCompress;
                 $oParam{queue} = \@oyBackupQueue;
                 $oParam{result_queue} = $oResultQueue;
@@ -592,22 +594,78 @@ sub process
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ARCHIVE_CHECK, undef,
                               !optionGet(OPTION_ONLINE) || optionGet(OPTION_BACKUP_ARCHIVE_CHECK));
 
-    # Create database object
-    my $oDb = new pgBackRest::Db();
+    # Initialize database objects
+    my $oDbMaster = undef;
+    $self->{iMasterRemoteIdx} = 1;
 
-    # Initialize the db file object
-    my $oFileDb = new pgBackRest::File
+    # Only iterate databases if online and more than one is defined.  It might be better to check the version of each database but
+    # this is simple and works.
+    if (optionGet(OPTION_ONLINE) && optionTest(optionIndex(OPTION_DB_PATH, 2)))
+    {
+        for (my $iRemoteIdx = 1; $iRemoteIdx <= 2; $iRemoteIdx++)
+        {
+            # Make sure a db is defined for this index
+            if (optionTest(optionIndex(OPTION_DB_PATH, $iRemoteIdx)) || optionTest(optionIndex(OPTION_DB_HOST, $iRemoteIdx)))
+            {
+                # Create the db object
+                my $oDb = new pgBackRest::Db($iRemoteIdx);
+                my $bAssigned = false;
+
+                # If able to connect then test if the database is a master or a standby.  It's OK if some databases cannot be
+                # reached as long as the databases required for the backup type are present.
+                if ($oDb->connect(true))
+                {
+                    my $bStandby = $oDb->executeSqlOne('select pg_is_in_recovery()');
+
+                    # If this is a master (for now standbys are ignored)
+                    if (!$bStandby)
+                    {
+                        # Error if more than one master is found
+                        if (defined($oDbMaster))
+                        {
+                            confess &log(ERROR, 'more than one master database found');
+                        }
+
+                        $oDbMaster = $oDb;
+                        $self->{iMasterRemoteIdx} = $iRemoteIdx;
+                        $bAssigned = true;
+                    }
+                }
+
+                # If the db was not used then destroy the protocol object underneath it
+                if (!$bAssigned)
+                {
+                    protocolDestroy(DB, $iRemoteIdx);
+                }
+            }
+        }
+
+        # A master database is always required
+        if (!defined($oDbMaster))
+        {
+            confess &log(ERROR, 'unable to find master database - cannot proceed');
+        }
+    }
+
+    # If master db is not already defined then set to default
+    if (!defined($oDbMaster))
+    {
+        $oDbMaster = new pgBackRest::Db($self->{iMasterRemoteIdx});
+    }
+
+    # Initialize the master file object
+    my $oFileMaster = new pgBackRest::File
     (
         optionGet(OPTION_STANZA),
         optionGet(OPTION_REPO_PATH),
-        protocolGet(DB)
+        protocolGet(DB, $self->{iMasterRemoteIdx})
     );
 
     # Determine the database paths
-    my $strDbPath = optionGet(OPTION_DB_PATH);
+    my $strDbMasterPath = optionGet(optionIndex(OPTION_DB_PATH, $self->{iMasterRemoteIdx}));
 
     # Database info
-    my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = $oDb->info();
+    my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = $oDbMaster->info();
 
     my $iDbHistoryId = $oBackupInfo->check($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
 
@@ -617,6 +675,14 @@ sub process
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef, $iCatalogVersion);
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID, undef, $ullDbSysId);
 
+    # Backup from standby can only be used on PostgreSQL >= 9.1
+    if (optionGet(OPTION_ONLINE) && optionGet(OPTION_BACKUP_STANDBY) && $strDbVersion < PG_VERSION_BACKUP_STANDBY)
+    {
+        confess &log(
+            ERROR,
+            'option \'' . OPTION_BACKUP_STANDBY . '\' not valid for PostgreSQL < ' . PG_VERSION_BACKUP_STANDBY, ERROR_CONFIG);
+    }
+
     # Start backup (unless --no-online is set)
     my $strArchiveStart;
     my $oTablespaceMap;
@@ -625,7 +691,7 @@ sub process
     # Don't start the backup but do check if PostgreSQL is running
     if (!optionGet(OPTION_ONLINE))
     {
-        if ($oFileDb->exists(PATH_DB_ABSOLUTE, $strDbPath . '/' . DB_FILE_POSTMASTERPID))
+        if ($oFileMaster->exists(PATH_DB_ABSOLUTE, $strDbMasterPath . '/' . DB_FILE_POSTMASTERPID))
         {
             if (optionGet(OPTION_FORCE))
             {
@@ -645,22 +711,22 @@ sub process
     {
         # Start the backup
         ($strArchiveStart) =
-            $oDb->backupStart(
+            $oDbMaster->backupStart(
                 BACKREST_NAME . ' backup started at ' . timestampFormat(undef, $lTimestampStart), optionGet(OPTION_START_FAST));
 
         # Record the archive start location
         $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LSN_START, undef, $strArchiveStart);
-        &log(INFO, "archive start: ${strArchiveStart}");
+        &log(INFO, "backup lsn start: ${strArchiveStart}");
 
         # Get tablespace map
-        $oTablespaceMap = $oDb->tablespaceMapGet();
+        $oTablespaceMap = $oDbMaster->tablespaceMapGet();
 
         # Get database map
-        $oDatabaseMap = $oDb->databaseMapGet();
+        $oDatabaseMap = $oDbMaster->databaseMapGet();
     }
 
     # Build the manifest
-    $oBackupManifest->build($oFileDb, $strDbPath, $oLastManifest, optionGet(OPTION_ONLINE),
+    $oBackupManifest->build($oFileMaster, $strDbMasterPath, $oLastManifest, optionGet(OPTION_ONLINE),
                             $oTablespaceMap, $oDatabaseMap);
     &log(TEST, TEST_MANIFEST_BUILD);
 
@@ -780,7 +846,9 @@ sub process
     $oBackupManifest->save();
 
     # Perform the backup
-    my $lBackupSizeTotal = $self->processManifest($oFileDb, $strDbPath, $strType, $bCompress, $bHardLink, $oBackupManifest);
+    my $lBackupSizeTotal =
+        $self->processManifest(
+            $oFileMaster, $strDbMasterPath, $strType, $bCompress, $bHardLink, $oBackupManifest);
     &log(INFO, "${strType} backup size = " . fileSizeFormat($lBackupSizeTotal));
 
     # Stop backup (unless --no-online is set)
@@ -788,10 +856,10 @@ sub process
 
     if (optionGet(OPTION_ONLINE))
     {
-        ($strArchiveStop, my $strTimestampDbStop, my $oFileHash) = $oDb->backupStop();
+        ($strArchiveStop, my $strTimestampDbStop, my $oFileHash) = $oDbMaster->backupStop();
 
         $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LSN_STOP, undef, $strArchiveStop);
-        &log(INFO, 'archive stop: ' . $strArchiveStop);
+        &log(INFO, 'backup lsn stop: ' . $strArchiveStop);
 
         # Write out files returned from stop backup
         foreach my $strFile (sort(keys(%{$oFileHash})))
@@ -837,8 +905,8 @@ sub process
         # After the backup has been stopped, need to make a copy of the archive logs to make the db consistent
         logDebugMisc($strOperation, "retrieve archive logs ${strArchiveStart}:${strArchiveStop}");
         my $oArchive = new pgBackRest::Archive();
-        my $strArchiveId = $oArchive->getCheck($oFileLocal);
-        my @stryArchive = $oArchive->range($strArchiveStart, $strArchiveStop, $strDbVersion < PG_VERSION_93);
+        my $strArchiveId = $oArchive->getArchiveId($oFileLocal);
+        my @stryArchive = lsnFileRange($strArchiveStart, $strArchiveStop, $strDbVersion);
 
         foreach my $strArchive (@stryArchive)
         {

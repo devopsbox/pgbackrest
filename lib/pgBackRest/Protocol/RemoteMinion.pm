@@ -101,7 +101,7 @@ sub process
     my $oArchive = new pgBackRest::Archive();
     my $oInfo = new pgBackRest::Info();
     my $oJSON = JSON::PP->new();
-    my $oDb = new pgBackRest::Db(NONE);
+    my $oDb = new pgBackRest::Db();
 
     # Command string
     my $strCommand = OP_NOOP;

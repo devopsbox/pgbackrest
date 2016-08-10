@@ -87,7 +87,7 @@ sub threadGroupThread
         {
             # Get the protocol object
             my $oProtocol = protocolGet(
-                $$oCommand{param}{remote_type}, {bCache => false, iProcessIdx => $iThreadIdx + 1});
+                $$oCommand{param}{remote_type}, $$oCommand{param}{remote_index}, {bCache => false, iProcessIdx => $iThreadIdx + 1});
 
             # Create a file object
             $oFile = new pgBackRest::File

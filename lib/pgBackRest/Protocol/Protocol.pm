@@ -78,12 +78,14 @@ sub protocolGet
     (
         $strOperation,
         $strRemoteType,
+        $iRemoteIdx,
         $oParam,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '::protocolGet', \@_,
             {name => 'strRemoteType'},
+            {name => 'iRemoteIdx', default => 1},
             {name => 'oParam', required => false},
         );
 
@@ -91,7 +93,7 @@ sub protocolGet
     my $oProtocol;
 
     # If no remote requested or if the requested remote type is local then return a local protocol object
-    my $strRemoteHost = $strRemoteType eq NONE ? undef : "${strRemoteType}-host";
+    my $strRemoteHost = $strRemoteType eq NONE ? undef : optionIndex("${strRemoteType}-host", $iRemoteIdx);
 
     if ($strRemoteType eq NONE || !optionTest($strRemoteHost))
     {
@@ -112,11 +114,11 @@ sub protocolGet
 
         # Set protocol to cached value
         $oProtocol =
-            $bCache && defined($$hProtocol{$strRemoteType}) ? $$hProtocol{$strRemoteType} : undef;
+            $bCache && defined($$hProtocol{$strRemoteType}{$iRemoteIdx}) ? $$hProtocol{$strRemoteType}{$iRemoteIdx} : undef;
 
-        if ($bCache && $$hProtocol{$strRemoteType})
+        if ($bCache && $$hProtocol{$strRemoteType}{$iRemoteIdx})
         {
-            $oProtocol = $$hProtocol{$strRemoteType};
+            $oProtocol = $$hProtocol{$strRemoteType}{$iRemoteIdx};
             logDebugMisc($strOperation, 'found cached protocol');
         }
 
@@ -134,19 +136,19 @@ sub protocolGet
 
             if ($strRemoteType eq DB)
             {
-                $strOptionCmd = OPTION_DB_CMD;
-                $strOptionConfig = OPTION_DB_CONFIG;
-                $strOptionHost = OPTION_DB_HOST;
-                $strOptionUser = OPTION_DB_USER;
+                $strOptionCmd = optionIndex(OPTION_DB_CMD, $iRemoteIdx);
+                $strOptionConfig = optionIndex(OPTION_DB_CONFIG, $iRemoteIdx);
+                $strOptionHost = optionIndex(OPTION_DB_HOST, $iRemoteIdx);
+                $strOptionUser = optionIndex(OPTION_DB_USER, $iRemoteIdx);
 
             }
 
             # Db socket is not valid in all contexts (restore, for instance)
-            if (optionValid(OPTION_DB_SOCKET_PATH))
+            if (optionValid(optionIndex(OPTION_DB_SOCKET_PATH, $iRemoteIdx)))
             {
                 $strOptionDbSocketPath =
-                    optionSource(OPTION_DB_SOCKET_PATH) eq SOURCE_DEFAULT ?
-                        undef : optionGet(OPTION_DB_SOCKET_PATH);
+                    optionSource(optionIndex(OPTION_DB_SOCKET_PATH, $iRemoteIdx)) eq SOURCE_DEFAULT ?
+                        undef : optionGet(optionIndex(OPTION_DB_SOCKET_PATH, $iRemoteIdx));
             }
 
             $oProtocol = new pgBackRest::Protocol::RemoteMaster
@@ -175,7 +177,7 @@ sub protocolGet
             # Cache the protocol
             if ($bCache)
             {
-                $$hProtocol{$strRemoteType} = $oProtocol;
+                $$hProtocol{$strRemoteType}{$iRemoteIdx} = $oProtocol;
             }
         }
     }
@@ -201,36 +203,44 @@ sub protocolDestroy
     my
     (
         $strOperation,
-        $strRemoteType
+        $strRemoteType,
+        $iRemoteIdx,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '::protocolDestroy', \@_,
-            {name => 'strRemoteType', required => false}
+            {name => 'strRemoteType', required => false},
+            {name => 'iRemoteIdx', required => false},
         );
 
     my $iExitStatus = 0;
 
     if (defined($strRemoteType))
     {
-        if (defined($$hProtocol{$strRemoteType}))
+        $iRemoteIdx = defined($iRemoteIdx) ? $iRemoteIdx : 1;
+
+        if (defined($$hProtocol{$strRemoteType}{$iRemoteIdx}))
         {
-            $iExitStatus = ($$hProtocol{$strRemoteType})->close();
-            delete($$hProtocol{$strRemoteType});
+            $iExitStatus = ($$hProtocol{$strRemoteType}{$iRemoteIdx})->close();
+            delete($$hProtocol{$strRemoteType}{$iRemoteIdx});
         }
     }
     else
     {
         foreach my $strRemoteType (sort(keys(%{$hProtocol})))
         {
-            if (defined($$hProtocol{$strRemoteType}))
+            foreach my $iRemoteIdx (sort(keys(%{$$hProtocol{$strRemoteType}})))
             {
-                logDebugMisc(
-                    $strOperation, 'found cached protocol',
-                    {name => 'strRemoteType', value => $strRemoteType});
+                if (defined($$hProtocol{$strRemoteType}{$iRemoteIdx}))
+                {
+                    logDebugMisc(
+                        $strOperation, 'found cached protocol',
+                        {name => 'strRemoteType', value => $strRemoteType},
+                        {name => 'iRemoteIdx', value => $iRemoteIdx});
 
-                $iExitStatus = ($$hProtocol{$strRemoteType})->close();
-                delete($$hProtocol{$strRemoteType});
+                    $iExitStatus = ($$hProtocol{$strRemoteType}{$iRemoteIdx})->close();
+                    delete($$hProtocol{$strRemoteType}{$iRemoteIdx});
+                }
             }
         }
     }

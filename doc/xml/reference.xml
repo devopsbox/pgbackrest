@@ -468,8 +468,8 @@
             <config-section id="stanza" name="Stanza">
                 <text>A stanza defines the backup configuration for a specific <postgres/> database cluster.  The stanza section must define the database cluster path and host/user if the database cluster is remote.  Also, any global configuration sections can be overridden to define stanza-specific settings.</text>
 
-                <!-- CONFIG - RETENTION SECTION - DB-HOST KEY -->
                 <config-key-list>
+                    <!-- CONFIG - STANZA SECTION - DB-HOST KEY -->
                     <config-key id="db-host" name="Database Host">
                         <summary>Cluster host for operating remotely via SSH.</summary>
 
@@ -478,7 +478,7 @@
                         <example>db.domain.com</example>
                     </config-key>
 
-                    <!-- CONFIG - RETENTION SECTION - DB-USER KEY -->
+                    <!-- CONFIG - STANZA SECTION - DB-USER KEY -->
                     <config-key id="db-user" name="Database User">
                         <summary>Cluster host logon user when <setting>db-host</setting> is set.</summary>
 
@@ -487,7 +487,7 @@
                         <example>db_owner</example>
                     </config-key>
 
-                    <!-- CONFIG - RETENTION SECTION - DB-PATH KEY -->
+                    <!-- CONFIG - STANZA SECTION - DB-PATH KEY -->
                     <config-key id="db-path" name="Database Path">
                         <summary>Cluster data directory.</summary>
 
@@ -498,7 +498,7 @@
                         <example>/data/db</example>
                     </config-key>
 
-                    <!-- CONFIG - RETENTION SECTION - DB-PORT KEY -->
+                    <!-- CONFIG - STANZA SECTION - DB-PORT KEY -->
                     <config-key id="db-port" name="Database Port">
                         <summary>Cluster port.</summary>
 
@@ -507,7 +507,7 @@
                         <example>6543</example>
                     </config-key>
 
-                    <!-- CONFIG - RETENTION SECTION - DB-SOCKET-PATH KEY -->
+                    <!-- CONFIG - STANZA SECTION - DB-SOCKET-PATH KEY -->
                     <config-key id="db-socket-path" name="Database Socket Path">
                         <summary>Cluster unix socket path.</summary>
 
