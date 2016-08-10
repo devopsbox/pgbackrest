@@ -765,6 +765,10 @@ sub backupTestRun
             # Create tablespace path
             $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGTBLSPC);
 
+            # Create temp dir and file that will be ignored
+            $oHostDbMaster->dbPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/pgsql_tmp');
+            $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/pgsql_tmp/pgsql_tmp.1', 'IGNORE');
+
             # Backup Info (with no stanzas)
             #-----------------------------------------------------------------------------------------------------------------------
             $oHostDbMaster->info('no stanzas exist');
@@ -1227,6 +1231,10 @@ sub backupTestRun
                                                   'd85de07d6421d90aa9191c11c889bfde43680f0f', $lTime);
             $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'badchecksum.txt', 'BADCHECKSUM',
                                                   'f927212cd08d11a42a666b2f04235398e9ceeb51', $lTime);
+
+            # Create temp dir and file that will be ignored
+            $oHostDbMaster->dbPathCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/1', 'pgsql_tmp');
+            $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/1', 'pgsql_tmp/pgsql_tmp.1', 'IGNORE');
 
             my $strBackup = $oHostBackup->backup(
                 $strType, 'add tablespace 1', {oExpectedManifest => \%oManifest, strOptionalParam => '--test'});

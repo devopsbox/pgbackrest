@@ -177,6 +177,9 @@ use constant DB_FILE_RECOVERYDONE                                   => 'recovery
 use constant DB_FILE_TABLESPACEMAP                                  => 'tablespace_map';
     push @EXPORT, qw(DB_FILE_TABLESPACEMAP);
 
+use constant DB_FILE_PREFIX_TMP                                     => 'pgsql_tmp';
+    push @EXPORT, qw(DB_FILE_PREFIX_TMP);
+
 ####################################################################################################################################
 # Manifest locations for important files/paths
 ####################################################################################################################################
@@ -605,7 +608,8 @@ sub build
         # 5. pg_dynshmem - WORK ON THIS!!!
 
         # Skip certain files during backup
-        if ($strFile =~ ('^' . MANIFEST_PATH_PGXLOG . '.*\/') && $bOnline ||  # pg_xlog/ - this will be reconstructed
+        if ($strFile =~ ('^' . MANIFEST_PATH_PGXLOG . '.*\/') && $bOnline ||  # pg_xlog/ - this will be reconstructed if online
+            $strName =~ ('(^|\/)' . DB_FILE_PREFIX_TMP) ||          # temp dirs/files - removed on server start anyway
             $strLevel eq MANIFEST_TARGET_PGDATA &&
             ($strName eq DB_FILE_BACKUPLABELOLD ||                  # backup_label.old - old backup labels are not useful
              $strName eq DB_FILE_POSTMASTEROPTS ||                  # postmaster.opts - not useful for backup
