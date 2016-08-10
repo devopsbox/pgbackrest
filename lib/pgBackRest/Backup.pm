@@ -225,8 +225,8 @@ sub processManifest
     my
     (
         $strOperation,
-        $oFileDb,
-        $strDbPath,
+        $oFileMaster,
+        $strDbMasterPath,
         $strType,
         $bCompress,
         $bHardLink,
@@ -235,8 +235,8 @@ sub processManifest
         logDebugParam
     (
         __PACKAGE__ . '->processManifest', \@_,
-        {name => 'oFileDb'},
-        {name => 'strDbPath'},
+        {name => 'oFileMaster'},
+        {name => 'strDbMasterPath'},
         {name => 'strType'},
         {name => 'bCompress'},
         {name => 'bHardLink'},
@@ -255,7 +255,7 @@ sub processManifest
         {
             if ($strPath ne '.')
             {
-                $oFileDb->pathCreate(PATH_BACKUP_TMP, $strPath);
+                $oFileMaster->pathCreate(PATH_BACKUP_TMP, $strPath);
             }
         }
     }
@@ -277,7 +277,7 @@ sub processManifest
             {
                 logDebugMisc($strOperation, "hardlink ${strFile} to ${strReference}");
 
-                $oFileDb->linkCreate(
+                $oFileMaster->linkCreate(
                     PATH_BACKUP_CLUSTER, "${strReference}/${strFile}", PATH_BACKUP_TMP, "${strFile}", true, false, true);
             }
             else
@@ -322,7 +322,7 @@ sub processManifest
                 $lSizeTotal += $lFileSize;
             }
 
-            $hFileCopyMap{$strQueueKey}{$strFileKey}{db_file} = $oBackupManifest->dbPathGet($strDbPath, $strFile);
+            $hFileCopyMap{$strQueueKey}{$strFileKey}{db_file} = $oBackupManifest->dbPathGet($strDbMasterPath, $strFile);
             $hFileCopyMap{$strQueueKey}{$strFileKey}{repo_file} = $strFile;
             $hFileCopyMap{$strQueueKey}{$strFileKey}{size} = $lFileSize;
             $hFileCopyMap{$strQueueKey}{$strFileKey}{modification_time} =
@@ -375,7 +375,7 @@ sub processManifest
         &log(TEST, TEST_BACKUP_START);
 
         # Get the master protocol for keep-alive
-        my $oProtocol = protocolGet(DB, $self->{iMasterRemoteIdx});
+        my $oProtocolMaster = protocolGet(DB, $self->{iMasterRemoteIdx});
 
         # Iterate all backup files
         foreach my $strTargetKey (sort(keys(%hFileCopyMap)))
@@ -400,7 +400,7 @@ sub processManifest
                 {
                     # Backup the file
                     ($bCopied, $lSizeCurrent, $lCopySize, $lRepoSize, $strCopyChecksum) =
-                        backupFile($oFileDb, $$hFileCopy{db_file}, $$hFileCopy{repo_file}, $bCompress, $$hFileCopy{checksum},
+                        backupFile($oFileMaster, $$hFileCopy{db_file}, $$hFileCopy{repo_file}, $bCompress, $$hFileCopy{checksum},
                                    $$hFileCopy{modification_time}, $$hFileCopy{size}, $lSizeTotal, $lSizeCurrent);
 
                     $lManifestSaveCurrent = backupManifestUpdate($oBackupManifest, $$hFileCopy{repo_file}, $bCopied, $lCopySize,
@@ -409,7 +409,7 @@ sub processManifest
 
                     # A keep-alive is required here because if there are a large number of resumed files that need to be checksummed
                     # then the remote might timeout while waiting for a command.
-                    $oProtocol->keepAlive();
+                    $oProtocolMaster->keepAlive();
                 }
             }
         }
@@ -432,13 +432,13 @@ sub processManifest
                 $oParam{result_queue} = $oResultQueue;
 
                 # Keep the protocol layer from timing out
-                $oProtocol->keepAlive();
+                $oProtocolMaster->keepAlive();
 
                 threadGroupRun($iThreadIdx, 'backup', \%oParam);
             }
 
             # Keep the protocol layer from timing out
-            $oProtocol->keepAlive();
+            $oProtocolMaster->keepAlive();
 
             # Start backup test point
             &log(TEST, TEST_BACKUP_START);
@@ -463,14 +463,14 @@ sub processManifest
 
                     # A keep-alive is required inside the loop because a flood of thread messages could prevent the keep-alive
                     # outside the loop from running in a timely fashion.
-                    $oProtocol->keepAlive();
+                    $oProtocolMaster->keepAlive();
                     $bKeepAlive = true;
                 }
 
                 # This keep-alive only runs if the keep-alive in the loop did not run
                 if (!$bKeepAlive)
                 {
-                    $oProtocol->keepAlive();
+                    $oProtocolMaster->keepAlive();
                 }
             }
             while (!$bDone);
@@ -483,7 +483,7 @@ sub processManifest
     if (defined($hFileCopy))
     {
         my ($bCopied, $lSizeCurrent, $lCopySize, $lRepoSize, $strCopyChecksum) =
-            backupFile($oFileDb, $$hFileCopy{db_file}, $$hFileCopy{repo_file}, $bCompress, $$hFileCopy{checksum},
+            backupFile($oFileMaster, $$hFileCopy{db_file}, $$hFileCopy{repo_file}, $bCompress, $$hFileCopy{checksum},
                        $$hFileCopy{modification_time}, $$hFileCopy{size}, undef, undef, false);
 
         backupManifestUpdate($oBackupManifest, $$hFileCopy{repo_file}, $bCopied, $lCopySize, $lRepoSize, $strCopyChecksum);
