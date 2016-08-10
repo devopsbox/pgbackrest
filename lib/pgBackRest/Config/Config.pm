@@ -20,18 +20,7 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Protocol::Common;
-use pgBackRest::Protocol::RemoteMaster;
 use pgBackRest::Version;
-
-####################################################################################################################################
-# DB/BACKUP Constants
-####################################################################################################################################
-use constant DB                                                     => 'db';
-    push @EXPORT, qw(DB);
-use constant BACKUP                                                 => 'backup';
-    push @EXPORT, qw(BACKUP);
-use constant NONE                                                   => 'none';
-    push @EXPORT, qw(NONE);
 
 ####################################################################################################################################
 # Command constants - basic commands that are allowed in backrest
