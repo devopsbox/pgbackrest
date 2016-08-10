@@ -766,8 +766,12 @@ sub backupTestRun
             $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGTBLSPC);
 
             # Create temp dir and file that will be ignored
-            $oHostDbMaster->dbPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/pgsql_tmp');
-            $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/pgsql_tmp/pgsql_tmp.1', 'IGNORE');
+            $oHostDbMaster->dbPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/' . DB_FILE_PREFIX_TMP);
+            $oHostDbMaster->dbFileCreate(
+                \%oManifest, MANIFEST_TARGET_PGDATA, 'base/' . DB_FILE_PREFIX_TMP . '/' . DB_FILE_PREFIX_TMP . '.1', 'IGNORE');
+
+            # postgresql.auto.conf.tmp should also be skipped
+            $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_POSTGRESQLAUTOCONFTMP, 'IGNORE');
 
             # Backup Info (with no stanzas)
             #-----------------------------------------------------------------------------------------------------------------------

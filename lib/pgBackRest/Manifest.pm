@@ -166,6 +166,8 @@ use constant DB_FILE_PGCONTROL                                      => DB_PATH_G
     push @EXPORT, qw(DB_FILE_PGCONTROL);
 use constant DB_FILE_PGVERSION                                      => 'PG_VERSION';
     push @EXPORT, qw(DB_FILE_PGVERSION);
+use constant DB_FILE_POSTGRESQLAUTOCONFTMP                          => 'postgresql.auto.conf.tmp';
+    push @EXPORT, qw(DB_FILE_POSTGRESQLAUTOCONFTMP);
 use constant DB_FILE_POSTMASTEROPTS                                 => 'postmaster.opts';
     push @EXPORT, qw(DB_FILE_POSTMASTEROPTS);
 use constant DB_FILE_POSTMASTERPID                                  => 'postmaster.pid';
@@ -189,6 +191,8 @@ use constant MANIFEST_PATH_PGXLOG                                   => MANIFEST_
 use constant MANIFEST_FILE_BACKUPLABEL                              => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_BACKUPLABEL;
     push @EXPORT, qw(MANIFEST_FILE_BACKUPLABEL);
 use constant MANIFEST_FILE_PGCONTROL                                => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_PGCONTROL;
+    push @EXPORT, qw(MANIFEST_FILE_PGCONTROL);
+use constant MANIFEST_FILE_POSTGRESQLAUTOCONFTMP                    => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_POSTGRESQLAUTOCONFTMP;
     push @EXPORT, qw(MANIFEST_FILE_PGCONTROL);
 use constant MANIFEST_FILE_TABLESPACEMAP                            => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_TABLESPACEMAP;
     push @EXPORT, qw(MANIFEST_FILE_TABLESPACEMAP);
@@ -597,11 +601,6 @@ sub build
         }
 
         # !!! Notes for what to skip
-        # 1. pgsql_tmp dir under base and each tablespace (logic in fd.c/RemovePgTempFiles(()).  The pgsql_tmp dir is cleaned on
-        #    each tablespace during startup.  Normally it does not drop the dir but since the create temp function will recreate
-        #    the directory if it does not exist we can go ahead and do so.  The reason is that standbys might never create temp
-        #    so no reason to copy it, just let postgres recreate it if needed.  More generally just skip any file that begins with
-        #    pgsql_temp as is done in /backend/replication/basebackup.c.  AUDIT ALL SUPPORTED VERSIONS
         # 2. skip postgresql.auto.conf.tmp for versions (I think >= 9.4?) where this feature is supported
         # 3. pg_stat_tmp - this may be relocated to another dir but even then some files can be written in here.
         # 4. pg_replslot - exclude all files but include the directory
@@ -610,6 +609,7 @@ sub build
         # Skip certain files during backup
         if ($strFile =~ ('^' . MANIFEST_PATH_PGXLOG . '.*\/') && $bOnline ||  # pg_xlog/ - this will be reconstructed if online
             $strName =~ ('(^|\/)' . DB_FILE_PREFIX_TMP) ||          # temp dirs/files - removed on server start anyway
+            $strFile eq MANIFEST_FILE_POSTGRESQLAUTOCONFTMP ||      # postgresql.auto.conf.tmp - temp file for safe write
             $strLevel eq MANIFEST_TARGET_PGDATA &&
             ($strName eq DB_FILE_BACKUPLABELOLD ||                  # backup_label.old - old backup labels are not useful
              $strName eq DB_FILE_POSTMASTEROPTS ||                  # postmaster.opts - not useful for backup

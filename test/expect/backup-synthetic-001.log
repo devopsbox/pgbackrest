@@ -52,6 +52,7 @@ full backup - create pg_stat link, pg_clog dir (db-master host)
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/1, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/16384, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/32768, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
+ DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/pgsql_tmp, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = global, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_clog, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_tblspc, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
@@ -284,6 +285,7 @@ full backup - abort backup - local (db-master host)
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/1, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/16384, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/32768, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
+ DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/pgsql_tmp, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = global, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_clog, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_tblspc, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
@@ -403,6 +405,7 @@ full backup - resume (db-master host)
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/1, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/16384, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/32768, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
+ DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/pgsql_tmp, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = global, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_clog, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_tblspc, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
@@ -654,6 +657,7 @@ DETAIL: check [TEST_PATH]/db-master/db/base exists
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/1, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/16384, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/32768, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
+ DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/pgsql_tmp, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = deleteme, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = global, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_tblspc, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
@@ -686,13 +690,17 @@ DETAIL: check [TEST_PATH]/db-master/db/pg_config exists
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/1, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/16384, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/32768, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
+ DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/pgsql_tmp, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = deleteme, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = global, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_tblspc, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
 DETAIL: remove file [TEST_PATH]/db-master/db/base/recovery.done
 DETAIL: preserve file [TEST_PATH]/db-master/db/base/recovery.conf
+DETAIL: remove file [TEST_PATH]/db-master/db/base/postgresql.auto.conf.tmp
 DETAIL: remove file [TEST_PATH]/db-master/db/base/deleteme/deleteme.txt
 DETAIL: remove path [TEST_PATH]/db-master/db/base/deleteme
+DETAIL: remove file [TEST_PATH]/db-master/db/base/base/pgsql_tmp/pgsql_tmp.1
+DETAIL: remove path [TEST_PATH]/db-master/db/base/base/pgsql_tmp
 DETAIL: set ownership vagrant:postgres on [TEST_PATH]/db-master/db/base/base/16384/PG_VERSION
  DEBUG:     File->owner(): strFile = [TEST_PATH]/db-master/db/base/base/16384/PG_VERSION, strGroup = [GROUP-1], strPathType = db:absolute, strUser = [USER-1]
 DETAIL: set ownership vagrant:postgres on [TEST_PATH]/db-master/db/base/base/1/PG_VERSION
@@ -700,7 +708,7 @@ DETAIL: set ownership vagrant:postgres on [TEST_PATH]/db-master/db/base/base/1/P
 DETAIL: set mode 0660 on [TEST_PATH]/db-master/db/base/base/1/PG_VERSION
 DETAIL: set mode 0700 on [TEST_PATH]/db-master/db/base/base
 DETAIL: remove file [TEST_PATH]/db-master/db/base/backup_label.old
-  INFO: cleanup removed 3 files, 1 path
+  INFO: cleanup removed 5 files, 2 paths
  DEBUG:     Restore->build(): oManifest = [object]
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/pg_stat, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = true
@@ -1109,6 +1117,7 @@ incr backup - add tablespace 1 (db-master host)
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/db/tablespace/ts1, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = [TS_PATH-1], strPathOp = [TEST_PATH]/db-master/db/tablespace/ts1, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = [TS_PATH-1]/16384, strPathOp = [TEST_PATH]/db-master/db/tablespace/ts1, strPathType = db:absolute
+ DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = [TS_PATH-1]/pgsql_tmp, strPathOp = [TEST_PATH]/db-master/db/tablespace/ts1, strPathType = db:absolute
  DEBUG:     File->wait(): bWait = false, strPathType = db:absolute
  DEBUG:     Backup->process: create temp backup path [TEST_PATH]/db-master/repo/temp/db.tmp
  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = false, strMode = <0750>, strPath = [undef], strPathType = backup:tmp
@@ -1329,6 +1338,7 @@ incr backup - resume and add tablespace 2 (db-master host)
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/db/tablespace/ts1, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = [TS_PATH-1], strPathOp = [TEST_PATH]/db-master/db/tablespace/ts1, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = [TS_PATH-1]/16384, strPathOp = [TEST_PATH]/db-master/db/tablespace/ts1, strPathType = db:absolute
+ DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = [TS_PATH-1]/pgsql_tmp, strPathOp = [TEST_PATH]/db-master/db/tablespace/ts1, strPathType = db:absolute
  DEBUG:     Manifest->build(): bOnline = false, bTablespace = true, oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strFilter = [TS_PATH-1], strLevel = pg_tblspc/2, strParentPath = [TEST_PATH]/db-master/db/base/pg_tblspc/pg_tblspc, strPath = [TEST_PATH]/db-master/db/tablespace/ts2
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/db/tablespace/ts2, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/db/tablespace/ts2, strPathType = db:absolute
