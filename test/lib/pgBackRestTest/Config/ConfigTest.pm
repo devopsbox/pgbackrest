@@ -549,13 +549,13 @@ sub configTestRun
             }
         }
 
-        if (testRun(++$iRun, CMD_BACKUP . ' default value ' . OPTION_COMMAND_REMOTE))
+        if (testRun(++$iRun, CMD_BACKUP . ' default value ' . OPTION_BACKUP_CMD))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
 
             configLoadExpect($oOption, CMD_BACKUP);
-            optionTestExpect(OPTION_COMMAND_REMOTE, abs_path($0));
+            optionTestExpect(OPTION_BACKUP_CMD, abs_path($0));
         }
 
         if (testRun(++$iRun, CMD_BACKUP . ' missing option ' . OPTION_DB_PATH))

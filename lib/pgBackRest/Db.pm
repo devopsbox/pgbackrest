@@ -23,6 +23,8 @@ use pgBackRest::Config::Config;
 use pgBackRest::File;
 use pgBackRest::Manifest;
 use pgBackRest::Version;
+use pgBackRest::Protocol::Common;
+use pgBackRest::Protocol::Protocol;
 
 ####################################################################################################################################
 # Remote operation constants
@@ -106,7 +108,23 @@ sub new
     bless $self, $class;
 
     # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(__PACKAGE__ . '->new');
+    my
+    (
+        $strOperation,
+        $strRemoteType,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->new', \@_,
+            {name => 'strRemoteType', default => DB},
+        );
+
+    $self->{oProtocol} = protocolGet($strRemoteType);
+
+    if ($strRemoteType ne NONE)
+    {
+        $self->{strDbPath} = optionGet(OPTION_DB_PATH);
+    }
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -182,7 +200,7 @@ sub connect
     my $bResult = true;
 
     # Run remotely
-    if (optionRemoteTypeTest(DB))
+    if ($self->{oProtocol}->isRemote())
     {
         # Build param hash
         my %oParamHash;
@@ -190,7 +208,7 @@ sub connect
         $oParamHash{'warn-on-error'} = $bWarnOnError;
 
         # Execute the command
-        $bResult = protocolGet()->cmdExecute(OP_DB_CONNECT, \%oParamHash, false, $bWarnOnError);
+        $bResult = $self->{oProtocol}->cmdExecute(OP_DB_CONNECT, \%oParamHash, false, $bWarnOnError);
 
         if (!defined($bResult))
         {
@@ -280,7 +298,7 @@ sub executeSql
     my $strResult;
 
     # Run remotely
-    if (optionRemoteTypeTest(DB))
+    if ($self->{oProtocol}->isRemote())
     {
         # Build param hash
         my %oParamHash;
@@ -290,7 +308,7 @@ sub executeSql
         $oParamHash{'result'} = $bResult;
 
         # Execute the command
-        $strResult = protocolGet()->cmdExecute(OP_DB_EXECUTE_SQL, \%oParamHash, $bResult);
+        $strResult = $self->{oProtocol}->cmdExecute(OP_DB_EXECUTE_SQL, \%oParamHash, $bResult);
     }
     # Else run locally
     else
@@ -499,20 +517,26 @@ sub info
     my
     (
         $strOperation,
-        $oFile,
         $strDbPath
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->info', \@_,
-            {name => 'oFile'},
-            {name => 'strDbPath'}
+            {name => 'strDbPath', default => $self->{strDbPath}}
         );
 
     # Get info if it is not cached
     #-------------------------------------------------------------------------------------------------------------------------------
     if (!defined($self->{info}{$strDbPath}))
     {
+        # Initialize file object
+        my $oFile = new pgBackRest::File
+        (
+            optionGet(OPTION_STANZA),
+            optionGet(OPTION_REPO_PATH),
+            $self->{oProtocol}
+        );
+
         # Get info from remote
         #---------------------------------------------------------------------------------------------------------------------------
         if ($oFile->isRemote(PATH_DB_ABSOLUTE))
@@ -520,7 +544,7 @@ sub info
             # Build param hash
             my %oParamHash;
 
-            $oParamHash{'db-path'} = ${strDbPath};
+            $oParamHash{'db-path'} = $strDbPath;
 
             # Output remote trace info
             &log(TRACE, OP_DB_INFO . ": remote (" . $oFile->{oProtocol}->commandParamString(\%oParamHash) . ')');
@@ -646,22 +670,18 @@ sub backupStart
     my
     (
         $strOperation,
-        $oFile,
-        $strDbPath,
         $strLabel,
         $bStartFast
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->backupStart', \@_,
-            {name => 'oFile'},
-            {name => 'strDbPath'},
             {name => 'strLabel'},
             {name => 'bStartFast'}
         );
 
     # Validate the database configuration
-    $self->configValidate($oFile, $strDbPath);
+    $self->configValidate($self->{strDbPath});
 
     # Only allow start-fast option for version >= 8.4
     if ($self->{strDbVersion} < PG_VERSION_84 && $bStartFast)
@@ -772,18 +792,16 @@ sub configValidate
     my
     (
         $strOperation,
-        $oFile,
         $strDbPath
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->configValidate', \@_,
-            {name => 'oFile'},
-            {name => 'strDbPath'}
+            {name => 'strDbPath', default => $self->{strDbPath}}
         );
 
     # Get the version from the control file
-    my ($strDbVersion) = $self->info($oFile, $strDbPath);
+    my ($strDbVersion) = $self->info($strDbPath);
 
     # Get version and db path from the database
     my ($fCompareDbVersion, $strCompareDbPath) = $self->versionGet();

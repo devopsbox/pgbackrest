@@ -24,6 +24,8 @@ use pgBackRest::File;
 use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
 use pgBackRest::RestoreFile;
+use pgBackRest::Protocol::Common;
+use pgBackRest::Protocol::Protocol;
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -40,14 +42,13 @@ sub new
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->new');
 
     # Initialize protocol
-    $self->{oProtocol} = protocolGet();
+    $self->{oProtocol} = protocolGet(BACKUP);
 
     # Initialize default file object
     $self->{oFile} = new pgBackRest::File
     (
         optionGet(OPTION_STANZA),
         optionGet(OPTION_REPO_PATH),
-        optionRemoteType(),
         $self->{oProtocol}
     );
 
@@ -1289,6 +1290,7 @@ sub process
         # Initialize the param hash
         my %oParam;
 
+        $oParam{remote_type} = BACKUP;
         $oParam{copy_time_begin} = $lCopyTimeBegin;
         $oParam{size_total} = $lSizeTotal;
         $oParam{delta} = optionGet(OPTION_DELTA);

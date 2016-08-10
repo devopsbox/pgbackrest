@@ -155,7 +155,6 @@ sub new
     $self->{oFile} = new pgBackRest::File(
         $self->stanza(),
         $self->repoPath(),
-        undef,
         new pgBackRest::Protocol::Common
         (
             OPTION_DEFAULT_BUFFER_SIZE,                 # Buffer size
@@ -689,20 +688,17 @@ sub configCreate
     my %oParamHash;
     my $strStanza = $self->stanza();
 
-    if (defined($oHostRemote))
-    {
-        $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_COMMAND_REMOTE} = $self->backrestExe();
-    }
-
     if (defined($oHostRemote) && $oHostRemote->nameTest(HOST_BACKUP))
     {
         $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_BACKUP_HOST} = $oHostRemote->nameGet();
         $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_BACKUP_USER} = $oHostRemote->userGet();
+        $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_BACKUP_CONFIG} = $oHostRemote->backrestConfig();
     }
     elsif (defined($oHostRemote))
     {
         $oParamHash{$strStanza}{&OPTION_DB_HOST} = $oHostRemote->nameGet();
         $oParamHash{$strStanza}{&OPTION_DB_USER} = $oHostRemote->userGet();
+        $oParamHash{$strStanza}{&OPTION_DB_CONFIG} = $oHostRemote->backrestConfig();
     }
 
     $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_LEVEL_CONSOLE} = lc(DEBUG);
@@ -744,11 +740,6 @@ sub configCreate
             $oParamHash{$strStanza}{&OPTION_DB_SOCKET_PATH} = $self->dbSocketPath();
             $oParamHash{$strStanza}{&OPTION_DB_PORT} = $self->dbPort();
         }
-    }
-
-    if (defined($oHostRemote))
-    {
-        $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_CONFIG_REMOTE} = $oHostRemote->backrestConfig();
     }
 
     if ($self->threadMax() > 1)
