@@ -299,7 +299,7 @@ sub fileMode
     ) =
         logDebugParam
         (
-            __PACKAGE__ . '::fileModeDefaultSet', \@_,
+            __PACKAGE__ . '::fileMode', \@_,
             {name => 'strFile', trace => true},
             {name => 'strMode', default => $strFileModeDefault, trace => true},
         );
@@ -417,10 +417,7 @@ sub fileMove
     }
 
     # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation
-    );
+    return logDebugReturn($strOperation);
 }
 
 push @EXPORT, qw(fileMove);
@@ -692,10 +689,7 @@ sub fileStringWrite
     filePathSync(dirname($strFileName)) if $bSync;
 
     # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation
-    );
+    return logDebugReturn($strOperation);
 }
 
 push @EXPORT, qw(fileStringWrite);
@@ -738,10 +732,15 @@ sub pathAbsolute
             confess &log(ERROR, "${strBasePath} is not an absolute path", ERROR_PATH_TYPE);
         }
 
-        while (index($strPath, '../') == 0)
+        while (index($strPath, '..') == 0)
         {
             $strBasePath = dirname($strBasePath);
-            $strPath = substr($strPath, 3);
+            $strPath = substr($strPath, 2);
+
+            if (index($strPath, '/') == 0)
+            {
+                $strPath = substr($strPath, 1);
+            }
         }
 
         $strAbsolutePath = "${strBasePath}/${strPath}";
@@ -836,10 +835,7 @@ sub filePathCreate
     }
 
     # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation
-    );
+    return logDebugReturn($strOperation);
 }
 
 push @EXPORT, qw(filePathCreate);
