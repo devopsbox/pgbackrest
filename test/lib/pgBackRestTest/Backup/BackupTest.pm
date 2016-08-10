@@ -773,6 +773,10 @@ sub backupTestRun
             # postgresql.auto.conf.tmp should also be skipped
             $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_POSTGRESQLAUTOCONFTMP, 'IGNORE');
 
+            # Create stat temp dir and file - only file will be ignored
+            $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSTATTMP);
+            $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGSTATTMP . '/anything.tmp', 'IGNORE');
+
             # Backup Info (with no stanzas)
             #-----------------------------------------------------------------------------------------------------------------------
             $oHostDbMaster->info('no stanzas exist');

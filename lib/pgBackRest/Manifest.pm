@@ -153,6 +153,8 @@ use constant MANIFEST_SUBKEY_USER                                   => 'user';
 ####################################################################################################################################
 use constant DB_PATH_GLOBAL                                         => 'global';
     push @EXPORT, qw(DB_PATH_GLOBAL);
+use constant DB_PATH_PGSTATTMP                                      => 'pg_stat_tmp';
+    push @EXPORT, qw(DB_PATH_PGSTATTMP);
 use constant DB_PATH_PGTBLSPC                                       => 'pg_tblspc';
     push @EXPORT, qw(DB_PATH_PGTBLSPC);
 use constant DB_PATH_PGXLOG                                         => 'pg_xlog';
@@ -185,6 +187,8 @@ use constant DB_FILE_PREFIX_TMP                                     => 'pgsql_tm
 ####################################################################################################################################
 # Manifest locations for important files/paths
 ####################################################################################################################################
+use constant MANIFEST_PATH_PGSTATTMP                                => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGSTATTMP;
+    push @EXPORT, qw(MANIFEST_PATH_PGSTATTMP);
 use constant MANIFEST_PATH_PGXLOG                                   => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGXLOG;
     push @EXPORT, qw(MANIFEST_PATH_PGXLOG);
 
@@ -601,7 +605,6 @@ sub build
         }
 
         # !!! Notes for what to skip
-        # 2. skip postgresql.auto.conf.tmp for versions (I think >= 9.4?) where this feature is supported
         # 3. pg_stat_tmp - this may be relocated to another dir but even then some files can be written in here.
         # 4. pg_replslot - exclude all files but include the directory
         # 5. pg_dynshmem - WORK ON THIS!!!
@@ -610,6 +613,7 @@ sub build
         if ($strFile =~ ('^' . MANIFEST_PATH_PGXLOG . '.*\/') && $bOnline ||  # pg_xlog/ - this will be reconstructed if online
             $strName =~ ('(^|\/)' . DB_FILE_PREFIX_TMP) ||          # temp dirs/files - removed on server start anyway
             $strFile eq MANIFEST_FILE_POSTGRESQLAUTOCONFTMP ||      # postgresql.auto.conf.tmp - temp file for safe write
+            $strFile =~ ('^' . MANIFEST_PATH_PGSTATTMP . '.*\/') || # pg_stat_tmp - temp stats files not used on restart
             $strLevel eq MANIFEST_TARGET_PGDATA &&
             ($strName eq DB_FILE_BACKUPLABELOLD ||                  # backup_label.old - old backup labels are not useful
              $strName eq DB_FILE_POSTMASTEROPTS ||                  # postmaster.opts - not useful for backup
