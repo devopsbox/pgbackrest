@@ -281,8 +281,8 @@ sub processManifest
             {
                 logDebugMisc($strOperation, "hardlink ${strFile} to ${strReference}");
 
-                $oFileMaster->linkCreate(PATH_BACKUP_CLUSTER, "${strReference}/${strFile}",
-                                         PATH_BACKUP_TMP, "${strFile}", true, false, true);
+                $oFileMaster->linkCreate(
+                    PATH_BACKUP_CLUSTER, "${strReference}/${strFile}", PATH_BACKUP_TMP, "${strFile}", true, false, true);
             }
             else
             {
