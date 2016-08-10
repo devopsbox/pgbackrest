@@ -693,12 +693,14 @@ sub configCreate
         $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_BACKUP_HOST} = $oHostRemote->nameGet();
         $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_BACKUP_USER} = $oHostRemote->userGet();
         $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_BACKUP_CONFIG} = $oHostRemote->backrestConfig();
+        $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_BACKUP_CMD} = $oHostRemote->backrestExe();
     }
     elsif (defined($oHostRemote))
     {
         $oParamHash{$strStanza}{&OPTION_DB_HOST} = $oHostRemote->nameGet();
         $oParamHash{$strStanza}{&OPTION_DB_USER} = $oHostRemote->userGet();
         $oParamHash{$strStanza}{&OPTION_DB_CONFIG} = $oHostRemote->backrestConfig();
+        $oParamHash{$strStanza}{&OPTION_DB_CMD} = $oHostRemote->backrestExe();
     }
 
     $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_LEVEL_CONSOLE} = lc(DEBUG);
