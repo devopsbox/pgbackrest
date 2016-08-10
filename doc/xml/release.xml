@@ -119,6 +119,10 @@
                     <release-item>
                         <p>Improvements in <code>Db</code> module: separated out <code>connect()</code> function, allow <code>executeSql()</code> calls that do not return data, and improve error handling.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Simplify protocol creation and identifying which host is local/remote.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
         </release>
