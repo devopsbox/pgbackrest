@@ -66,6 +66,7 @@ full backup - create pg_stat link, pg_clog dir (db-master host)
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_clog, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_dynshmem, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_replslot, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
+ DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_snapshots, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_stat_tmp, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_tblspc, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strFilter = [undef], strLevel = pg_data/pg_stat, strParentPath = [TEST_PATH]/db-master/db/base, strPath = ../pg_stat
@@ -87,6 +88,7 @@ full backup - create pg_stat link, pg_clog dir (db-master host)
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_clog, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_dynshmem, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_replslot, strPathType = backup:tmp
+ DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_snapshots, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_stat, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_stat_tmp, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_tblspc, strPathType = backup:tmp
@@ -245,6 +247,7 @@ pg_data/global={}
 pg_data/pg_clog={}
 pg_data/pg_dynshmem={}
 pg_data/pg_replslot={}
+pg_data/pg_snapshots={}
 pg_data/pg_stat={}
 pg_data/pg_stat_tmp={}
 pg_data/pg_tblspc={}
@@ -328,6 +331,7 @@ full backup - abort backup - local (db-master host)
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_clog, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_dynshmem, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_replslot, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
+ DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_snapshots, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_stat_tmp, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_tblspc, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strFilter = [undef], strLevel = pg_data/pg_stat, strParentPath = [TEST_PATH]/db-master/db/base, strPath = ../pg_stat
@@ -349,6 +353,7 @@ full backup - abort backup - local (db-master host)
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_clog, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_dynshmem, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_replslot, strPathType = backup:tmp
+ DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_snapshots, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_stat, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_stat_tmp, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_tblspc, strPathType = backup:tmp
@@ -479,6 +484,7 @@ full backup - resume (db-master host)
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_clog, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_dynshmem, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_replslot, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
+ DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_snapshots, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_stat_tmp, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_tblspc, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strFilter = [undef], strLevel = pg_data/pg_stat, strParentPath = [TEST_PATH]/db-master/db/base, strPath = ../pg_stat
@@ -501,6 +507,7 @@ DETAIL: clean backup temp path: [TEST_PATH]/db-master/repo/temp/db.tmp
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = pg_data/pg_clog, strPathOp = [TEST_PATH]/db-master/repo/temp/db.tmp, strPathType = backup:tmp
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = pg_data/pg_dynshmem, strPathOp = [TEST_PATH]/db-master/repo/temp/db.tmp, strPathType = backup:tmp
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = pg_data/pg_replslot, strPathOp = [TEST_PATH]/db-master/repo/temp/db.tmp, strPathType = backup:tmp
+ DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = pg_data/pg_snapshots, strPathOp = [TEST_PATH]/db-master/repo/temp/db.tmp, strPathType = backup:tmp
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = pg_data/pg_stat, strPathOp = [TEST_PATH]/db-master/repo/temp/db.tmp, strPathType = backup:tmp
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = pg_data/pg_stat_tmp, strPathOp = [TEST_PATH]/db-master/repo/temp/db.tmp, strPathType = backup:tmp
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = pg_data/pg_tblspc, strPathOp = [TEST_PATH]/db-master/repo/temp/db.tmp, strPathType = backup:tmp
@@ -517,6 +524,7 @@ DETAIL: clean backup temp path: [TEST_PATH]/db-master/repo/temp/db.tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_clog, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_dynshmem, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_replslot, strPathType = backup:tmp
+ DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_snapshots, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_stat, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_stat_tmp, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_tblspc, strPathType = backup:tmp
@@ -675,6 +683,7 @@ pg_data/global={}
 pg_data/pg_clog={}
 pg_data/pg_dynshmem={}
 pg_data/pg_replslot={}
+pg_data/pg_snapshots={}
 pg_data/pg_stat={}
 pg_data/pg_stat_tmp={}
 pg_data/pg_tblspc={}
@@ -754,6 +763,7 @@ DETAIL: check [TEST_PATH]/db-master/db/base exists
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = global, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_dynshmem, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_replslot, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
+ DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_snapshots, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_stat_tmp, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_tblspc, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
 DETAIL: check [TEST_PATH]/db-master/db/pg_stat exists
@@ -790,6 +800,7 @@ DETAIL: check [TEST_PATH]/db-master/db/pg_config exists
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = global, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_dynshmem, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_replslot, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
+ DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_snapshots, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_stat_tmp, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_tblspc, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
 DETAIL: remove file [TEST_PATH]/db-master/db/base/recovery.done
@@ -797,6 +808,7 @@ DETAIL: preserve file [TEST_PATH]/db-master/db/base/recovery.conf
 DETAIL: remove file [TEST_PATH]/db-master/db/base/postmaster.opts
 DETAIL: remove file [TEST_PATH]/db-master/db/base/postgresql.auto.conf.tmp
 DETAIL: remove file [TEST_PATH]/db-master/db/base/pg_stat_tmp/anything.tmp
+DETAIL: remove file [TEST_PATH]/db-master/db/base/pg_snapshots/anything.tmp
 DETAIL: remove file [TEST_PATH]/db-master/db/base/pg_replslot/anything.tmp
 DETAIL: remove file [TEST_PATH]/db-master/db/base/pg_dynshmem/anything.tmp
 DETAIL: remove file [TEST_PATH]/db-master/db/base/deleteme/deleteme.txt
@@ -810,7 +822,7 @@ DETAIL: set ownership vagrant:postgres on [TEST_PATH]/db-master/db/base/base/1/P
 DETAIL: set mode 0660 on [TEST_PATH]/db-master/db/base/base/1/PG_VERSION
 DETAIL: set mode 0700 on [TEST_PATH]/db-master/db/base/base
 DETAIL: remove file [TEST_PATH]/db-master/db/base/backup_label.old
-  INFO: cleanup removed 9 files, 2 paths
+  INFO: cleanup removed 10 files, 2 paths
  DEBUG:     Restore->build(): oManifest = [object]
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/pg_stat, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = true
@@ -828,6 +840,8 @@ DETAIL: remove file [TEST_PATH]/db-master/db/base/backup_label.old
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/pg_dynshmem, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = true
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/pg_replslot, strPathType = db:absolute
+ DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/pg_snapshots, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = true
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/pg_stat_tmp, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = true
@@ -1231,6 +1245,7 @@ incr backup - add tablespace 1 (db-master host)
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_clog, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_dynshmem, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_replslot, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
+ DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_snapshots, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_stat, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_stat_tmp, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_tblspc, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
@@ -1389,6 +1404,7 @@ pg_data/global={}
 pg_data/pg_clog={}
 pg_data/pg_dynshmem={}
 pg_data/pg_replslot={}
+pg_data/pg_snapshots={}
 pg_data/pg_stat={}
 pg_data/pg_stat_tmp={}
 pg_data/pg_tblspc={}
@@ -1476,6 +1492,7 @@ incr backup - resume and add tablespace 2 (db-master host)
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_clog, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_dynshmem, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_replslot, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
+ DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_snapshots, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_stat, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_stat_tmp, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_tblspc, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
@@ -1656,6 +1673,7 @@ pg_data/global={}
 pg_data/pg_clog={}
 pg_data/pg_dynshmem={}
 pg_data/pg_replslot={}
+pg_data/pg_snapshots={}
 pg_data/pg_stat={}
 pg_data/pg_stat_tmp={}
 pg_data/pg_tblspc={}
@@ -1799,6 +1817,7 @@ pg_data/global={}
 pg_data/pg_clog={}
 pg_data/pg_dynshmem={}
 pg_data/pg_replslot={}
+pg_data/pg_snapshots={}
 pg_data/pg_stat={}
 pg_data/pg_stat_tmp={}
 pg_data/pg_tblspc={}
@@ -1942,6 +1961,7 @@ pg_data/global={}
 pg_data/pg_clog={}
 pg_data/pg_dynshmem={}
 pg_data/pg_replslot={}
+pg_data/pg_snapshots={}
 pg_data/pg_stat={}
 pg_data/pg_stat_tmp={}
 pg_data/pg_tblspc={}
@@ -2178,6 +2198,7 @@ pg_data/global={}
 pg_data/pg_clog={}
 pg_data/pg_dynshmem={}
 pg_data/pg_replslot={}
+pg_data/pg_snapshots={}
 pg_data/pg_stat={}
 pg_data/pg_stat_tmp={}
 pg_data/pg_tblspc={}
@@ -2321,6 +2342,7 @@ pg_data/global={}
 pg_data/pg_clog={}
 pg_data/pg_dynshmem={}
 pg_data/pg_replslot={}
+pg_data/pg_snapshots={}
 pg_data/pg_stat={}
 pg_data/pg_stat_tmp={}
 pg_data/pg_tblspc={}
@@ -2466,6 +2488,7 @@ pg_data/global={}
 pg_data/pg_clog={}
 pg_data/pg_dynshmem={}
 pg_data/pg_replslot={}
+pg_data/pg_snapshots={}
 pg_data/pg_stat={}
 pg_data/pg_stat_tmp={}
 pg_data/pg_tblspc={}
@@ -2607,6 +2630,7 @@ pg_data/global={}
 pg_data/pg_clog={}
 pg_data/pg_dynshmem={}
 pg_data/pg_replslot={}
+pg_data/pg_snapshots={}
 pg_data/pg_stat={}
 pg_data/pg_stat_tmp={}
 pg_data/pg_tblspc={}
@@ -2751,6 +2775,7 @@ pg_data/global={}
 pg_data/pg_clog={}
 pg_data/pg_dynshmem={}
 pg_data/pg_replslot={}
+pg_data/pg_snapshots={}
 pg_data/pg_stat={}
 pg_data/pg_stat_tmp={}
 pg_data/pg_tblspc={}
@@ -2904,6 +2929,7 @@ pg_data/global={}
 pg_data/pg_clog={}
 pg_data/pg_dynshmem={}
 pg_data/pg_replslot={}
+pg_data/pg_snapshots={}
 pg_data/pg_stat={}
 pg_data/pg_stat_tmp={}
 pg_data/pg_tblspc={}
@@ -3385,6 +3411,7 @@ pg_data/global={}
 pg_data/pg_clog={}
 pg_data/pg_dynshmem={}
 pg_data/pg_replslot={}
+pg_data/pg_snapshots={}
 pg_data/pg_stat={}
 pg_data/pg_stat_tmp={}
 pg_data/pg_tblspc={}

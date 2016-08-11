@@ -159,6 +159,8 @@ use constant DB_PATH_PGDYNSHMEM                                     => 'pg_dynsh
     push @EXPORT, qw(DB_PATH_PGDYNSHMEM);
 use constant DB_PATH_PGREPLSLOT                                     => 'pg_replslot';
     push @EXPORT, qw(DB_PATH_PGREPLSLOT);
+use constant DB_PATH_PGSNAPSHOTS                                    => 'pg_snapshots';
+    push @EXPORT, qw(DB_PATH_PGSNAPSHOTS);
 use constant DB_PATH_PGSTATTMP                                      => 'pg_stat_tmp';
     push @EXPORT, qw(DB_PATH_PGSTATTMP);
 use constant DB_PATH_PGTBLSPC                                       => 'pg_tblspc';
@@ -201,6 +203,8 @@ use constant MANIFEST_PATH_PGDYNSHMEM                               => MANIFEST_
     push @EXPORT, qw(MANIFEST_PATH_PGDYNSHMEM);
 use constant MANIFEST_PATH_PGREPLSLOT                               => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGREPLSLOT;
     push @EXPORT, qw(MANIFEST_PATH_PGREPLSLOT);
+use constant MANIFEST_PATH_PGSNAPSHOTS                              => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGSNAPSHOTS;
+    push @EXPORT, qw(MANIFEST_PATH_PGSNAPSHOTS);
 use constant MANIFEST_PATH_PGSTATTMP                                => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGSTATTMP;
     push @EXPORT, qw(MANIFEST_PATH_PGSTATTMP);
 use constant MANIFEST_PATH_PGTBLSPC                                 => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC;
@@ -632,21 +636,25 @@ sub build
 
         # Skip pg_xlog/* when doing an online backup.  WAL will be restored from the archive or stored in pg_xlog at the end of the
         # backup if the archive-copy option is set.
-        next if ($strFile =~ ('^' . MANIFEST_PATH_PGXLOG . '.*\/') && $bOnline);
+        next if ($strFile =~ ('^' . MANIFEST_PATH_PGXLOG . '\/') && $bOnline);
 
-
-        # Skip all directories and files that start with pgsql_tmp.  These files are removed when the server is restarted.
+        # Skip all directories and files that start with pgsql_tmp.  The files are removed when the server is restarted and the
+        # directories are recreated.  Since temp files cannnot be created on the replica it makes sense to delete the directories
+        # and let the server recreate them when they are needed.
         next if $strName =~ ('(^|\/)' . DB_FILE_PREFIX_TMP);
 
         # Skip temporary statistics in pg_stat_tmp even when stats_temp_directory is set because PGSS_TEXT_FILE is always created
         # there.
-        next if $strFile =~ ('^' . MANIFEST_PATH_PGSTATTMP . '.*\/');
+        next if $strFile =~ ('^' . MANIFEST_PATH_PGSTATTMP . '\/');
 
-        # Skip pg_replslot/* since these files cannot be reused
-        next if $strFile =~ ('^' . MANIFEST_PATH_PGREPLSLOT . '.*\/');
+        # Skip pg_snapshots/* since these files cannot be reused on recovery
+        next if $strFile =~ ('^' . MANIFEST_PATH_PGSNAPSHOTS . '\/');
 
-        # Skip pg_dynshmem/* since these files cannot be reused
-        next if $strFile =~ ('^' . MANIFEST_PATH_PGDYNSHMEM . '.*\/');
+        # Skip pg_replslot/* since these files cannot be reused on recovery
+        next if $strFile =~ ('^' . MANIFEST_PATH_PGREPLSLOT . '\/');
+
+        # Skip pg_dynshmem/* since these files cannot be reused on recovery
+        next if $strFile =~ ('^' . MANIFEST_PATH_PGDYNSHMEM . '\/');
 
         # Skip ignored files
         if ($strFile eq MANIFEST_FILE_POSTGRESQLAUTOCONFTMP ||      # postgresql.auto.conf.tmp - temp file for safe writes
