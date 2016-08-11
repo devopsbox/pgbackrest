@@ -113,7 +113,7 @@
              <release-core-list>
                  <release-refactor-list>
                     <release-item>
-                        <p>Removed all <code>OP_*</code> function constants that were not used in the protocol for debugging and replaced with <code>__PACKAGE__</code>.</p>
+                        <p>Removed all <code>OP_*</code> function constants that were used only for debugging, not in the protocol, and replaced with <code>__PACKAGE__</code>.</p>
                     </release-item>
 
                     <release-item>

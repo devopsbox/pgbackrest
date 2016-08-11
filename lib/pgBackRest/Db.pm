@@ -170,12 +170,12 @@ sub connect
     my
     (
         $strOperation,
-        $bWarnOnError
+        $bWarnOnError,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '::connect', \@_,
-            {name => 'bWarnOnError', default => false}
+            {name => 'bWarnOnError', default => false},
         );
 
     # Only connect if not already connected
@@ -266,7 +266,7 @@ sub executeSql
         $strOperation,
         $strSql,
         $bIgnoreError,
-        $bResult
+        $bResult,
     ) =
         logDebugParam
         (
