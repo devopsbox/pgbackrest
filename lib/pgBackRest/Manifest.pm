@@ -155,6 +155,8 @@ use constant DB_PATH_GLOBAL                                         => 'global';
     push @EXPORT, qw(DB_PATH_GLOBAL);
 use constant DB_PATH_PGDYNSHMEM                                     => 'pg_dynshmem';
     push @EXPORT, qw(DB_PATH_PGDYNSHMEM);
+use constant DB_PATH_PGNOTIFY                                       => 'pg_notify';
+    push @EXPORT, qw(DB_PATH_PGNOTIFY);
 use constant DB_PATH_PGREPLSLOT                                     => 'pg_replslot';
     push @EXPORT, qw(DB_PATH_PGREPLSLOT);
 use constant DB_PATH_PGSNAPSHOTS                                    => 'pg_snapshots';
@@ -195,6 +197,8 @@ use constant DB_FILE_PREFIX_TMP                                     => 'pgsql_tm
 ####################################################################################################################################
 use constant MANIFEST_PATH_PGDYNSHMEM                               => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGDYNSHMEM;
     push @EXPORT, qw(MANIFEST_PATH_PGDYNSHMEM);
+use constant MANIFEST_PATH_PGNOTIFY                                 => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGNOTIFY;
+    push @EXPORT, qw(MANIFEST_PATH_PGNOTIFY);
 use constant MANIFEST_PATH_PGREPLSLOT                               => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGREPLSLOT;
     push @EXPORT, qw(MANIFEST_PATH_PGREPLSLOT);
 use constant MANIFEST_PATH_PGSNAPSHOTS                              => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGSNAPSHOTS;
@@ -641,6 +645,9 @@ sub build
 
         # Skip pg_snapshots/* since these files cannot be reused on recovery
         next if $strFile =~ ('^' . MANIFEST_PATH_PGSNAPSHOTS . '\/');
+
+        # Skip pg_notify/* since these files cannot be reused on recovery
+        next if $strFile =~ ('^' . MANIFEST_PATH_PGNOTIFY . '\/');
 
         # Skip pg_replslot/* since these files cannot be reused on recovery
         next if $strFile =~ ('^' . MANIFEST_PATH_PGREPLSLOT . '\/');
