@@ -295,8 +295,6 @@ sub processManifest
             # Increment file total
             $lFileTotal++;
 
-            my $strFileKey;
-
             # By default put everything into a single queue
             my $strQueueKey = MANIFEST_TARGET_PGDATA;
 
@@ -306,16 +304,17 @@ sub processManifest
                 $strQueueKey = DB_PATH_PGTBLSPC . '/' . (split('\/', $strFile))[1];
             }
 
+            # Generate a plain key for pg_control to make it easier to find later
+            my $strFileKey = $strFile eq MANIFEST_FILE_PGCONTROL ? $strFile : sprintf("%016d-${strFile}", $lFileSize);
+
             # Certain files are not copied until the end
             if ($strFile eq MANIFEST_FILE_PGCONTROL)
             {
-                $strFileKey = $strFile;
                 $hFileCopyMap{$strQueueKey}{$strFileKey}{skip} = true;
             }
             # Else continue normally
             else
             {
-                $strFileKey = sprintf("%016d-${strFile}", $lFileSize);
                 $hFileCopyMap{$strQueueKey}{$strFileKey}{skip} = false;
 
                 # Add file size to total size
