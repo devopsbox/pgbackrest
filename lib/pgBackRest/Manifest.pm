@@ -153,6 +153,8 @@ use constant MANIFEST_SUBKEY_USER                                   => 'user';
 ####################################################################################################################################
 use constant DB_PATH_BASE                                           => 'base';
     push @EXPORT, qw(DB_PATH_BASE);
+use constant DB_PATH_PGCLOG                                         => 'pg_clog';
+    push @EXPORT, qw(DB_PATH_PGCLOG);
 use constant DB_PATH_GLOBAL                                         => 'global';
     push @EXPORT, qw(DB_PATH_GLOBAL);
 use constant DB_PATH_PGDYNSHMEM                                     => 'pg_dynshmem';
@@ -197,6 +199,8 @@ use constant DB_FILE_PREFIX_TMP                                     => 'pgsql_tm
 ####################################################################################################################################
 use constant MANIFEST_PATH_BASE                                     => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_BASE;
     push @EXPORT, qw(MANIFEST_PATH_BASE);
+use constant MANIFEST_PATH_PGCLOG                                   => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGCLOG;
+    push @EXPORT, qw(MANIFEST_PATH_PGCLOG);
 use constant MANIFEST_PATH_GLOBAL                                   => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_GLOBAL;
     push @EXPORT, qw(MANIFEST_PATH_GLOBAL);
 use constant MANIFEST_PATH_PGDYNSHMEM                               => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGDYNSHMEM;

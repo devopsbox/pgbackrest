@@ -299,8 +299,6 @@ sub processManifest
             # Increment file total
             $lFileTotal++;
 
-            my $strFileKey;
-
             # By default put everything into a single queue
             my $strQueueKey = MANIFEST_TARGET_PGDATA;
 
@@ -311,12 +309,12 @@ sub processManifest
             }
 
             # Generate a plain key for pg_control to make it easier to find later
-            $strFileKey = $strFile eq MANIFEST_FILE_PGCONTROL ? $strFile : sprintf("%016d-${strFile}", $lFileSize);
+            my $strFileKey = $strFile eq MANIFEST_FILE_PGCONTROL ? $strFile : sprintf("%016d-${strFile}", $lFileSize);
 
             # Certain files must be copied from the master
             if ($strFile eq MANIFEST_FILE_PGCONTROL ||
                 ($strFile !~ ('^' . MANIFEST_PATH_BASE . '\/') && $strFile !~ ('^' . MANIFEST_PATH_PGTBLSPC . '\/') &&
-                 $strFile !~ ('^' . MANIFEST_PATH_GLOBAL . '\/')))
+                 $strFile !~ ('^' . MANIFEST_PATH_GLOBAL . '\/') && $strFile !~ ('^' . MANIFEST_PATH_PGCLOG . '\/')))
             {
                 $hFileCopyMap{$strQueueKey}{$strFileKey}{skip} = true;
                 $hFileCopyMap{$strQueueKey}{$strFileKey}{db_file} = $oBackupManifest->dbPathGet($strDbMasterPath, $strFile);
