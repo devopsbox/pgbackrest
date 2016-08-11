@@ -310,20 +310,20 @@ sub processManifest
                 $strQueueKey = DB_PATH_PGTBLSPC . '/' . (split('\/', $strFile))[1];
             }
 
-            # Certain files are not copied until the end
-            if ($strFile eq MANIFEST_FILE_PGCONTROL ||
-                ($strFile != ('^' . DB_PATH_BASE '\/') || $strFile != ('^' . DB_PATH_PGTBLSPC '\/')))
+            # Generate a plain key for pg_control to make it easier to find later
+            $strFileKey = $strFile eq MANIFEST_FILE_PGCONTROL ? $strFile : sprintf("%016d-${strFile}", $lFileSize);
 
-                !!! WORKING ON WHICH FILES ARE COPIED FROM WHERE
+            # Certain files must be copied from the master
+            if ($strFile eq MANIFEST_FILE_PGCONTROL ||
+                ($strFile !~ ('^' . MANIFEST_PATH_BASE . '\/') && $strFile !~ ('^' . MANIFEST_PATH_PGTBLSPC . '\/') &&
+                 $strFile !~ ('^' . MANIFEST_PATH_GLOBAL . '\/')))
             {
-                $strFileKey = $strFile;
                 $hFileCopyMap{$strQueueKey}{$strFileKey}{skip} = true;
                 $hFileCopyMap{$strQueueKey}{$strFileKey}{db_file} = $oBackupManifest->dbPathGet($strDbMasterPath, $strFile);
             }
             # Else continue normally
             else
             {
-                $strFileKey = sprintf("%016d-${strFile}", $lFileSize);
                 $hFileCopyMap{$strQueueKey}{$strFileKey}{skip} = false;
                 $hFileCopyMap{$strQueueKey}{$strFileKey}{db_file} = $oBackupManifest->dbPathGet($strDbCopyPath, $strFile);
 
@@ -401,7 +401,7 @@ sub processManifest
             );
         }
 
-        # Iterate all backup files
+        # Iterate all to be copied from the master (or standby if there is one) files
         foreach my $strTargetKey (sort(keys(%hFileCopyMap)))
         {
             if (optionGet(OPTION_THREAD_MAX) > 1)
@@ -500,48 +500,50 @@ sub processManifest
             }
             while (!$bDone);
         }
-    }
 
-    # Always copy backup label from master for PostgreSQL <= 9.5
-    if ($strDbVersion <= PG_VERSION_95 && optionGet(OPTION_ONLINE))
-    {
-        my $hFileCopy = $hFileCopyMap{&MANIFEST_TARGET_PGDATA}{&MANIFEST_FILE_BACKUPLABEL};
+        # Iterate all backup files
+        foreach my $strTargetKey (sort(keys(%hFileCopyMap)))
+        {
+            foreach my $strFileKey (sort {$b cmp $a} (keys(%{$hFileCopyMap{$strTargetKey}})))
+            {
+                my $hFileCopy = $hFileCopyMap{$strTargetKey}{$strFileKey};
 
-        my ($bCopied, $lSizeCurrent, $lCopySize, $lRepoSize, $strCopyChecksum) =
-            backupFile($oFileMaster, $$hFileCopy{db_file}, $$hFileCopy{repo_file}, $bCompress, $$hFileCopy{checksum},
-                       $$hFileCopy{modification_time}, $$hFileCopy{size}, undef, undef, false);
+                # Skip files marked to be copied later
+                next if !$$hFileCopy{skip} || $strFileKey eq &MANIFEST_FILE_PGCONTROL;
 
-        backupManifestUpdate($oBackupManifest, $$hFileCopy{repo_file}, $bCopied, $lCopySize, $lRepoSize, $strCopyChecksum);
+                # Backup the file
+                my ($bCopied, $lSizeCurrent, $lCopySize, $lRepoSize, $strCopyChecksum) =
+                    backupFile($oFileMaster, $$hFileCopy{db_file}, $$hFileCopy{repo_file}, $bCompress, $$hFileCopy{checksum},
+                               $$hFileCopy{modification_time}, $$hFileCopy{size}, $lSizeTotal, $lSizeCurrent);
 
-        $lSizeTotal += $$hFileCopy{size};
-    }
+                $lManifestSaveCurrent = backupManifestUpdate($oBackupManifest, $$hFileCopy{repo_file}, $bCopied, $lCopySize,
+                                                             $lRepoSize, $strCopyChecksum, $lManifestSaveSize,
+                                                             $lManifestSaveCurrent);
 
-    # Copy tablespace map when it exists
-    if (defined($hFileCopyMap{&MANIFEST_TARGET_PGDATA}{&MANIFEST_FILE_TABLESPACEMAP}))
-    {
-        my $hFileCopy = $hFileCopyMap{&MANIFEST_TARGET_PGDATA}{&MANIFEST_FILE_TABLESPACEMAP};
+                # A keep-alive is required here because if there are a large number of resumed files that need to be checksummed
+                # then the remote might timeout while waiting for a command.
+                $oProtocolMaster->keepAlive();
 
-        my ($bCopied, $lSizeCurrent, $lCopySize, $lRepoSize, $strCopyChecksum) =
-            backupFile($oFileMaster, $$hFileCopy{db_file}, $$hFileCopy{repo_file}, $bCompress, $$hFileCopy{checksum},
-                       $$hFileCopy{modification_time}, $$hFileCopy{size}, undef, undef, false);
+                if (defined($oProtocolCopy))
+                {
+                    $oProtocolCopy->keepAlive();
+                }
+            }
+        }
 
-        backupManifestUpdate($oBackupManifest, $$hFileCopy{repo_file}, $bCopied, $lCopySize, $lRepoSize, $strCopyChecksum);
+        # Copy pg_control last - this is required for backups taken during recovery
+        my $hFileCopy = $hFileCopyMap{&MANIFEST_TARGET_PGDATA}{&MANIFEST_FILE_PGCONTROL};
 
-        $lSizeTotal += $$hFileCopy{size};
-    }
+        if (defined($hFileCopy))
+        {
+            my ($bCopied, $lSizeCurrent, $lCopySize, $lRepoSize, $strCopyChecksum) =
+                backupFile($oFileMaster, $$hFileCopy{db_file}, $$hFileCopy{repo_file}, $bCompress, $$hFileCopy{checksum},
+                           $$hFileCopy{modification_time}, $$hFileCopy{size}, undef, undef, false);
 
-    # Copy pg_control last - this is required for backups taken during recovery
-    my $hFileCopy = $hFileCopyMap{&MANIFEST_TARGET_PGDATA}{&MANIFEST_FILE_PGCONTROL};
+            backupManifestUpdate($oBackupManifest, $$hFileCopy{repo_file}, $bCopied, $lCopySize, $lRepoSize, $strCopyChecksum);
 
-    if (defined($hFileCopy))
-    {
-        my ($bCopied, $lSizeCurrent, $lCopySize, $lRepoSize, $strCopyChecksum) =
-            backupFile($oFileMaster, $$hFileCopy{db_file}, $$hFileCopy{repo_file}, $bCompress, $$hFileCopy{checksum},
-                       $$hFileCopy{modification_time}, $$hFileCopy{size}, undef, undef, false);
-
-        backupManifestUpdate($oBackupManifest, $$hFileCopy{repo_file}, $bCopied, $lCopySize, $lRepoSize, $strCopyChecksum);
-
-        $lSizeTotal += $$hFileCopy{size};
+            $lSizeTotal += $$hFileCopy{size};
+        }
     }
 
     # Return from function and log return values if any

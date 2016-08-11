@@ -193,12 +193,18 @@ use constant DB_FILE_PREFIX_TMP                                     => 'pgsql_tm
 ####################################################################################################################################
 # Manifest locations for important files/paths
 ####################################################################################################################################
-use constant MANIFEST_PATH_PGDYNSHMEM                                => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGDYNSHMEM;
+use constant MANIFEST_PATH_BASE                                     => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_BASE;
+    push @EXPORT, qw(MANIFEST_PATH_BASE);
+use constant MANIFEST_PATH_GLOBAL                                   => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_GLOBAL;
+    push @EXPORT, qw(MANIFEST_PATH_GLOBAL);
+use constant MANIFEST_PATH_PGDYNSHMEM                               => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGDYNSHMEM;
     push @EXPORT, qw(MANIFEST_PATH_PGDYNSHMEM);
-use constant MANIFEST_PATH_PGREPLSLOT                                => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGREPLSLOT;
+use constant MANIFEST_PATH_PGREPLSLOT                               => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGREPLSLOT;
     push @EXPORT, qw(MANIFEST_PATH_PGREPLSLOT);
 use constant MANIFEST_PATH_PGSTATTMP                                => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGSTATTMP;
     push @EXPORT, qw(MANIFEST_PATH_PGSTATTMP);
+use constant MANIFEST_PATH_PGTBLSPC                                 => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC;
+    push @EXPORT, qw(MANIFEST_PATH_PGTBLSPC);
 use constant MANIFEST_PATH_PGXLOG                                   => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGXLOG;
     push @EXPORT, qw(MANIFEST_PATH_PGXLOG);
 
