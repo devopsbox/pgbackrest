@@ -475,20 +475,20 @@ sub processManifest
             }
             while (!$bDone);
         }
-    }
 
-    # Copy pg_control last - this is required for backups taken during recovery
-    my $hFileCopy = $hFileCopyMap{&MANIFEST_TARGET_PGDATA}{&MANIFEST_FILE_PGCONTROL};
+        # Copy pg_control last - this is required for backups taken during recovery
+        my $hFileCopy = $hFileCopyMap{&MANIFEST_TARGET_PGDATA}{&MANIFEST_FILE_PGCONTROL};
 
-    if (defined($hFileCopy))
-    {
-        my ($bCopied, $lSizeCurrent, $lCopySize, $lRepoSize, $strCopyChecksum) =
-            backupFile($oFileMaster, $$hFileCopy{db_file}, $$hFileCopy{repo_file}, $bCompress, $$hFileCopy{checksum},
-                       $$hFileCopy{modification_time}, $$hFileCopy{size}, undef, undef, false);
+        if (defined($hFileCopy))
+        {
+            my ($bCopied, $lSizeCurrent, $lCopySize, $lRepoSize, $strCopyChecksum) =
+                backupFile($oFileMaster, $$hFileCopy{db_file}, $$hFileCopy{repo_file}, $bCompress, $$hFileCopy{checksum},
+                           $$hFileCopy{modification_time}, $$hFileCopy{size}, undef, undef, false);
 
-        backupManifestUpdate($oBackupManifest, $$hFileCopy{repo_file}, $bCopied, $lCopySize, $lRepoSize, $strCopyChecksum);
+            backupManifestUpdate($oBackupManifest, $$hFileCopy{repo_file}, $bCopied, $lCopySize, $lRepoSize, $strCopyChecksum);
 
-        $lSizeTotal += $$hFileCopy{size};
+            $lSizeTotal += $$hFileCopy{size};
+        }
     }
 
     # Return from function and log return values if any
