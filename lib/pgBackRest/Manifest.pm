@@ -163,6 +163,8 @@ use constant DB_PATH_PGSNAPSHOTS                                    => 'pg_snaps
     push @EXPORT, qw(DB_PATH_PGSNAPSHOTS);
 use constant DB_PATH_PGSTATTMP                                      => 'pg_stat_tmp';
     push @EXPORT, qw(DB_PATH_PGSTATTMP);
+use constant DB_PATH_PGSUBTRANS                                     => 'pg_subtrans';
+    push @EXPORT, qw(DB_PATH_PGSUBTRANS);
 use constant DB_PATH_PGTBLSPC                                       => 'pg_tblspc';
     push @EXPORT, qw(DB_PATH_PGTBLSPC);
 use constant DB_PATH_PGXLOG                                         => 'pg_xlog';
@@ -205,6 +207,8 @@ use constant MANIFEST_PATH_PGSNAPSHOTS                              => MANIFEST_
     push @EXPORT, qw(MANIFEST_PATH_PGSNAPSHOTS);
 use constant MANIFEST_PATH_PGSTATTMP                                => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGSTATTMP;
     push @EXPORT, qw(MANIFEST_PATH_PGSTATTMP);
+use constant MANIFEST_PATH_PGSUBTRANS                               => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGSUBTRANS;
+    push @EXPORT, qw(MANIFEST_PATH_PGSUBTRANS);
 use constant MANIFEST_PATH_PGXLOG                                   => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGXLOG;
     push @EXPORT, qw(MANIFEST_PATH_PGXLOG);
 
@@ -639,12 +643,8 @@ sub build
         # and let the server recreate them when they are needed.
         next if $strName =~ ('(^|\/)' . DB_FILE_PREFIX_TMP);
 
-        # Skip temporary statistics in pg_stat_tmp even when stats_temp_directory is set because PGSS_TEXT_FILE is always created
-        # there.
-        next if $strFile =~ ('^' . MANIFEST_PATH_PGSTATTMP . '\/');
-
-        # Skip pg_snapshots/* since these files cannot be reused on recovery
-        next if $strFile =~ ('^' . MANIFEST_PATH_PGSNAPSHOTS . '\/');
+        # Skip pg_dynshmem/* since these files cannot be reused on recovery
+        next if $strFile =~ ('^' . MANIFEST_PATH_PGDYNSHMEM . '\/');
 
         # Skip pg_notify/* since these files cannot be reused on recovery
         next if $strFile =~ ('^' . MANIFEST_PATH_PGNOTIFY . '\/');
@@ -652,8 +652,15 @@ sub build
         # Skip pg_replslot/* since these files cannot be reused on recovery
         next if $strFile =~ ('^' . MANIFEST_PATH_PGREPLSLOT . '\/');
 
-        # Skip pg_dynshmem/* since these files cannot be reused on recovery
-        next if $strFile =~ ('^' . MANIFEST_PATH_PGDYNSHMEM . '\/');
+        # Skip pg_snapshots/* since these files cannot be reused on recovery
+        next if $strFile =~ ('^' . MANIFEST_PATH_PGSNAPSHOTS . '\/');
+
+        # Skip temporary statistics in pg_stat_tmp even when stats_temp_directory is set because PGSS_TEXT_FILE is always created
+        # there.
+        next if $strFile =~ ('^' . MANIFEST_PATH_PGSTATTMP . '\/');
+
+        # Skip pg_subtrans/* since these files cannot be reused on recovery
+        next if $strFile =~ ('^' . MANIFEST_PATH_PGSUBTRANS . '\/');
 
         # Skip ignored files
         if ($strFile eq MANIFEST_FILE_POSTGRESQLAUTOCONFTMP ||      # postgresql.auto.conf.tmp - temp file for safe writes
