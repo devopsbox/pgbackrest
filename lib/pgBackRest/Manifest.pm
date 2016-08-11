@@ -159,6 +159,8 @@ use constant DB_PATH_PGNOTIFY                                       => 'pg_notif
     push @EXPORT, qw(DB_PATH_PGNOTIFY);
 use constant DB_PATH_PGREPLSLOT                                     => 'pg_replslot';
     push @EXPORT, qw(DB_PATH_PGREPLSLOT);
+use constant DB_PATH_PGSERIAL                                       => 'pg_serial';
+    push @EXPORT, qw(DB_PATH_PGSERIAL);
 use constant DB_PATH_PGSNAPSHOTS                                    => 'pg_snapshots';
     push @EXPORT, qw(DB_PATH_PGSNAPSHOTS);
 use constant DB_PATH_PGSTATTMP                                      => 'pg_stat_tmp';
@@ -203,6 +205,8 @@ use constant MANIFEST_PATH_PGNOTIFY                                 => MANIFEST_
     push @EXPORT, qw(MANIFEST_PATH_PGNOTIFY);
 use constant MANIFEST_PATH_PGREPLSLOT                               => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGREPLSLOT;
     push @EXPORT, qw(MANIFEST_PATH_PGREPLSLOT);
+use constant MANIFEST_PATH_PGSERIAL                                 => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGSERIAL;
+    push @EXPORT, qw(MANIFEST_PATH_PGSERIAL);
 use constant MANIFEST_PATH_PGSNAPSHOTS                              => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGSNAPSHOTS;
     push @EXPORT, qw(MANIFEST_PATH_PGSNAPSHOTS);
 use constant MANIFEST_PATH_PGSTATTMP                                => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGSTATTMP;
@@ -652,6 +656,9 @@ sub build
         # Skip pg_replslot/* since these files cannot be reused on recovery
         next if $strFile =~ ('^' . MANIFEST_PATH_PGREPLSLOT . '\/');
 
+        # Skip pg_serial/* since these files are reset
+        next if $strFile =~ ('^' . MANIFEST_PATH_PGSERIAL . '\/');
+
         # Skip pg_snapshots/* since these files cannot be reused on recovery
         next if $strFile =~ ('^' . MANIFEST_PATH_PGSNAPSHOTS . '\/');
 
@@ -659,7 +666,7 @@ sub build
         # there.
         next if $strFile =~ ('^' . MANIFEST_PATH_PGSTATTMP . '\/');
 
-        # Skip pg_subtrans/* since these files cannot be reused on recovery
+        # Skip pg_subtrans/* since these files are reset
         next if $strFile =~ ('^' . MANIFEST_PATH_PGSUBTRANS . '\/');
 
         # Skip ignored files
