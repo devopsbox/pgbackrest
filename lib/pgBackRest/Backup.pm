@@ -27,6 +27,7 @@ use pgBackRest::BackupInfo;
 use pgBackRest::Common::String;
 use pgBackRest::Config::Config;
 use pgBackRest::Db;
+use pgBackRest::DbVersion;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
@@ -665,7 +666,7 @@ sub process
     }
 
     # Build the manifest
-    $oBackupManifest->build($self->{oFile}, optionGet(OPTION_DB_PATH), $oLastManifest, optionGet(OPTION_ONLINE),
+    $oBackupManifest->build($self->{oFile}, $strDbVersion, optionGet(OPTION_DB_PATH), $oLastManifest, optionGet(OPTION_ONLINE),
                             $oTablespaceMap, $oDatabaseMap);
     &log(TEST, TEST_MANIFEST_BUILD);
 
