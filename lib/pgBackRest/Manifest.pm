@@ -15,6 +15,7 @@ use Digest::SHA;
 use Time::Local qw(timelocal);
 
 use lib dirname($0);
+use pgBackRest::DbVersion;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
@@ -528,6 +529,7 @@ sub build
     (
         $strOperation,
         $oFile,
+        $strDbVersion,
         $strPath,
         $oLastManifest,
         $bOnline,
@@ -542,6 +544,7 @@ sub build
         (
             __PACKAGE__ . '->build', \@_,
             {name => 'oFile'},
+            {name => 'strDbVersion'},
             {name => 'strPath'},
             {name => 'oLastManifest', required => false},
             {name => 'bOnline'},
@@ -660,23 +663,23 @@ sub build
         next if $strName =~ ('(^|\/)' . DB_FILE_PREFIX_TMP);
 
         # Skip pg_dynshmem/* since these files cannot be reused on recovery
-        next if $strFile =~ ('^' . MANIFEST_PATH_PGDYNSHMEM . '\/');
+        next if $strFile =~ ('^' . MANIFEST_PATH_PGDYNSHMEM . '\/') && $strDbVersion >= PG_VERSION_94;
 
         # Skip pg_notify/* since these files cannot be reused on recovery
-        next if $strFile =~ ('^' . MANIFEST_PATH_PGNOTIFY . '\/');
+        next if $strFile =~ ('^' . MANIFEST_PATH_PGNOTIFY . '\/') && $strDbVersion >= PG_VERSION_90;
 
         # Skip pg_replslot/* since these files cannot be reused on recovery
-        next if $strFile =~ ('^' . MANIFEST_PATH_PGREPLSLOT . '\/');
+        next if $strFile =~ ('^' . MANIFEST_PATH_PGREPLSLOT . '\/') && $strDbVersion >= PG_VERSION_94;
 
         # Skip pg_serial/* since these files are reset
-        next if $strFile =~ ('^' . MANIFEST_PATH_PGSERIAL . '\/');
+        next if $strFile =~ ('^' . MANIFEST_PATH_PGSERIAL . '\/') && $strDbVersion >= PG_VERSION_91;
 
         # Skip pg_snapshots/* since these files cannot be reused on recovery
-        next if $strFile =~ ('^' . MANIFEST_PATH_PGSNAPSHOTS . '\/');
+        next if $strFile =~ ('^' . MANIFEST_PATH_PGSNAPSHOTS . '\/') && $strDbVersion >= PG_VERSION_92;
 
         # Skip temporary statistics in pg_stat_tmp even when stats_temp_directory is set because PGSS_TEXT_FILE is always created
         # there.
-        next if $strFile =~ ('^' . MANIFEST_PATH_PGSTATTMP . '\/');
+        next if $strFile =~ ('^' . MANIFEST_PATH_PGSTATTMP . '\/') && $strDbVersion >= PG_VERSION_84;
 
         # Skip pg_subtrans/* since these files are reset
         next if $strFile =~ ('^' . MANIFEST_PATH_PGSUBTRANS . '\/');
@@ -789,7 +792,7 @@ sub build
 
             $strPath = dirname("${strPath}/${strName}");
 
-            $self->build($oFile, $strLinkDestination, undef, $bOnline, $oTablespaceMapRef, $oDatabaseMapRef,
+            $self->build($oFile, $strDbVersion, $strLinkDestination, undef, $bOnline, $oTablespaceMapRef, $oDatabaseMapRef,
                          $strFile, $bTablespace, $strPath, $strFilter, $strLinkDestination);
         }
     }

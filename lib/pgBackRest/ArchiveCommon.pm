@@ -10,7 +10,7 @@ use Carp qw(confess);
 use Exporter qw(import);
     our @EXPORT = qw();
 
-use pgBackRest::Db;
+use pgBackRest::DbVersion;
 use pgBackRest::Common::Log;
 
 ####################################################################################################################################
