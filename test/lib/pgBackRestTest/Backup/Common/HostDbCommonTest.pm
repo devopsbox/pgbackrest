@@ -22,7 +22,7 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
-use pgBackRest::Db;
+use pgBackRest::DbVersion;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
@@ -573,7 +573,9 @@ sub restoreCompare
         $$oExpectedManifestRef{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG});
 
     my $oTablespaceMapRef = undef;
-    $oActualManifest->build($self->{oFile}, $strDbClusterPath, $oLastManifest, false, $oTablespaceMap);
+    $oActualManifest->build(
+        $self->{oFile}, ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION}, $strDbClusterPath,
+        $oLastManifest, false, $oTablespaceMap);
 
     my $strSectionPath = $oActualManifest->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH);
 
