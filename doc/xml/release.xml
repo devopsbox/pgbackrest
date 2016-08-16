@@ -131,6 +131,10 @@
 
                 <release-feature-list>
                     <release-item>
+                        <p>More flexible configuration for databases.  Master and standby can both be configured on the backup server and <backrest/> will automatically determine which is the master.  This means no configuration changes for backup are required after failing over from a master to standby.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Exclude directories during backup that are cleaned, recreated, or zeroed by <postgres/> at startup.  These include (depending on the version where they were introduced): <path>pgsql_tmp</path>, <path>pg_dynshmem</path>, <path>pg_notify</path>, <path>pg_replslot</path>, <path>pg_serial</path>, <path>pg_snapshots</path>, <path>pg_stat_tmp</path>, <path>pg_subtrans</path>.  The <file>postgresql.auto.conf.tmp</file> file is now excluded in addition to files that were already excluded: <file>backup_label.old</file>, <file>postmaster.opts</file>, <file>postmaster.pid</file>, <file>recovery.conf</file>, <file>recovery.done</file>.</p>
                     </release-item>
 
