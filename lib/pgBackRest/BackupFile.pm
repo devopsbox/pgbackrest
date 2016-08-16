@@ -67,6 +67,9 @@ sub backupFile
     # If checksum is defined then the file already exists but needs to be checked
     my $bCopy = true;
 
+    # See if there is a host
+    my $strHost = $oFile->{oProtocol}->{strHost};
+
     # Add compression suffix if needed
     my $strFileOp = $strRepoFile . ($bDestinationCompress ? '.' . $oFile->{strCompressExtension} : '');
 
@@ -116,8 +119,9 @@ sub backupFile
     if ($bCopyResult)
     {
         &log($bCopy ? INFO : DETAIL,
-             (defined($strChecksum) && !$bCopy ? 'checksum resumed file' : 'backup file') .
-             " ${strDbFile} (" . fileSizeFormat($lCopySize) .
+             (defined($strChecksum) && !$bCopy ?
+                'checksum resumed file' : 'backup file ' . (defined($strHost) ? "${strHost}:" : '')) .
+             "${strDbFile} (" . fileSizeFormat($lCopySize) .
              ($lSizeTotal > 0 ? ', ' . int($lSizeCurrent * 100 / $lSizeTotal) . '%' : '') . ')' .
              ($lCopySize != 0 ? " checksum ${strCopyChecksum}" : ''));
     }

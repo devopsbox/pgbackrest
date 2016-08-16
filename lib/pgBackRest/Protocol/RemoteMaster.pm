@@ -56,6 +56,9 @@ sub new
         $strRemoteType, 'remote', $strHost, $strCommand, $iBufferMax, $iCompressLevel, $iCompressLevelNetwork, $iProtocolTimeout);
     bless $self, $class;
 
+    # Store the host
+    $self->{strHost} = $strHost;
+
     # Return from function and log return values if any
     return logDebugReturn
     (
