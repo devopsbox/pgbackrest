@@ -120,7 +120,7 @@ sub backupFile
     {
         &log($bCopy ? INFO : DETAIL,
              (defined($strChecksum) && !$bCopy ?
-                'checksum resumed file' : 'backup file ' . (defined($strHost) ? "${strHost}:" : '')) .
+                'checksum resumed file ' : 'backup file ' . (defined($strHost) ? "${strHost}:" : '')) .
              "${strDbFile} (" . fileSizeFormat($lCopySize) .
              ($lSizeTotal > 0 ? ', ' . int($lSizeCurrent * 100 / $lSizeTotal) . '%' : '') . ')' .
              ($lCopySize != 0 ? " checksum ${strCopyChecksum}" : ''));
