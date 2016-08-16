@@ -21,6 +21,7 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
+use pgBackRest::Config::Config;
 
 ####################################################################################################################################
 # File/path constants
@@ -92,6 +93,8 @@ use constant MANIFEST_KEY_TYPE                                      => 'backup-t
     push @EXPORT, qw(MANIFEST_KEY_TYPE);
 
 # Options that were set when the backup was made
+use constant MANIFEST_KEY_BACKUP_STANDBY                            => 'option-' . OPTION_BACKUP_STANDBY;
+    push @EXPORT, qw(MANIFEST_KEY_BACKUP_STANDBY);
 use constant MANIFEST_KEY_HARDLINK                                  => 'option-hardlink';
     push @EXPORT, qw(MANIFEST_KEY_HARDLINK);
 use constant MANIFEST_KEY_ARCHIVE_CHECK                             => 'option-archive-check';
