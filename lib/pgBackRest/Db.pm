@@ -896,6 +896,8 @@ sub replayWait
 
     } while ($bTimeout && waitMore($oWait));
 
+    # !!! On 9.6 it should be possible to test the last checkpoint and make sure it's what we expect
+
     if ($bTimeout == true)
     {
         confess &log(
