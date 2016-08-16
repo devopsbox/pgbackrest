@@ -1837,164 +1837,24 @@
 
     <!-- SECTION => STANDBY-BACKUP -->
     <section id="standby-backup" depend="/replication/streaming">
-        <title>Backup from a Replica</title>
+        <title>Backup from a Standby</title>
 
-        <!-- <backrest-config host="{[host-backup]}" owner="backrest:postgres" file="{[backrest-config-demo]}">
-            <title>Change <br-option>db-host</br-option> to the replica</title>
+        <backrest-config host="{[host-backup]}" owner="backrest:postgres" file="{[backrest-config-demo]}">
+            <title>Configure <br-option>db2-host</br-option>/<br-option>db2-user</br-option> and <br-option>db2-path</br-option></title>
 
-            <backrest-config-option section="demo" key="db-host">{[host-db-standby]}</backrest-config-option>
-            <backrest-config-option section="global" key="archive-check">n</backrest-config-option>
-        </backrest-config> -->
+            <backrest-config-option section="demo" key="db2-path">{[db-path]}</backrest-config-option>
+            <backrest-config-option section="demo" key="db2-host">{[host-db-standby]}</backrest-config-option>
+            <backrest-config-option section="demo" key="db2-user">postgres</backrest-config-option>
 
-        <execute-list host="{[host-db-master]}">
-            <title>Start the backup</title>
-
-            <execute output="y" filter="n">
-                <exe-cmd>psql -c "
-                    select * from pg_start_backup('test', true)"</exe-cmd>
-                    <exe-highlight>0/</exe-highlight>
-            </execute>
-
-            <execute output="y" filter="n">
-                <exe-cmd>psql -c "
-                    select * from pg_create_restore_point('pgBackRest - Start Standby Backup')"</exe-cmd>
-            </execute>
-
-            <execute>
-                <exe-cmd>sleep 1</exe-cmd>
-            </execute>
-        </execute-list>
-
-        <execute-list host="{[host-db-master]}">
-            <title>Check <id>pg_stat_replication</id> to make sure <id>replay_location</id> has advanced</title>
-
-            <execute output="y" filter="n">
-                <exe-cmd>psql -c "
-                    select client_addr, sent_location, write_location,
-                           flush_location, replay_location
-                      from pg_stat_replication"</exe-cmd>
-                <exe-highlight>0/</exe-highlight>
-            </execute>
-        </execute-list>
-
-        <execute-list host="{[host-db-standby]}">
-            <title>Check pg_last_xlog_replay_location() on standby</title>
-
-            <execute output="y" filter="n">
-                <exe-cmd>psql -c "
-                    select * from pg_last_xlog_replay_location()"</exe-cmd>
-            </execute>
-        </execute-list>
-
-        <execute-list host="{[host-db-master]}">
-            <title>Double-check pg_stat_replication before starting to copy from standby</title>
-
-            <execute>
-                <exe-cmd>sleep 1</exe-cmd>
-            </execute>
-
-            <execute output="y" filter="n">
-                <exe-cmd>psql -c "
-                    select client_addr, sent_location, write_location,
-                           flush_location, replay_location
-                      from pg_stat_replication"</exe-cmd>
-                <exe-highlight>0/</exe-highlight>
-            </execute>
-        </execute-list>
-
-        <!-- <execute-list host="{[host-backup]}">
-            <title>Backup the {[postgres-cluster-demo]} cluster using the standby</title>
-
-            <execute user="backrest" output="y" filter="n">
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=detail backup</exe-cmd>
-            </execute>
-        </execute-list>
-
-        <execute-list host="{[host-db-standby]}">
-            <title>Check pg_control after the backup and shutdown the cluster</title>
-
-            <execute user="postgres" output="y">
-                <exe-cmd>/usr/lib/postgresql/9.6/bin/pg_controldata
-                    -D /var/lib/postgresql/9.6/demo</exe-cmd>
-                <exe-highlight>Latest checkpoint location|Prior checkpoint location|Minimum recovery ending location</exe-highlight>
-            </execute>
-
-            <execute user="root" err-suppress="y">
-                <exe-cmd>{[db-cluster-stop]}</exe-cmd>
-            </execute>
-        </execute-list>
-
-        <execute-list host="{[host-db-master]}">
-            <title>Check pg_control after the backup and shutdown the cluster</title>
-
-            <execute user="postgres" output="y">
-                <exe-cmd>/usr/lib/postgresql/9.6/bin/pg_controldata
-                    -D /var/lib/postgresql/9.6/demo</exe-cmd>
-                <exe-highlight>Latest checkpoint location|Prior checkpoint location|Minimum recovery ending location</exe-highlight>
-            </execute>
-
-            <execute user="root" err-suppress="y">
-                <exe-cmd>{[db-cluster-stop]}</exe-cmd>
-            </execute>
-        </execute-list>
+            <backrest-config-option section="global" key="backup-standby">y</backrest-config-option>
+        </backrest-config>
 
         <execute-list host="{[host-backup]}">
-            <title>Check WAL start and stop in backup.manifest</title>
+            <title>Backup the {[postgres-cluster-demo]} cluster from <host>db-standby</host></title>
 
-            <execute user="backrest" output="y">
-                <exe-cmd>cat /var/lib/pgbackrest/backup/demo/latest/backup.manifest</exe-cmd>
-                <exe-highlight>backup-lsn-</exe-highlight>
+            <execute user="backrest" output="y" filter="n">
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --log-level-console=detail backup</exe-cmd>
             </execute>
         </execute-list>
-
-        <execute-list host="{[host-db-master]}">
-            <title>Restore from latest backup and check pg_control</title>
-
-            <execute>
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]}
-                    {[dash]}-type=immediate {[dash]}-delta restore</exe-cmd>
-            </execute>
-
-            <execute user="postgres" output="y">
-                <exe-cmd>/usr/lib/postgresql/9.6/bin/pg_controldata
-                    -D /var/lib/postgresql/9.6/demo</exe-cmd>
-                <exe-highlight>Latest checkpoint location|Prior checkpoint location|Minimum recovery ending location</exe-highlight>
-            </execute>
-        </execute-list>
-
-        <execute-list host="{[host-db-master]}">
-            <title>Start <postgres/></title>
-
-            <execute user="root" show="n">
-                <exe-cmd>rm {[postgres-log-demo]}</exe-cmd>
-            </execute>
-
-            <execute user="root">
-                <exe-cmd>{[db-cluster-start]}</exe-cmd>
-            </execute>
-
-            <execute show="n">
-                <exe-cmd>{[db-cluster-wait]}</exe-cmd>
-            </execute>
-        </execute-list>
-
-        <execute-list host="{[host-db-master]}">
-            <title>Examine the <postgres/> log output for log messages indicating success</title>
-
-            <execute output="y" filter="n">
-                <exe-cmd>cat {[postgres-log-demo]}</exe-cmd>
-                <exe-highlight>consistent recovery state reached</exe-highlight>
-            </execute>
-        </execute-list>
-
-        <execute-list host="{[host-db-master]}">
-            <title>Check pg_control</title>
-
-            <execute user="postgres" output="y">
-                <exe-cmd>/usr/lib/postgresql/9.6/bin/pg_controldata
-                    -D /var/lib/postgresql/9.6/demo</exe-cmd>
-                <exe-highlight>Latest checkpoint location|Prior checkpoint location|Minimum recovery ending location</exe-highlight>
-            </execute>
-        </execute-list> -->
     </section>
 </doc>
