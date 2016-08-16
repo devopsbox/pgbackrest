@@ -160,6 +160,8 @@ use constant DB_PATH_GLOBAL                                         => 'global';
     push @EXPORT, qw(DB_PATH_GLOBAL);
 use constant DB_PATH_PGDYNSHMEM                                     => 'pg_dynshmem';
     push @EXPORT, qw(DB_PATH_PGDYNSHMEM);
+use constant DB_PATH_PGMULTIXACT                                    => 'pg_multixact';
+    push @EXPORT, qw(DB_PATH_PGMULTIXACT);
 use constant DB_PATH_PGNOTIFY                                       => 'pg_notify';
     push @EXPORT, qw(DB_PATH_PGNOTIFY);
 use constant DB_PATH_PGREPLSLOT                                     => 'pg_replslot';
@@ -212,6 +214,8 @@ use constant MANIFEST_PATH_GLOBAL                                   => MANIFEST_
     push @EXPORT, qw(MANIFEST_PATH_GLOBAL);
 use constant MANIFEST_PATH_PGDYNSHMEM                               => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGDYNSHMEM;
     push @EXPORT, qw(MANIFEST_PATH_PGDYNSHMEM);
+use constant MANIFEST_PATH_PGMULTIXACT                              => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGMULTIXACT;
+    push @EXPORT, qw(MANIFEST_PATH_PGMULTIXACT);
 use constant MANIFEST_PATH_PGNOTIFY                                 => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGNOTIFY;
     push @EXPORT, qw(MANIFEST_PATH_PGNOTIFY);
 use constant MANIFEST_PATH_PGREPLSLOT                               => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGREPLSLOT;

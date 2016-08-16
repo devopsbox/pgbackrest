@@ -314,8 +314,8 @@ sub processManifest
 
             # Certain files must be copied from the master
             if ($strFile eq MANIFEST_FILE_PGCONTROL ||
-                ($strFile !~ ('^' . MANIFEST_PATH_BASE . '\/') && $strFile !~ ('^' . MANIFEST_PATH_PGTBLSPC . '\/') &&
-                 $strFile !~ ('^' . MANIFEST_PATH_GLOBAL . '\/') && $strFile !~ ('^' . MANIFEST_PATH_PGCLOG . '\/')))
+                $strFile !~ ('^(' . MANIFEST_PATH_BASE . '|' . MANIFEST_PATH_PGTBLSPC . '|' . MANIFEST_PATH_GLOBAL . '|' .
+                    MANIFEST_PATH_PGCLOG . '|' . MANIFEST_PATH_PGMULTIXACT . ')\/'))
             {
                 $hFileCopyMap{$strQueueKey}{$strFileKey}{skip} = true;
                 $hFileCopyMap{$strQueueKey}{$strFileKey}{db_file} = $oBackupManifest->dbPathGet($strDbMasterPath, $strFile);
