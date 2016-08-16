@@ -788,7 +788,7 @@
         <section id="archive">
             <title>Archive Retention</title>
 
-            <p>Although <backrest/> automatically removes archived WAL segments when expiring backups, it can be useful to expire WAL logs to save disk space. Expiring archives will never remove WAL segments that are required to make a backup consistent, however, PITR can only be played for WAL logs that are still in the archive, so care should be taken when performing archiving outside of the normal backup expiration process.</p>
+            <p>Although <backrest/> automatically removes archived WAL segments when expiring backups, it may be useful to expire archive more aggressively to save disk space. Expiring archive will never remove WAL segments that are required to make a backup consistent, however, PITR can only be on a continuous WAL stream, so care should be taken when expiring archive outside of the normal backup expiration process.</p>
 
             <backrest-config host="{[host-db-master]}" file="{[backrest-config-demo]}">
                 <title>Configure <br-option>retention-diff</br-option></title>
@@ -825,8 +825,7 @@
 
             </execute-list>
 
-            <p>The <id>{[backup-diff-first]}</id> differential backup has archived WAL that must be retained to make the older backups consistent even though they cannot be played any further forward with PITR and the other archives for <id>{[backup-diff-first]}</id> are removed. Archives for the new backup {[backup-diff-second]} remain and can be used for PITR.</p>
-
+            <p>The <id>{[backup-diff-first]}</id> differential backup has archived WAL segments that must be retained to make the older backups consistent even though they cannot be played any further forward with PITR and the [in between WAL?] for <id>{[backup-diff-first]}</id> are removed. WAL segments for the new backup {[backup-diff-second]} remain and can be used for PITR.</p>
         </section>
     </section>
 
