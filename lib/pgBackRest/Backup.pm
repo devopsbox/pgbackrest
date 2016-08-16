@@ -810,11 +810,16 @@ sub process
             my ($strStandbyDbVersion, $iStandbyControlVersion, $iStandbyCatalogVersion, $ullStandbyDbSysId) = $oDbStandby->info();
             $oBackupInfo->check($strStandbyDbVersion, $iStandbyControlVersion, $iStandbyCatalogVersion, $ullStandbyDbSysId);
 
+            $oDbStandby->configValidate();
+
             &log(INFO, "wait for replay on the standby to reach ${strArchiveStart}");
 
-            my $strReplayedLSN = $oDbStandby->replayWait($strArchiveStart);
+            my ($strReplayedLSN, $strCheckpointLSN) = $oDbStandby->replayWait($strArchiveStart);
 
-            &log(INFO, "replay on the standby reached ${strReplayedLSN}");
+            &log(
+                INFO,
+                "replay on the standby reached ${strReplayedLSN}" .
+                    (defined($strCheckpointLSN) ? ", checkpoint ${strCheckpointLSN}" : ''));
 
             # The standby db object won't be used anymore so undef it to catch an subsequent references
             undef($oDbStandby);

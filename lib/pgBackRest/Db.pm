@@ -875,7 +875,8 @@ sub replayWait
                 ERROR_ARCHIVE_TIMEOUT);
         }
 
-        # Is the replay lsn >= target lsn?
+        # Is the replay lsn > target lsn?  It needs to be greater because the checkpoint record is directly after the LSN returned
+        # by pg_start_backup().
         if (lsnNormalize($strLastReplayedLSN) ge lsnNormalize($strTargetLSN))
         {
             $bTimeout = false;
@@ -896,8 +897,7 @@ sub replayWait
 
     } while ($bTimeout && waitMore($oWait));
 
-    # !!! On 9.6 it should be possible to test the last checkpoint and make sure it's what we expect
-
+    # Error if a timeout occurred before the target lsn was reached
     if ($bTimeout == true)
     {
         confess &log(
@@ -907,11 +907,30 @@ sub replayWait
     # Perform a checkpoint
     $self->executeSql('checkpoint', undef, false);
 
+    # On PostgreSQL >= 9.6 the checkpoint location can be verified
+    my $strCheckpointLSN = undef;
+
+    if ($self->{strDbVersion} >= PG_VERSION_96)
+    {
+        $strCheckpointLSN = $self->executeSqlOne('select checkpoint_location from pg_control_checkpoint()');
+
+        if (lsnNormalize($strCheckpointLSN) le lsnNormalize($strTargetLSN))
+        {
+            confess &log(
+                ERROR,
+                "the checkpoint location ${strCheckpointLSN} is less than the target location ${strTargetLSN} even though the" .
+                    " replay location is ${strReplayedLSN}\n" .
+                    "Hint: This should not be possible and may indicate a bug in PostgreSQL.",
+                ERROR_ARCHIVE_TIMEOUT);
+        }
+    }
+
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'strReplayedLSN', value => $strReplayedLSN}
+        {name => 'strReplayedLSN', value => $strReplayedLSN},
+        {name => 'strCheckpointLSN', value => $strCheckpointLSN},
     );
 }
 
