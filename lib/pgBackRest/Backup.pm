@@ -754,6 +754,14 @@ sub process
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef, $iCatalogVersion);
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID, undef, $ullDbSysId);
 
+    # Backup from standby can only be used on PostgreSQL >= 9.1
+    if (optionGet(OPTION_ONLINE) && optionGet(OPTION_BACKUP_STANDBY) && $strDbVersion < PG_VERSION_BACKUP_STANDBY)
+    {
+        confess &log(
+            ERROR,
+            'option \'' . OPTION_BACKUP_STANDBY . '\' not valid for PostgreSQL < ' . PG_VERSION_BACKUP_STANDBY, ERROR_CONFIG);
+    }
+
     # Start backup (unless --no-online is set)
     my $strArchiveStart;
     my $oTablespaceMap;
